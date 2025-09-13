@@ -1,0 +1,20 @@
+{
+  "inputs": [],
+  "servers": {
+    "github": {
+      "type": "sse",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {}
+    },
+    "Azure MCP Server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure/mcp@latest",
+        "server",
+        "start"
+      ]
+    }
+  }
+}

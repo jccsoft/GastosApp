@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Registro de Tíquets</value>
+  </data>
+  <data name="ActLogin" xml:space="preserve">
+    <value>Inicia sesión</value>
+  </data>
+  <data name="HomeTextWellcome0" xml:space="preserve">
+    <value>Bienvenido a la aplicación '{0}'</value>
+  </data>
+  <data name="HomeTextLoginToStart0" xml:space="preserve">
+    <value>{0} para empezar o continúa en modo demo.</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="ActLogout" xml:space="preserve">
+    <value>Cerrar sesión</value>
+  </data>
+  <data name="Hello0" xml:space="preserve">
+    <value>¡ Hola {0} !</value>
+  </data>
+  <data name="DemoModeMessage1" xml:space="preserve">
+    <value>MODO DEMO</value>
+  </data>
+  <data name="TableSearch" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Cargando datos</value>
+  </data>
+  <data name="TableRowsPerPage" xml:space="preserve">
+    <value>Filas por página</value>
+  </data>
+  <data name="TableAllItems" xml:space="preserve">
+    <value>Todos los registros</value>
+  </data>
+  <data name="ErrorNoRecordsFound" xml:space="preserve">
+    <value>No se encontraron registros</value>
+  </data>
+  <data name="TableAllowRemove" xml:space="preserve">
+    <value>Permitir eliminar</value>
+  </data>
+  <data name="StatMonthly" xml:space="preserve">
+    <value>Mensual</value>
+  </data>
+  <data name="StatDaily" xml:space="preserve">
+    <value>Diario</value>
+  </data>
+  <data name="ActCancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="ActCreate" xml:space="preserve">
+    <value>Crear</value>
+  </data>
+  <data name="ActDelete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="AskDelete0" xml:space="preserve">
+    <value>¿Eliminar {0}?</value>
+  </data>
+  <data name="ActEdit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="ErrorGettingStores" xml:space="preserve">
+    <value>Error al obtener las tiendas</value>
+  </data>
+  <data name="EntityFile" xml:space="preserve">
+    <value>Fichero</value>
+  </data>
+  <data name="ErrorIncoherentItems" xml:space="preserve">
+    <value>Incoherencia entre los items leídos y los creados en local</value>
+  </data>
+  <data name="ErrorNoProductSelected" xml:space="preserve">
+    <value>No hay producto seleccionado para editar.</value>
+  </data>
+  <data name="ErrorNoStoreSelected" xml:space="preserve">
+    <value>No hay tienda seleccionada para editar.</value>
+  </data>
+  <data name="RowClickStore" xml:space="preserve">
+    <value>Clic en tienda para ver sus últimas compras</value>
+  </data>
+  <data name="ActSave" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="SuccessDelete" xml:space="preserve">
+    <value>Eliminación correcta</value>
+  </data>
+  <data name="EntityProduct" xml:space="preserve">
+    <value>Producto</value>
+  </data>
+  <data name="FieldName" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="FieldImage" xml:space="preserve">
+    <value>Imagen</value>
+  </data>
+  <data name="ErrorGettingProducts" xml:space="preserve">
+    <value>Error al obtener los productos</value>
+  </data>
+  <data name="RowClickProduct" xml:space="preserve">
+    <value>Clic en el producto para ver sus últimos tíquets</value>
+  </data>
+  <data name="FieldAmount" xml:space="preserve">
+    <value>Importe</value>
+  </data>
+  <data name="FieldDate" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="EntityStore" xml:space="preserve">
+    <value>Tienda</value>
+  </data>
+  <data name="ErrorReadingReceipt" xml:space="preserve">
+    <value>Error leyendo el tíquet</value>
+  </data>
+  <data name="DocIntelCheckingHealth" xml:space="preserve">
+    <value>Chequeando la salud de la API DocIntel</value>
+  </data>
+  <data name="DocIntelNoResponse" xml:space="preserve">
+    <value>La API DocIntel no responde</value>
+  </data>
+  <data name="DragFilesHereOrClick" xml:space="preserve">
+    <value>Arrastra ficheros aquí o haz clic</value>
+  </data>
+  <data name="ReadReceipts" xml:space="preserve">
+    <value>Leer tíquets</value>
+  </data>
+  <data name="ActClearList" xml:space="preserve">
+    <value>Limpiar lista</value>
+  </data>
+  <data name="ErrorFileTypeNotSupported0" xml:space="preserve">
+    <value>El tipo de fichero {0} no está soportado.</value>
+  </data>
+  <data name="ErrorFileAlreadySelected0" xml:space="preserve">
+    <value>El fichero {0} ya ha sido seleccionado.</value>
+  </data>
+  <data name="AnalysisJobCreated" xml:space="preserve">
+    <value>Solicitud para {0} creada con éxito</value>
+  </data>
+  <data name="ErrorWithFile" xml:space="preserve">
+    <value>Error con {0}: {1}</value>
+  </data>
+  <data name="FieldActions" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="EntityReceipt" xml:space="preserve">
+    <value>Tíquet</value>
+  </data>
+  <data name="FieldReceiptDescription" xml:space="preserve">
+    <value>Descripción en Tíquet</value>
+  </data>
+  <data name="FieldQuantity" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="RowClickReceipt" xml:space="preserve">
+    <value>Clic en tíquet para ver su detalle</value>
+  </data>
+  <data name="Reading0" xml:space="preserve">
+    <value>Lectura de {0}</value>
+  </data>
+  <data name="EntityProducts" xml:space="preserve">
+    <value>Productos</value>
+  </data>
+  <data name="EntityReceipts" xml:space="preserve">
+    <value>Tíquets</value>
+  </data>
+  <data name="EntityStats" xml:space="preserve">
+    <value>Estadísticas</value>
+  </data>
+  <data name="EntityStores" xml:space="preserve">
+    <value>Tiendas</value>
+  </data>
+  <data name="FieldDateFrom" xml:space="preserve">
+    <value>Desde</value>
+  </data>
+  <data name="FieldDateTo" xml:space="preserve">
+    <value>Hasta</value>
+  </data>
+  <data name="ActShowGraph" xml:space="preserve">
+    <value>Mostrar gráfico</value>
+  </data>
+  <data name="ErrorDateStartLessThanEnd" xml:space="preserve">
+    <value>La fecha inicial debe ser menor que la final</value>
+  </data>
+  <data name="FieldAmounts" xml:space="preserve">
+    <value>Importes</value>
+  </data>
+  <data name="ErrorNoPendingReceipts" xml:space="preserve">
+    <value>No hay tíquets pendientes de crear</value>
+  </data>
+  <data name="PendingReceipts" xml:space="preserve">
+    <value>Tíquets pendientes de crear</value>
+  </data>
+  <data name="ErrorReceiptAlreadyCreated" xml:space="preserve">
+    <value>Tíquet ya creado para esta tienda en esta fecha. Elimínelo.</value>
+  </data>
+  <data name="FieldDateCreation" xml:space="preserve">
+    <value>Creación</value>
+  </data>
+  <data name="FieldDateCompleted" xml:space="preserve">
+    <value>Completado</value>
+  </data>
+  <data name="FieldStatus" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="ErrorNoReceiptFoundForAnalysisJob" xml:space="preserve">
+    <value>No se ha encontrado el tíquet asociado al trabajo de análisis.</value>
+  </data>
+  <data name="ErrorNoReceiptsFoundForProduct" xml:space="preserve">
+    <value>No se han encontrado tíquets para este producto.</value>
+  </data>
+  <data name="FieldUnitPrice0" xml:space="preserve">
+    <value>{0}/unit</value>
+  </data>
+  <data name="FieldUnit" xml:space="preserve">
+    <value>Unidad</value>
+  </data>
+  <data name="NoUnit" xml:space="preserve">
+    <value>Sin unidad</value>
+  </data>
+  <data name="FieldUnitsPack" xml:space="preserve">
+    <value>Unid. x Pack</value>
+  </data>
+  <data name="SizingMilliliters" xml:space="preserve">
+    <value>Mililitros</value>
+  </data>
+  <data name="SizingCentiliters" xml:space="preserve">
+    <value>Centilitros</value>
+  </data>
+  <data name="SizingLiters" xml:space="preserve">
+    <value>Litros</value>
+  </data>
+  <data name="SizingGrams" xml:space="preserve">
+    <value>Gramos</value>
+  </data>
+  <data name="SizingKilos" xml:space="preserve">
+    <value>Kilos</value>
+  </data>
+  <data name="SizingUnits" xml:space="preserve">
+    <value>Unidades</value>
+  </data>
+  <data name="SizingUnitValue" xml:space="preserve">
+    <value>Valor de unidad</value>
+  </data>
+  <data name="ErrorUnknown" xml:space="preserve">
+    <value>Error desconocido</value>
+  </data>
+  <data name="TextCopiedToClipboard" xml:space="preserve">
+    <value>Texto copiado al portapapeles</value>
+  </data>
+  <data name="ErrorCopyingText" xml:space="preserve">
+    <value>Error al copiar el texto</value>
+  </data>
+  <data name="LastPurchases" xml:space="preserve">
+    <value>Últimas compras</value>
+  </data>
+  <data name="AskDeleteReceiptItem0" xml:space="preserve">
+    <value>¿Eliminar el producto '{0}' de este tíquet?</value>
+  </data>
+  <data name="AskDeleteAnalysisJob0" xml:space="preserve">
+    <value>¿Eliminar el trabajo de análisis del fichero '{0}'?</value>
+  </data>
+  <data name="ErrorUserMismatch" xml:space="preserve">
+    <value>Desajuste de usuarios</value>
+  </data>
+  <data name="ErrorStatusCodeBadRequest" xml:space="preserve">
+    <value>Error en los datos de entrada.</value>
+  </data>
+  <data name="ErrorStatusCodeConflict" xml:space="preserve">
+    <value>Elemento referenciado. La acción no se ha podido realizar.</value>
+  </data>
+  <data name="ErrorStatusCodeNotFound" xml:space="preserve">
+    <value>Elemento no encontrado.</value>
+  </data>
+  <data name="StatWeekly" xml:space="preserve">
+    <value>Semanal</value>
+  </data>
+  <data name="ValidProductId" xml:space="preserve">
+    <value>Debe seleccionar un producto.</value>
+  </data>
+  <data name="ValidProductNameMandatory" xml:space="preserve">
+    <value>El nombre del producto es obligatorio.</value>
+  </data>
+  <data name="ValidProductNameTooLong0" xml:space="preserve">
+    <value>El nombre del producto no puede exceder los {0} caracteres.</value>
+  </data>
+  <data name="ValidProductUnitsPack" xml:space="preserve">
+    <value>Las unidades por paquete deben ser mayores que cero.</value>
+  </data>
+  <data name="ValidProductUniqueNameAndUnitsPack" xml:space="preserve">
+    <value>Ya existe un producto con este nombre y unidades/pack.</value>
+  </data>
+  <data name="ValidReceiptItemQuantity" xml:space="preserve">
+    <value>La cantidad no puede ser cero.</value>
+  </data>
+  <data name="ValidReceiptItemAmount" xml:space="preserve">
+    <value>El importe no puede ser cero</value>
+  </data>
+  <data name="ValidReceiptId" xml:space="preserve">
+    <value>El ID del tíquet no puede estar vacío.</value>
+  </data>
+  <data name="ValidReceiptTransactionDateUtc" xml:space="preserve">
+    <value>La fecha del tíquet no puede estar vacía.</value>
+  </data>
+  <data name="ValidReceiptSourceId" xml:space="preserve">
+    <value>El ID de origen no puede estar vacío.</value>
+  </data>
+  <data name="ValidReceiptStoreId" xml:space="preserve">
+    <value>Debe seleccionar una tienda.</value>
+  </data>
+  <data name="ValidReceiptItemsAtLeastOneItem" xml:space="preserve">
+    <value>El tíquet debe contener al menos un artículo.</value>
+  </data>
+  <data name="ValidReceiptItemsAllItemsFilled" xml:space="preserve">
+    <value>Todos los artículos deben tener un producto, cantidad e importe.</value>
+  </data>
+  <data name="ValidReceiptItemsNoDuplicateProducts" xml:space="preserve">
+    <value>No se pueden repetir los mismos productos con cantidades o importes diferentes en el tíquet.</value>
+  </data>
+  <data name="ValidReceiptItemsValidateSourceId" xml:space="preserve">
+    <value>Ya existe un tíquet con este ID de origen.</value>
+  </data>
+  <data name="ValidReceiptItemsValidateStoreIdAndDate" xml:space="preserve">
+    <value>Ya existe un tíquet para esta tienda y fecha.</value>
+  </data>
+  <data name="ValidStoreId" xml:space="preserve">
+    <value>Debe seleccionar una tienda.</value>
+  </data>
+  <data name="ValidStoreNameMandatory" xml:space="preserve">
+    <value>El nombre de la tienda es obligatorio</value>
+  </data>
+  <data name="ValidStoreNameTooLong0" xml:space="preserve">
+    <value>El nombre de la tienda no puede exceder los {0} caracteres.</value>
+  </data>
+  <data name="ValidStoreUniqueName" xml:space="preserve">
+    <value>Ya existe una tienda con este nombre.</value>
+  </data>
+  <data name="ErrorStatusCodeUnauthorized" xml:space="preserve">
+    <value>Debes iniciar sesión para realizar esta operación</value>
+  </data>
+  <data name="DemoModeMessage2" xml:space="preserve">
+    <value>Inicia sesión para acceder a tus datos</value>
+  </data>
+  <data name="Themes" xml:space="preserve">
+    <value>Temas</value>
+  </data>
+  <data name="ThemeAuto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="ThemeDark" xml:space="preserve">
+    <value>Oscuro</value>
+  </data>
+  <data name="ThemeLight" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+</root>

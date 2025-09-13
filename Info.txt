@@ -1,0 +1,8 @@
+Crear extension Unaccent en la base de datos Postgres
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+DEPLOYMENT
+- Cambiar a rama prod
+- Hacer merge de la rama main en prod
+- Sincronizar
+- Volver a main

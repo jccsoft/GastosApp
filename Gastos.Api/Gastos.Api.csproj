@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <NugetSource>O:\Repos\1.Nugets</NugetSource>
+    <NugetDestination>..\..\.nuget-local</NugetDestination>
+  </PropertyGroup>
+
+  <Target Name="CopyNugets" AfterTargets="Compile" Condition="Exists('$(NugetSource)')">
+    <ItemGroup>
+      <SourceFile Include="$(NugetSource)\**\*" />
+      <DestinationFile Include="@(SourceFile->'$(NugetDestination)\%(RecursiveDir)%(Filename)%(Extension)')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(SourceFile)" DestinationFiles="@(DestinationFile)" SkipUnchangedFiles="true" />
+  </Target>
+  
+  <ItemGroup>
+    <PackageReference Include="DocIntel.Api.Sdk" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Yarp.ReverseProxy" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Stores\" />
+    <Folder Include="Features\Receipts\" />
+    <Folder Include="Features\Products\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gastos.Shared\Gastos.Shared.csproj" />
+    <ProjectReference Include="..\GastosApp.ServiceDefaults\GastosApp.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

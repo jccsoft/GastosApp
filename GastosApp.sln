@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36429.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gastos.Api", "Gastos.Api\Gastos.Api.csproj", "{67D0B979-B56D-44E7-998E-478E779FABF4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{089100B1-113F-4E66-888A-E83F3999EAFD}"
+	ProjectSection(SolutionItems) = preProject
+		.mcp.json = .mcp.json
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		DuplicarRegistros.txt = DuplicarRegistros.txt
+		Info.txt = Info.txt
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gastos.Shared", "Gastos.Shared\Gastos.Shared.csproj", "{796F9A85-2C66-4CAC-B8E1-822F3A461269}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GastosApp.AppHost", "GastosApp.AppHost\GastosApp.AppHost.csproj", "{79D3192F-6994-4E2C-9584-937A906C688D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GastosApp.ServiceDefaults", "GastosApp.ServiceDefaults\GastosApp.ServiceDefaults.csproj", "{18846A4D-B455-C5CE-1387-8C0A2305B844}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{67D0B979-B56D-44E7-998E-478E779FABF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67D0B979-B56D-44E7-998E-478E779FABF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67D0B979-B56D-44E7-998E-478E779FABF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67D0B979-B56D-44E7-998E-478E779FABF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{796F9A85-2C66-4CAC-B8E1-822F3A461269}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{796F9A85-2C66-4CAC-B8E1-822F3A461269}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{796F9A85-2C66-4CAC-B8E1-822F3A461269}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{796F9A85-2C66-4CAC-B8E1-822F3A461269}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79D3192F-6994-4E2C-9584-937A906C688D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79D3192F-6994-4E2C-9584-937A906C688D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79D3192F-6994-4E2C-9584-937A906C688D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79D3192F-6994-4E2C-9584-937A906C688D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18846A4D-B455-C5CE-1387-8C0A2305B844}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18846A4D-B455-C5CE-1387-8C0A2305B844}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18846A4D-B455-C5CE-1387-8C0A2305B844}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18846A4D-B455-C5CE-1387-8C0A2305B844}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{67D0B979-B56D-44E7-998E-478E779FABF4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{796F9A85-2C66-4CAC-B8E1-822F3A461269} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2EAD7CEF-5ECE-4363-A323-CC74206711AF}
+	EndGlobalSection
+EndGlobal

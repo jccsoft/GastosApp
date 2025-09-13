@@ -1,0 +1,99 @@
+En DBeaver
+
+-- Variables de usuario
+@set source_user = 'Demo'
+@set target_user = '<ID USUARIO>'
+
+BEGIN;
+
+-- Duplicate stores from source_user to target_user
+INSERT INTO rc.stores (id, name, source_name, user_id)
+SELECT 
+    gen_random_uuid() as id,
+    name,
+    source_name,
+    :target_user as user_id
+FROM rc.stores 
+WHERE user_id = :source_user;
+
+-- Duplicate products 
+INSERT INTO rc.products (id, name, image_url, units_pack, sizing_id, sizing_value, user_id)
+SELECT 
+    gen_random_uuid() as id,
+    name,
+    image_url,
+    units_pack,
+    sizing_id,
+    sizing_value,
+    :target_user as user_id
+FROM rc.products 
+WHERE user_id = :source_user;
+
+-- Create temporary mapping tables for ID relationships
+CREATE TEMP TABLE store_mapping AS
+SELECT 
+    old_stores.id as old_id,
+    new_stores.id as new_id
+FROM rc.stores old_stores
+JOIN rc.stores new_stores ON old_stores.name = new_stores.name 
+    AND old_stores.source_name IS NOT DISTINCT FROM new_stores.source_name
+WHERE old_stores.user_id = :source_user 
+    AND new_stores.user_id = :target_user;
+
+CREATE TEMP TABLE product_mapping AS
+SELECT 
+    old_products.id as old_id,
+    new_products.id as new_id
+FROM rc.products old_products
+JOIN rc.products new_products ON old_products.name = new_products.name
+    AND old_products.units_pack IS NOT DISTINCT FROM new_products.units_pack
+    AND old_products.sizing_id IS NOT DISTINCT FROM new_products.sizing_id
+    AND old_products.sizing_value IS NOT DISTINCT FROM new_products.sizing_value
+WHERE old_products.user_id = :source_user 
+    AND new_products.user_id = :target_user;
+
+-- Duplicate receipts with mapped store IDs (keeping the same source_id)
+INSERT INTO rc.receipts (id, source_id, transaction_date_utc, store_id, user_id)
+SELECT 
+    gen_random_uuid() as id,
+    source_id,
+    transaction_date_utc,
+    COALESCE(sm.new_id, r.store_id) as store_id,
+    :target_user as user_id
+FROM rc.receipts r
+LEFT JOIN store_mapping sm ON r.store_id = sm.old_id
+WHERE r.user_id = :source_user;
+
+-- Create receipt mapping for receipt_items
+CREATE TEMP TABLE receipt_mapping AS
+SELECT 
+    old_receipts.id as old_id,
+    new_receipts.id as new_id
+FROM rc.receipts old_receipts
+JOIN rc.receipts new_receipts ON old_receipts.source_id = new_receipts.source_id
+WHERE old_receipts.user_id = :source_user 
+    AND new_receipts.user_id = :target_user;
+
+-- Duplicate receipt_items with mapped IDs
+INSERT INTO rc.receipt_items (id, receipt_id, product_id, source_description, quantity, amount)
+SELECT 
+    gen_random_uuid() as id,
+    rm.new_id as receipt_id,
+    pm.new_id as product_id,
+    ri.source_description,
+    ri.quantity,
+    ri.amount
+FROM rc.receipt_items ri
+JOIN receipt_mapping rm ON ri.receipt_id = rm.old_id
+LEFT JOIN product_mapping pm ON ri.product_id = pm.old_id
+WHERE EXISTS (
+    SELECT 1 FROM rc.receipts r 
+    WHERE r.id = ri.receipt_id AND r.user_id = :source_user
+);
+
+-- Clean up temporary tables
+DROP TABLE IF EXISTS store_mapping;
+DROP TABLE IF EXISTS product_mapping;
+DROP TABLE IF EXISTS receipt_mapping;
+
+COMMIT;
