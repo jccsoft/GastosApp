@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="9.4.2" />
+    <PackageVersion Include="Auth0.AspNetCore.Authentication" Version="1.5.0" />
     <PackageVersion Include="DocIntel.Api.Sdk" Version="1.1.1" />
     <PackageVersion Include="EFCore.NamingConventions" Version="9.0.0" />
     <PackageVersion Include="FluentValidation" Version="12.0.0" />

@@ -14,6 +14,7 @@ public static class DependencyInjection
             .AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
 
         builder
+            .AddAuth0Services()
             .AddDatabaseServices()
             .AddRepoServices();
 

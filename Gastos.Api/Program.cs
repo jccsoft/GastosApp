@@ -13,11 +13,16 @@ app.UseMyRequestLocalization();
 
 app.MapDefaultEndpoints();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapOpenApi();
 
 await app.ApplyMigrationsAsync();
 
 app.UseHttpsRedirection();
+
+app.MapAuth0Endpoints();
 
 app.MapDocIntelApiForwarder();
 
