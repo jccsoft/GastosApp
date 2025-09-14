@@ -2,7 +2,7 @@
 
 public static class GastosApiEndpoints
 {
-    public const string ApiBase = "/api";
+    public const string ApiBase = "/gastos-api";
 
     public static class Products
     {
