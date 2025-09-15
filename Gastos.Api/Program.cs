@@ -14,7 +14,7 @@ app.UseMyRequestLocalization();
 app.MapDefaultEndpoints();
 
 app.UseAuthentication();
-app.UseAuthorization();
+//app.UseAuthorization();
 
 app.MapOpenApi();
 

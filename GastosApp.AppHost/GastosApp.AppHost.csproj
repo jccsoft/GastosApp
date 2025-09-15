@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Gastos.Api\Gastos.Api.csproj" />
+    <ProjectReference Include="..\Gastos.Pwa\Gastos.Pwa.csproj" />
   </ItemGroup>
 
 </Project>

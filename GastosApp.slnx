@@ -9,8 +9,9 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="Gastos.Api/Gastos.Api.csproj" />
+    <Project Path="Gastos.Pwa/Gastos.Pwa.csproj" Id="2dbf58b9-bb05-44d4-8e21-957159df0f35" />
     <Project Path="Gastos.Shared/Gastos.Shared.csproj" />
+    <Project Path="GastosApp.AppHost/GastosApp.AppHost.csproj" />
+    <Project Path="GastosApp.ServiceDefaults/GastosApp.ServiceDefaults.csproj" />
   </Folder>
-  <Project Path="GastosApp.AppHost/GastosApp.AppHost.csproj" />
-  <Project Path="GastosApp.ServiceDefaults/GastosApp.ServiceDefaults.csproj" />
 </Solution>
