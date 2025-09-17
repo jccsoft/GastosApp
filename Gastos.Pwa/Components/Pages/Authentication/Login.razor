@@ -2,13 +2,14 @@
 
 <RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogIn">
     <LoggingIn>
-        <div class="d-flex justify-center align-center" style="height: 100vh;">
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="sr-only">Iniciando sesión...</span>
-                </div>
-                <p class="mt-3">Iniciando sesión...</p>
-            </div>
-        </div>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Class="mb-4" />
+                <MudText Typo="Typo.h5" Class="mb-2">Iniciando sesión</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Por favor, espere mientras se procesa su autenticación...
+                </MudText>
+            </MudPaper>
+        </MudContainer>
     </LoggingIn>
 </RemoteAuthenticatorView>

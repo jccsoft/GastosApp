@@ -2,10 +2,18 @@
 
 <PageTitle>Error de autenticación</PageTitle>
 
-<div class="d-flex justify-center align-center" style="height: 100vh;">
-    <div class="text-center">
-        <h1>Error de autenticación</h1>
-        <p>Ha ocurrido un error durante el proceso de autenticación.</p>
-        <a href="/" class="btn btn-primary">Volver al inicio</a>
-    </div>
-</div>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+    <MudPaper Class="pa-8 text-center" Elevation="3">
+        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mb-4" />
+        <MudText Typo="Typo.h4" Class="mb-4">Error de autenticación</MudText>
+        <MudText Typo="Typo.body1" Class="mb-6">
+            Ha ocurrido un error durante el proceso de autenticación.
+        </MudText>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Home"
+                   Href="/">
+            Volver al inicio
+        </MudButton>
+    </MudPaper>
+</MudContainer>

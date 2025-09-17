@@ -37,6 +37,14 @@ public static class DependencyInjection
             options.ProviderOptions.DefaultScopes.Add("openid");
             options.ProviderOptions.DefaultScopes.Add("profile");
             options.ProviderOptions.DefaultScopes.Add("email");
+            
+            // Configuración específica para Auth0 logout
+            options.ProviderOptions.AdditionalProviderParameters.Add("federated", "");
+            
+            // Configuración de rutas de autenticación
+            options.AuthenticationPaths.LogOutPath = "authentication/logout";
+            options.AuthenticationPaths.LogOutCallbackPath = "authentication/logout-callback";
+            options.AuthenticationPaths.LogOutFailedPath = "authentication/logout-failed";
         });
 
         builder.Services.AddRefitClients(

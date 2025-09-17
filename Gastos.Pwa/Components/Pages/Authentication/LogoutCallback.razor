@@ -1,3 +1,50 @@
 @page "/authentication/logout-callback"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
-<RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogOutCallback" />
+<RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogOutCallback">
+    <CompletingLogOut>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudProgressCircular Color="Color.Success" Size="Size.Large" Indeterminate="true" Class="mb-4" />
+                <MudText Typo="Typo.h5" Class="mb-2">Completando cierre de sesión</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Finalizando el proceso de cierre de sesión...
+                </MudText>
+            </MudPaper>
+        </MudContainer>
+    </CompletingLogOut>
+    <LogOutSucceeded>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Class="mb-4" />
+                <MudText Typo="Typo.h5" Class="mb-2">Sesión cerrada exitosamente</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Su sesión ha sido cerrada correctamente.
+                </MudText>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Home"
+                           Href="/">
+                    Ir al inicio
+                </MudButton>
+            </MudPaper>
+        </MudContainer>
+    </LogOutSucceeded>
+    <LogOutFailed>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mb-4" />
+                <MudText Typo="Typo.h5" Class="mb-2">Error en el callback de logout</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Error al procesar el callback de cierre de sesión.
+                </MudText>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Home"
+                           Href="/">
+                    Volver al inicio
+                </MudButton>
+            </MudPaper>
+        </MudContainer>
+    </LogOutFailed>
+</RemoteAuthenticatorView>

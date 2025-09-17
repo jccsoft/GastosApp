@@ -1,0 +1,79 @@
+@page "/debug-auth"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<h3>Estado de Autenticación - Debug</h3>
+
+<MudPaper Class="pa-4 ma-2">
+    <MudText Typo="Typo.h6">Estado del Usuario:</MudText>
+    @if (authenticationState != null)
+    {
+        <MudText>Autenticado: @authenticationState.User.Identity?.IsAuthenticated</MudText>
+        <MudText>Nombre: @authenticationState.User.Identity?.Name</MudText>
+        <MudText>Tipo de autenticación: @authenticationState.User.Identity?.AuthenticationType</MudText>
+        
+        <MudText Typo="Typo.h6" Class="mt-4">Claims:</MudText>
+        @foreach (var claim in authenticationState.User.Claims)
+        {
+            <MudText>@claim.Type: @claim.Value</MudText>
+        }
+    }
+</MudPaper>
+
+<MudStack Direction="Row" Wrap="Wrap.Wrap" Spacing="2" Class="ma-2">
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="LogoutModern">
+        Logout Moderno (.NET 9)
+    </MudButton>
+
+    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Href="/authentication/logout">
+        Logout por URL
+    </MudButton>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="LogoutJS">
+        Logout JavaScript
+    </MudButton>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshState">
+        Refrescar Estado
+    </MudButton>
+
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/">
+        Volver al inicio
+    </MudButton>
+</MudStack>
+
+<MudPaper Class="pa-4 ma-2">
+    <MudText Typo="Typo.h6">URLs de prueba:</MudText>
+    <MudText>Current URL: @Navigation.Uri</MudText>
+    <MudText>Base URL: @Navigation.BaseUri</MudText>
+</MudPaper>
+
+@code {
+    private AuthenticationState? authenticationState;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshState();
+    }
+
+    private async Task RefreshState()
+    {
+        authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        StateHasChanged();
+    }
+
+    private void LogoutModern()
+    {
+        // Enfoque recomendado para .NET 9
+        Navigation.NavigateToLogout("/authentication/logout");
+    }
+
+    private async Task LogoutJS()
+    {
+        await JSRuntime.InvokeVoidAsync("console.log", "Iniciando logout JavaScript");
+        await JSRuntime.InvokeVoidAsync("eval", "window.location.href = '/authentication/logout'");
+    }
+}

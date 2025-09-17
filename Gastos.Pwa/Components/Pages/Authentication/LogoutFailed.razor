@@ -1,0 +1,27 @@
+@page "/authentication/logout-failed"
+
+<PageTitle>Error al cerrar sesión</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+    <MudPaper Class="pa-8 text-center" Elevation="3">
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Large" Class="mb-4" />
+        <MudText Typo="Typo.h4" Class="mb-4">Error al cerrar sesión</MudText>
+        <MudText Typo="Typo.body1" Class="mb-6">
+            Ha ocurrido un error durante el proceso de cierre de sesión. Es posible que su sesión ya haya sido cerrada.
+        </MudText>
+        <MudStack Row Justify="Justify.Center" Spacing="3">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Href="/authentication/logout">
+                Intentar de nuevo
+            </MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Home"
+                       Href="/">
+                Volver al inicio
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>

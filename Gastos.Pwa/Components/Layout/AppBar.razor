@@ -1,4 +1,7 @@
-﻿<MudText Typo="Typo.subtitle1" Class="mr-2">
+﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject NavigationManager Navigation
+
+<MudText Typo="Typo.subtitle1" Class="mr-2">
     hola
 </MudText>
 <MudAppBar Elevation="3" Dense>
@@ -7,20 +10,28 @@
                 <MudText Typo="Typo.subtitle1" Class="mr-2">
                     @authContext.User.GetUserName()
                 </MudText>
-            <MudTooltip Text="ActLogout">
-                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Href="authentication/logout" />
+            <MudTooltip Text="Cerrar sesión">
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" 
+                              Color="Color.Inherit" 
+                              OnClick="BeginLogout" />
             </MudTooltip>
         </Authorized>
         <NotAuthorized>
             <MudText Typo="Typo.subtitle1" Class="mr-2">
                 NO AUTORIZADO
             </MudText>
-            <MudTooltip Text="ActLogin">
-                <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="authentication/login" />
+            <MudTooltip Text="Iniciar sesión">
+                <MudIconButton Icon="@Icons.Material.Filled.Login" 
+                              Color="Color.Inherit" 
+                              Href="/authentication/login" />
             </MudTooltip>
         </NotAuthorized>
     </AuthorizeView>
 </MudAppBar>
 
 @code {
+    private void BeginLogout()
+    {
+        Navigation.NavigateToLogout("/authentication/logout");
+    }
 }
