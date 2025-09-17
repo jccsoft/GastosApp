@@ -1,0 +1,14 @@
+@page "/authentication/login"
+
+<RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogIn">
+    <LoggingIn>
+        <div class="d-flex justify-center align-center" style="height: 100vh;">
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Iniciando sesión...</span>
+                </div>
+                <p class="mt-3">Iniciando sesión...</p>
+            </div>
+        </div>
+    </LoggingIn>
+</RemoteAuthenticatorView>

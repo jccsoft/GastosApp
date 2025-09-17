@@ -13,6 +13,7 @@ global using Gastos.Shared.Entities;
 global using Gastos.Shared.Entities.Dto;
 global using Gastos.Shared.Entities.Request;
 global using Gastos.Shared.Entities.Response;
+global using Gastos.Shared.Extensions;
 global using Gastos.Shared.Resources;
 global using Gastos.Shared.Validators;
 global using Microsoft.AspNetCore.Mvc;

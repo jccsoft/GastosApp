@@ -1,7 +1,9 @@
-﻿using System.Security.Claims;
+﻿using Microsoft.AspNetCore.Http;
+using System.Globalization;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
-namespace Gastos.Api.Shared.Extensions;
+namespace Gastos.Shared.Extensions;
 
 public static class UserExtensions
 {

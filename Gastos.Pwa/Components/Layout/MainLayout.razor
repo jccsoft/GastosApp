@@ -1,16 +1,125 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+@implements IDisposable
+@inject StateContainer StateContainer
+@inject ThemeService ThemeService
 
-        <article class="content px-4">
+@* <BreakpointMonitor /> *@
+
+<MudLayout>
+    <AppBar />
+        @* @if (StateContainer.IsNotMobile)
+        {    
+            <MudDrawer @bind-Open="_open" ClipMode="@DrawerClipMode.Always" Breakpoint="@Breakpoint.Lg" Elevation="3"
+                       Variant="@DrawerVariant.Mini" OpenMiniOnHover >
+                <Menu MenuType="lateral" />
+            </MudDrawer>
+        } *@
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="pt-6">
             @Body
-        </article>
-    </main>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
 </div>
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+<MudSnackbarProvider />
+<MudDialogProvider FullWidth="true"
+                   MaxWidth="MaxWidth.Medium"
+                   CloseButton="true"
+                   BackdropClick="true"
+                   NoHeader="false"
+                   Position="DialogPosition.Center"
+                   CloseOnEscapeKey="true" />
+
+@code {
+    // private bool _open = false;
+    private MudTheme? _theme = null;
+    private bool _isDarkMode = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _theme = new()
+        {
+            PaletteLight = _lightPalette,
+            PaletteDark = _darkPalette,
+            LayoutProperties = new LayoutProperties()
+        };
+
+        StateContainer.BreakpointChanged += OnBreakpointChanged;
+        ThemeService.ThemeChanged += OnThemeChanged;
+
+        // Initialize theme
+        var currentTheme = await ThemeService.GetThemeAsync();
+        _isDarkMode = await ThemeService.IsDarkModeAsync(currentTheme);
+    }
+
+    private async void OnThemeChanged()
+    {
+        _isDarkMode = await ThemeService.IsDarkModeAsync(ThemeService.CurrentTheme);
+        StateHasChanged();
+    }
+
+    private const string LightPrimary = "#607D8B";
+
+    private readonly PaletteLight _lightPalette = new()
+    {
+        Primary = Colors.BlueGray.Default,
+        AppbarText = Colors.BlueGray.Lighten5,//"#424242",
+        AppbarBackground = Colors.BlueGray.Default,
+        DrawerBackground = Colors.BlueGray.Default,
+        DrawerIcon = Colors.BlueGray.Lighten5,
+        DrawerText = Colors.BlueGray.Lighten5,
+        Background = Colors.BlueGray.Lighten5,// "#E0E0E0",
+        Black = "#110e2d",
+        GrayLight = "#e8e8e8",
+        GrayLighter = "#f9f9f9"
+    };
+
+    private readonly PaletteDark _darkPalette = new()
+    {
+        Primary = "#7e6fff",
+        Surface = "#1e1e2d",
+        Background = "#1a1a27",
+        BackgroundGray = "#151521",
+        AppbarText = "#92929f",
+        AppbarBackground = "#000000",
+        DrawerBackground = "#000000",
+        ActionDefault = "#74718e",
+        ActionDisabled = "#9999994d",
+        ActionDisabledBackground = "#605f6d4d",
+        TextPrimary = "#D9D8DF", //b2b0bf
+        TextSecondary = "#92929f",
+        TextDisabled = "#ffffff33",
+        DrawerIcon = "#92929f",
+        DrawerText = "#92929f",
+        GrayLight = "#2a2833",
+        GrayLighter = "#1e1e2d",
+        Info = "#4a86ff",
+        Success = "#3dcb6c",
+        Warning = "#ffb545",
+        Error = "#ff3f5f",
+        LinesDefault = "#33323e",
+        TableLines = "#33323e",
+        Divider = "#292838",
+        OverlayLight = "#1e1e2d80",
+    };
+
+    private void OnBreakpointChanged() => StateHasChanged();
+
+    public void Dispose()
+    {
+        StateContainer.BreakpointChanged -= OnBreakpointChanged;
+        ThemeService.ThemeChanged -= OnThemeChanged;
+    }
+}
+
+
+

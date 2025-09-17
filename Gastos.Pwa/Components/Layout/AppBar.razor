@@ -1,0 +1,26 @@
+﻿<MudText Typo="Typo.subtitle1" Class="mr-2">
+    hola
+</MudText>
+<MudAppBar Elevation="3" Dense>
+    <AuthorizeView>
+        <Authorized Context="authContext">
+                <MudText Typo="Typo.subtitle1" Class="mr-2">
+                    @authContext.User.GetUserName()
+                </MudText>
+            <MudTooltip Text="ActLogout">
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" Href="authentication/logout" />
+            </MudTooltip>
+        </Authorized>
+        <NotAuthorized>
+            <MudText Typo="Typo.subtitle1" Class="mr-2">
+                NO AUTORIZADO
+            </MudText>
+            <MudTooltip Text="ActLogin">
+                <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="authentication/login" />
+            </MudTooltip>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudAppBar>
+
+@code {
+}

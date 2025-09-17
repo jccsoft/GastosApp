@@ -1,0 +1,15 @@
+@page "/authentication/logout"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+<RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogOut">
+    <LoggingOut>
+        <div class="d-flex justify-center align-center" style="height: 100vh;">
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">Cerrando sesión...</span>
+                </div>
+                <p class="mt-3">Cerrando sesión...</p>
+            </div>
+        </div>
+    </LoggingOut>
+</RemoteAuthenticatorView>
