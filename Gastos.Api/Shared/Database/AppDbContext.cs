@@ -12,6 +12,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
 
+        //POSTGRESQL => "CREATE EXTENSION IF NOT EXISTS unaccent;"
+
+        modelBuilder.HasDefaultSchema(Schemas.Default);
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

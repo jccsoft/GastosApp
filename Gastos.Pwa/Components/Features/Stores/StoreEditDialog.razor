@@ -1,0 +1,127 @@
+@inject BlazorService BlazorService
+@inject IStoreApi StoreApi
+@inject LocalizationService Loc
+@inject StoreClientValidator Validator
+
+
+@if (_loading)
+{
+    <Loading />
+}
+else if (_editingStore is not null)
+{
+    <MudDialog>
+        <DialogContent>
+            <MudForm Model="_editingStore" @ref="_form" Validation="@(Validator.ValidateValue)" ValidationDelay="0">
+                <MudTextField @ref="focusField" @bind-Value="_editingStore.Name" For="@(() => _editingStore.Name)"
+                              Label="@Loc.Get(RS.FieldName)" FullWidth Class="mb-5" />
+                <MudTextField @bind-Value="_editingStore.SourceName" For="@(() => _editingStore.SourceName)"
+                              Label="@Loc.Get(RS.FieldReceiptDescription)" FullWidth Class="mb-5" />
+            </MudForm>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
+            <MudButton OnClick="SubmitAsync" Variant="Variant.Filled"
+                       Color="@(_isEdit ? Color.Primary : Color.Success)">
+                @(_isEdit? Loc.Get(RS.ActSave) : Loc.Get(RS.ActCreate))
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid? StoreId { get; set; }
+    [Parameter] public string InitialName { get; set; } = string.Empty;
+
+    private StoreDto? _editingStore;
+
+    private bool _isEdit => StoreId.HasValue && StoreId != Guid.Empty;
+    private bool _loading = true;
+    private MudTextField<string>? focusField;
+
+    private MudForm? _form;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isEdit)
+        {
+            var response = await StoreApi.GetByIdAsync(StoreId!.Value);
+            if (response.IsSuccessStatusCode && response.Content is StoreDto store)
+            {
+                _editingStore = store;
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+                MudDialog.Cancel();
+            }
+        }
+        else
+        {
+            _editingStore = new StoreDto { Name = InitialName, SourceName = InitialName };
+        }
+
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && focusField is not null)
+        {
+            await Task.Delay(100);
+            await focusField.FocusAsync();
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+
+        if (!_form!.IsValid)
+            return;
+
+        if (_isEdit)
+        {
+            var response = await StoreApi.UpdateAsync(_editingStore!);
+            if (response.IsSuccessStatusCode)
+            {
+                await CloseAndReturnStore();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+        else
+        {
+            var response = await StoreApi.CreateAsync(_editingStore!);
+            if (response.IsSuccessStatusCode)
+            {
+                await CloseAndReturnStore();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+    }
+
+
+    private async Task CloseAndReturnStore()
+    {
+        var response = await StoreApi.GetByIdAsync(_editingStore!.Id);
+        if (response.IsSuccessStatusCode && response.Content is not null)
+        {
+            MudDialog.Close(DialogResult.Ok(response.Content));
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -8,296 +8,296 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Gastos.Api.Migrations
+namespace Gastos.Api.Migrations;
+
+[DbContext(typeof(AppDbContext))]
+partial class AppDbContextModelSnapshot : ModelSnapshot
 {
-    [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    protected override void BuildModel(ModelBuilder modelBuilder)
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+        modelBuilder
+            .HasDefaultSchema(Schemas.Default)
+            .HasAnnotation("ProductVersion", "9.0.9")
+            .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+        NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+        modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)")
-                        .HasColumnName("image_url");
+                b.Property<string>("ImageUrl")
+                    .IsRequired()
+                    .HasMaxLength(2048)
+                    .HasColumnType("character varying(2048)")
+                    .HasColumnName("image_url");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("name");
 
-                    b.Property<int?>("SizingId")
-                        .HasColumnType("integer")
-                        .HasColumnName("sizing_id");
+                b.Property<int?>("SizingId")
+                    .HasColumnType("integer")
+                    .HasColumnName("sizing_id");
 
-                    b.Property<decimal?>("SizingValue")
-                        .HasColumnType("numeric")
-                        .HasColumnName("sizing_value");
+                b.Property<decimal?>("SizingValue")
+                    .HasColumnType("numeric")
+                    .HasColumnName("sizing_value");
 
-                    b.Property<int>("UnitsPack")
-                        .HasColumnType("integer")
-                        .HasColumnName("units_pack");
+                b.Property<int>("UnitsPack")
+                    .HasColumnType("integer")
+                    .HasColumnName("units_pack");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("user_id");
 
-                    b.HasKey("Id")
-                        .HasName("pk_products");
+                b.HasKey("Id")
+                    .HasName("pk_products");
 
-                    b.HasIndex("SizingId")
-                        .HasDatabaseName("ix_products_sizing_id");
+                b.HasIndex("SizingId")
+                    .HasDatabaseName("ix_products_sizing_id");
 
-                    b.HasIndex("UserId", "Name", "UnitsPack", "SizingValue")
-                        .IsUnique()
-                        .HasDatabaseName("ix_products_user_id_name_units_pack_sizing_value");
+                b.HasIndex("UserId", "Name", "UnitsPack", "SizingValue")
+                    .IsUnique()
+                    .HasDatabaseName("ix_products_user_id_name_units_pack_sizing_value");
 
-                    b.ToTable("products", (string)null);
-                });
+                b.ToTable("products", Schemas.Default);
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+        modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<Guid>("SourceId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("source_id");
+                b.Property<Guid>("SourceId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("source_id");
 
-                    b.Property<Guid?>("StoreId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("store_id");
+                b.Property<Guid?>("StoreId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("store_id");
 
-                    b.Property<DateTime?>("TransactionDateUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("transaction_date_utc");
+                b.Property<DateTime?>("TransactionDateUtc")
+                    .HasColumnType("timestamp with time zone")
+                    .HasColumnName("transaction_date_utc");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("user_id");
 
-                    b.HasKey("Id")
-                        .HasName("pk_receipts");
+                b.HasKey("Id")
+                    .HasName("pk_receipts");
 
-                    b.HasIndex("StoreId")
-                        .HasDatabaseName("ix_receipts_store_id");
+                b.HasIndex("StoreId")
+                    .HasDatabaseName("ix_receipts_store_id");
 
-                    b.HasIndex("UserId", "SourceId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_receipts_user_id_source_id");
+                b.HasIndex("UserId", "SourceId")
+                    .IsUnique()
+                    .HasDatabaseName("ix_receipts_user_id_source_id");
 
-                    b.ToTable("receipts", (string)null);
-                });
+                b.ToTable("receipts", Schemas.Default);
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Receipts.ReceiptItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+        modelBuilder.Entity("Gastos.Api.Features.Receipts.ReceiptItem", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("amount");
+                b.Property<decimal>("Amount")
+                    .HasColumnType("numeric")
+                    .HasColumnName("amount");
 
-                    b.Property<Guid?>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
+                b.Property<Guid?>("ProductId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("product_id");
 
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric")
-                        .HasColumnName("quantity");
+                b.Property<decimal>("Quantity")
+                    .HasColumnType("numeric")
+                    .HasColumnName("quantity");
 
-                    b.Property<Guid>("ReceiptId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("receipt_id");
+                b.Property<Guid>("ReceiptId")
+                    .HasColumnType("uuid")
+                    .HasColumnName("receipt_id");
 
-                    b.Property<string>("SourceDescription")
-                        .HasColumnType("text")
-                        .HasColumnName("source_description");
+                b.Property<string>("SourceDescription")
+                    .HasColumnType("text")
+                    .HasColumnName("source_description");
 
-                    b.HasKey("Id")
-                        .HasName("pk_receipt_items");
+                b.HasKey("Id")
+                    .HasName("pk_receipt_items");
 
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("ix_receipt_items_product_id");
+                b.HasIndex("ProductId")
+                    .HasDatabaseName("ix_receipt_items_product_id");
 
-                    b.HasIndex("ReceiptId")
-                        .HasDatabaseName("ix_receipt_items_receipt_id");
+                b.HasIndex("ReceiptId")
+                    .HasDatabaseName("ix_receipt_items_receipt_id");
 
-                    b.ToTable("receipt_items", (string)null);
-                });
+                b.ToTable("receipt_items", Schemas.Default);
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Sizings.Sizing", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+        modelBuilder.Entity("Gastos.Api.Features.Sizings.Sizing", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("integer")
+                    .HasColumnName("id");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("character varying(10)")
+                    .HasColumnName("name");
 
-                    b.HasKey("Id")
-                        .HasName("pk_sizings");
+                b.HasKey("Id")
+                    .HasName("pk_sizings");
 
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_sizings_name");
+                b.HasIndex("Name")
+                    .IsUnique()
+                    .HasDatabaseName("ix_sizings_name");
 
-                    b.ToTable("sizings", (string)null);
+                b.ToTable("sizings", Schemas.Default);
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "ml"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "cl"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "L"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "gr"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Kg"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "u"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Name = "ml"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        Name = "cl"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        Name = "L"
+                    },
+                    new
+                    {
+                        Id = 4,
+                        Name = "gr"
+                    },
+                    new
+                    {
+                        Id = 5,
+                        Name = "Kg"
+                    },
+                    new
+                    {
+                        Id = 6,
+                        Name = "u"
+                    });
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Stores.Store", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+        modelBuilder.Entity("Gastos.Api.Features.Stores.Store", b =>
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uuid")
+                    .HasColumnName("id");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("character varying(100)")
+                    .HasColumnName("name");
 
-                    b.Property<string>("SourceName")
-                        .HasColumnType("text")
-                        .HasColumnName("source_name");
+                b.Property<string>("SourceName")
+                    .HasColumnType("text")
+                    .HasColumnName("source_name");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("user_id");
 
-                    b.HasKey("Id")
-                        .HasName("pk_stores");
+                b.HasKey("Id")
+                    .HasName("pk_stores");
 
-                    b.HasIndex("UserId", "Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_stores_user_id_name");
+                b.HasIndex("UserId", "Name")
+                    .IsUnique()
+                    .HasDatabaseName("ix_stores_user_id_name");
 
-                    b.ToTable("stores", (string)null);
-                });
+                b.ToTable("stores", Schemas.Default);
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>
-                {
-                    b.HasOne("Gastos.Api.Features.Sizings.Sizing", "Sizing")
-                        .WithMany("Products")
-                        .HasForeignKey("SizingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_products_sizings_sizing_id");
+        modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>
+            {
+                b.HasOne("Gastos.Api.Features.Sizings.Sizing", "Sizing")
+                    .WithMany("Products")
+                    .HasForeignKey("SizingId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("fk_products_sizings_sizing_id");
 
-                    b.Navigation("Sizing");
-                });
+                b.Navigation("Sizing");
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
-                {
-                    b.HasOne("Gastos.Api.Features.Stores.Store", "Store")
-                        .WithMany("Receipts")
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_receipts_stores_store_id");
+        modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
+            {
+                b.HasOne("Gastos.Api.Features.Stores.Store", "Store")
+                    .WithMany("Receipts")
+                    .HasForeignKey("StoreId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("fk_receipts_stores_store_id");
 
-                    b.Navigation("Store");
-                });
+                b.Navigation("Store");
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Receipts.ReceiptItem", b =>
-                {
-                    b.HasOne("Gastos.Api.Features.Products.Product", "Product")
-                        .WithMany("ReceiptItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_receipt_items_products_product_id");
+        modelBuilder.Entity("Gastos.Api.Features.Receipts.ReceiptItem", b =>
+            {
+                b.HasOne("Gastos.Api.Features.Products.Product", "Product")
+                    .WithMany("ReceiptItems")
+                    .HasForeignKey("ProductId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("fk_receipt_items_products_product_id");
 
-                    b.HasOne("Gastos.Api.Features.Receipts.Receipt", "Receipt")
-                        .WithMany("Items")
-                        .HasForeignKey("ReceiptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_receipt_items_receipts_receipt_id");
+                b.HasOne("Gastos.Api.Features.Receipts.Receipt", "Receipt")
+                    .WithMany("Items")
+                    .HasForeignKey("ReceiptId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("fk_receipt_items_receipts_receipt_id");
 
-                    b.Navigation("Product");
+                b.Navigation("Product");
 
-                    b.Navigation("Receipt");
-                });
+                b.Navigation("Receipt");
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>
-                {
-                    b.Navigation("ReceiptItems");
-                });
+        modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>
+            {
+                b.Navigation("ReceiptItems");
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
-                {
-                    b.Navigation("Items");
-                });
+        modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
+            {
+                b.Navigation("Items");
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Sizings.Sizing", b =>
-                {
-                    b.Navigation("Products");
-                });
+        modelBuilder.Entity("Gastos.Api.Features.Sizings.Sizing", b =>
+            {
+                b.Navigation("Products");
+            });
 
-            modelBuilder.Entity("Gastos.Api.Features.Stores.Store", b =>
-                {
-                    b.Navigation("Receipts");
-                });
+        modelBuilder.Entity("Gastos.Api.Features.Stores.Store", b =>
+            {
+                b.Navigation("Receipts");
+            });
 #pragma warning restore 612, 618
-        }
     }
 }

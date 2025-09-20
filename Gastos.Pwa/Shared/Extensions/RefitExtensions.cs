@@ -37,7 +37,7 @@ public static class RefitExtensions
             .ConfigureHttpClient(configClient);
 
         if (addHandler)
-            builder.ConfigurePrimaryHttpMessageHandler<LocalApiCallsHttpHandler>();
+            builder.AddHttpMessageHandler<BearerTokenHttpHandler>();
 
         //builder.AddStandardResilienceHandler(options =>
         //{

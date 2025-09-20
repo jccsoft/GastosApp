@@ -1,0 +1,20 @@
+﻿@inject BlazorService BlazorService
+
+
+<MudStack Row Class="mx-5" AlignItems="AlignItems.Baseline">
+    <MudText>Id: @Receipt.Id </MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="() => CopyText(Receipt.Id.ToString())" />
+</MudStack>
+<MudStack Row Class="mx-5" AlignItems="AlignItems.Baseline">
+    <MudText>Origen Id: @Receipt.SourceId </MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="() => CopyText(Receipt.SourceId.ToString())" />
+</MudStack>
+
+@code {
+    [Parameter] public required ReceiptDto Receipt { get; set; }
+
+    private async Task CopyText(string textToCopy)
+    {
+         await BlazorService.CopyText(textToCopy);
+    }
+}

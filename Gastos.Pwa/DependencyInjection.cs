@@ -16,40 +16,39 @@ public static class DependencyInjection
             .AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped)
             .AddScoped<StateContainer>()
             .AddScoped<BlazorService>()
-            .AddScoped<ThemeService>();
+            .AddScoped<ThemeService>()
+            .AddScoped<INetworkStatusService, NetworkStatusService>();
 
         // Configuración OIDC para Auth0
         builder.Services.AddOidcAuthentication(options =>
         {
             // Usar configuración del archivo appsettings.json
             builder.Configuration.Bind("Auth0", options.ProviderOptions);
-            
-            // Configurar URLs de redirección dinámicamente
-            var baseAddress = builder.HostEnvironment.BaseAddress;
-            options.ProviderOptions.RedirectUri = $"{baseAddress}authentication/login-callback";
-            options.ProviderOptions.PostLogoutRedirectUri = $"{baseAddress}authentication/logout-callback";
-            
-            // Configuración específica para Auth0
+
+            // Configurar URLs de redirección
+            options.ProviderOptions.RedirectUri = $"{builder.HostEnvironment.BaseAddress}authentication/login-callback";
+            options.ProviderOptions.PostLogoutRedirectUri = $"{builder.HostEnvironment.BaseAddress}authentication/logout-callback";
+
             options.ProviderOptions.ResponseType = "code";
-            
-            // Configurar scopes específicos
+
+            // Configurar scopes (incluir el audience como scope)
             options.ProviderOptions.DefaultScopes.Clear();
             options.ProviderOptions.DefaultScopes.Add("openid");
             options.ProviderOptions.DefaultScopes.Add("profile");
             options.ProviderOptions.DefaultScopes.Add("email");
-            
-            // Configuración específica para Auth0 logout
+            options.ProviderOptions.DefaultScopes.Add("https://gastos-api"); // ✅ Agregar el audience como scope
+
             options.ProviderOptions.AdditionalProviderParameters.Add("federated", "");
-            
-            // Configuración de rutas de autenticación
-            options.AuthenticationPaths.LogOutPath = "authentication/logout";
-            options.AuthenticationPaths.LogOutCallbackPath = "authentication/logout-callback";
-            options.AuthenticationPaths.LogOutFailedPath = "authentication/logout-failed";
+            options.ProviderOptions.AdditionalProviderParameters.Add("audience", "https://gastos-api"); // ✅ Especificar audience
         });
 
+
+        builder.Services.AddTransient<BearerTokenHttpHandler>();
+
+        var apiBaseAddress = builder.Configuration["ApiBaseAddress"] ?? "";
         builder.Services.AddRefitClients(
-            baseUrl: builder.HostEnvironment.BaseAddress,
-            addHandler: false);
+            baseUrl: apiBaseAddress,
+            addHandler: true);
 
         return builder;
     }

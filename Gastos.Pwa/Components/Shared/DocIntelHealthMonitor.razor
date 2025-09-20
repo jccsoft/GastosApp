@@ -1,0 +1,50 @@
+@implements IDisposable
+@inject IDocIntelApi DocIntelApi
+@inject LocalizationService Loc
+@using System.Timers
+
+@if (_error)
+{
+    <Alert Message="@Loc.Get(RS.DocIntelNoResponse)" />
+}
+
+@code {
+    private bool _healthy = false;
+    private bool _error = false;
+    private Timer? _timer;
+    private const int IntervalMs = 10000; // 10 segundos
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckHealthAsync();
+        _timer = new Timer(IntervalMs);
+        _timer.Elapsed += async (_, _) => await InvokeAsync(CheckHealthAsync);
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private async Task CheckHealthAsync()
+    {
+        bool lastError = _error;
+
+        try
+        {
+            var response = await DocIntelApi.CheckHealth();
+            _healthy = response.IsSuccessStatusCode;
+            _error = !_healthy;
+        }
+        catch
+        {
+            _healthy = false;
+            _error = true;
+        }
+
+        if (lastError != _error)
+            StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

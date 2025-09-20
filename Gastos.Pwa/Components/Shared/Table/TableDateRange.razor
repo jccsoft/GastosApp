@@ -1,0 +1,47 @@
+@inject LocalizationService Loc
+
+<MudStack Row Spacing="2" Class="date-range-filter">
+    <MudDatePicker Date="@_fromDate" DateChanged="OnDateStartChanged" Label="@Loc.Get(RS.FieldDateFrom)" 
+                   DateFormat="@DateFormat" Clearable="@Clearable" HelperText="@DateStartHelperText" Variant="Variant.Text" />
+    <MudDatePicker Date="@_toDate" DateChanged="OnDateEndChange" Label="@Loc.Get(RS.FieldDateTo)" 
+                   DateFormat="@DateFormat" Clearable="@Clearable" HelperText="@DateEndHelperText" Variant="Variant.Text" />
+</MudStack>
+
+@code {
+    [Parameter] public DateTime? FromDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> DateStartChanged { get; set; }
+    [Parameter] public DateTime? ToDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> DateEndChanged { get; set; }
+    [Parameter] public string DateFormat { get; set; } = "dd/MMM/yy";
+    [Parameter] public bool Clearable { get; set; } = false;
+    [Parameter] public string DateStartHelperText { get; set; } = "";
+    [Parameter] public string DateEndHelperText { get; set; } = "";
+
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+
+    protected override void OnParametersSet()
+    {
+        if (_fromDate != FromDate)
+            _fromDate = FromDate;
+        if (_toDate != ToDate)
+            _toDate = ToDate;
+    }
+
+    private async Task OnDateStartChanged(DateTime? value)
+    {
+        if (_fromDate != value)
+        {
+            _fromDate = value;
+            await DateStartChanged.InvokeAsync(value);
+        }
+    }
+    private async Task OnDateEndChange(DateTime? value)
+    {
+        if (_toDate != value)
+        {
+            _toDate = value;
+            await DateEndChanged.InvokeAsync(value);
+        }
+    }
+}

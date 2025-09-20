@@ -1,0 +1,31 @@
+@inject LocalizationService Loc
+
+
+@if (ShowPageSizeOptions)
+{
+    <MudTablePager PageSizeOptions="@PageSizeOptions"
+                   RowsPerPageString="@Loc.Get(RS.TableRowsPerPage)"
+                   InfoFormat="{first_item}-{last_item} / {all_items}"
+                   AllItemsText="@Loc.Get(RS.TableAllItems)" />
+}
+
+<MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Baseline" Class="pb-1">
+    <MudSwitch T="bool"
+               Label="@Loc.Get(RS.TableAllowRemove)"
+               Value="@AllowRemoveValue" 
+               ValueChanged="@AllowRemoveValueChanged"
+               Color="Color.Error" Class="mx-3" Size="Size.Small" />
+
+    <MudText Style="font-size:smaller;" hidden="@(string.IsNullOrEmpty(RowClickText))" >
+        @RowClickText
+    </MudText>
+</MudStack>
+
+
+@code {
+    [Parameter] public bool AllowRemoveValue { get; set; }
+    [Parameter] public EventCallback<bool> AllowRemoveValueChanged { get; set; }
+    [Parameter] public string? RowClickText { get; set; }
+    [Parameter] public bool ShowPageSizeOptions { get; set; } = true;
+    [Parameter] public int[]? PageSizeOptions { get; set; } = [10, 25, 50, 100, int.MaxValue];
+}

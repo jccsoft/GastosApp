@@ -1,0 +1,16 @@
+﻿@inject StateContainer StateContainer
+
+
+<PageTitle>@Title</PageTitle>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public bool IsHome { get; set; } = false;
+
+
+    protected override void OnParametersSet()
+    {
+        StateContainer.IsPageHome = IsHome;
+        StateContainer.PageTitle = Title;
+    }
+}

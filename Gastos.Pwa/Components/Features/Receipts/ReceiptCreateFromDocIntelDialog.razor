@@ -1,0 +1,349 @@
+﻿@inject LocalizationService Loc
+@inject IDocIntelApi DocIntelApi
+@inject IStoreApi StoreApi
+@inject IProductApi ProductApi
+@inject IReceiptApi ReceiptApi
+@inject ISnackbar Snackbar
+@inject BlazorService BlazorService
+@inject IDialogService DialogService
+
+
+<MudDialog>
+    <DialogContent>        
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <Alert Message="@_errorMessage" />
+        }
+        else if (_loading)
+        {
+            <Loading />
+        }
+        else
+        {
+            var storeId = _receipt.StoreId;
+
+            <MudStack AlignItems="AlignItems.End" Class="mb-5">
+                <MudStack Row AlignItems="AlignItems.Baseline">
+                    <MudSelect @ref="@storeSelect" FullWidth="true" T="Guid?" Value="storeId"
+                               ValueChanged="OnStoreChanged" Label="@($"({_receiptResponse!.Merchant})")"
+                               AdornmentIcon="@(storeId.HasValue && storeId != Guid.Empty ? null : _errorIcon)"
+                               AdornmentColor="@(storeId.HasValue && storeId != Guid.Empty ? Color.Default : Color.Error)"
+                               Adornment="Adornment.End" Variant="Variant.Text" Immediate="true">
+                        @foreach (var store in stores.OrderBy(s => s.Name))
+                        {
+                            <MudSelectItem Value="@((Guid?)store.Id)">@store.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <TableButton Action="TableAction.Add" OnClick="OpenAddStoreDialogAsync" 
+                                 ToolTipText="@($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityStore)}")"
+                                 Size="Size.Medium" Class="mx-0 px-0" />
+                        <TableButton Action="TableAction.Edit" OnClick="OpenEditStoreDialogAsync"
+                                     ToolTipText="@($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityStore)}")" 
+                                     Size="Size.Medium" Hidden="@(_receipt.StoreId == Guid.Empty)" Class="me-5 ms-0 ps-0" />
+                    <MudSpacer />
+                    <MudDatePicker Style="text-align: center" Variant="Variant.Text" @bind-Date="_receiptLocalDate" DateFormat="dd/MMM" />
+                </MudStack>
+            </MudStack>
+            <MudGrid Justify="Justify.Center" Spacing="1" Class="mb-5">
+                @if (_receiptResponse!.Items is not null && _receipt!.Items is not null && 
+                        _receiptResponse!.ItemsCount == _receipt!.Items.Count)
+                {
+                    @for (int index = 0; index < _receiptResponse.Items.Count(); index++)
+                    {
+                        var i = index;
+                        var newItem = _receipt.Items[i];
+                        var productId = _receipt.Items[i].ProductId;
+
+                        <MudItem xs="1">
+                            <MudIcon Class="mt-2" Size="Size.Large" Icon="@_errorIcon" Color="Color.Error"
+                                        hidden="@(_receipt.Items[i].Quantity != 0 && _receipt.Items[i].Amount != 0)" />
+                        </MudItem>
+                        <MudItem xs="11">
+                            <MudStack>
+                                <MudStack Row AlignItems="AlignItems.Baseline">
+                                    <MudAutocomplete T="Guid?" Class="pb-0" Style="padding-bottom: 0 important!;"
+                                                     Value="productId"
+                                                     ValueChanged="((Guid? id) => OnProductChanged(id, i))"
+                                                     Label="@($"({newItem.SourceDescription})")"
+                                                     AdornmentIcon="@(productId.HasValue && productId != Guid.Empty ? null : _errorIcon)"
+                                                     AdornmentColor="@(productId.HasValue && productId != Guid.Empty ? Color.Default : Color.Error)"
+                                                     Adornment="Adornment.End" FullWidth="true" Immediate="true" Variant="Variant.Outlined"
+                                                     ToStringFunc="(Guid? id) => _productLists[i].FirstOrDefault(p => p.Id == id)?.FullName ?? string.Empty"
+                                                     SearchFunc="((value, token) => SearchProductAsync(i,value,token))"
+                                                        />
+
+                                    <TableButton Action="TableAction.Add" OnClick="(() => OpenAddProductDialogAsync(i))" ToolTipText="@($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Class="mx-0 px-0" />
+                                    <TableButton Action="TableAction.Edit" OnClick="(() => OpenEditProductDialogAsync(i))" ToolTipText="@($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Hidden="@(_receipt.Items[i].ProductId == Guid.Empty)" Class="me-5 ms-0 ps-0" />
+                                    <MudSpacer />
+                                    <MudTextField Variant="Variant.Outlined" @bind-value="@newItem.Quantity" Label="@Loc.Get(RS.FieldQuantity)" Format="0.###" />
+                                    <MudTextField Variant="Variant.Outlined" @bind-value="@newItem.Amount" Label="@Loc.Get(RS.FieldAmount)" Adornment="Adornment.Start" AdornmentText="€" />
+                                </MudStack>
+                            </MudStack>
+                        </MudItem>
+                    }
+                }
+                else
+                {
+                    <Alert Message="@Loc.Get(RS.ErrorIncoherentItems)" ShowCloseIcon="false" />
+                }
+            </MudGrid>
+            <MudText Typo="Typo.subtitle2" hidden="@(string.IsNullOrEmpty(Filename))">
+                @Loc.Get(RS.EntityFile): @Filename
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
+        <MudButton OnClick="Submit" Disabled="@(!(string.IsNullOrEmpty(_errorMessage) && IsValidReceipt()))"
+                   Color="Color.Success" Variant="Variant.Filled">
+            @Loc.Get(RS.ActCreate)
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid DocIntelReceiptId { get; set; }
+    [Parameter] public string? Filename { get; set; }
+
+    private ReceiptResponse? _receiptResponse;
+    private readonly ReceiptDto _receipt = new();
+    private DateTime? _receiptLocalDate;
+    private readonly List<List<ProductDto>> _productLists = [];
+
+    private string _errorMessage = string.Empty;
+    private bool _loading = true;
+    private readonly string _errorIcon = Icons.Material.Filled.PriorityHigh;
+    private readonly ProductDto _emptyProduct = new() { Id = Guid.Empty, Name = "-" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await DocIntelApi.GetReceiptByIdAsync(DocIntelReceiptId);
+        if (response.IsSuccessStatusCode && response.Content is ReceiptResponse receiptResponse)
+        {
+            _receiptResponse = receiptResponse;
+
+            await LoadStoresAsync();
+
+            await InitializeReceiptAsync();
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+        _loading = false;
+    }
+
+
+    #region STORE
+    private MudSelect<Guid?>? storeSelect;
+    private List<StoreDto> stores = [];
+
+    private async Task LoadStoresAsync()
+    {
+        var response = await StoreApi.GetAllAsync(new StoreParameters(){PageSize=100});
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<StoreDto> pagedResponse)
+        {
+            stores = pagedResponse.Items;
+            stores.Insert(0, new StoreDto { Id = Guid.Empty, Name = "-", SourceName = "" });
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+    private void OnStoreChanged(Guid? storeId)
+    {
+        _receipt.StoreId = storeId.HasValue ? storeId.Value : null;
+    }
+
+    private async Task OpenAddStoreDialogAsync()
+    {
+        var result = await BlazorService.OpenAddStoreDialogAsync(_receiptResponse!.Merchant.FirstCharToUpper());
+        if (result is not null && !result.Canceled && result.Data is StoreDto newStore)
+        {
+            stores.Add(newStore);
+            storeSelect!.ForceRender(true);
+            _receipt.StoreId = newStore.Id;
+        }
+    }
+
+    private async Task OpenEditStoreDialogAsync()
+    {
+        var storeId = _receipt.StoreId;
+        var store = stores.FirstOrDefault(s => s.Id == storeId);
+
+        if (store is null || storeId is null || storeId == Guid.Empty)
+        {
+            Snackbar.Add("No hay tienda seleccionada para editar.", Severity.Warning);
+            return;
+        }
+
+        var result = await BlazorService.OpenEditStoreDialogAsync(storeId.Value);
+        if (result is not null && !result.Canceled && result.Data is StoreDto updatedStore)
+        {
+            store.Name = updatedStore.Name;
+            storeSelect!.ForceRender(true);
+        }
+    }
+    #endregion
+
+
+    #region PRODUCT
+
+    private async Task LoadProductsAsync(int index, string searchString = "")
+    {
+        if (_receipt.Items[index].ProductId == Guid.Empty &&
+            string.IsNullOrEmpty(searchString))
+        {
+            _productLists[index] = [_emptyProduct];
+            return;
+        }
+
+        var parameters = new ProductParameters { PageSize = 10, SearchString = searchString };
+
+        var response = await ProductApi.GetAllAsync(parameters);
+
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ProductDto> pagedResponse)
+        {
+            _productLists[index] = pagedResponse.Items;
+            _productLists[index].Insert(0, _emptyProduct);
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+    private void OnProductChanged(Guid? productId, int index)
+    {
+        _receipt.Items[index].ProductId = productId.HasValue ? productId.Value : null;
+    }
+
+    private async Task<IEnumerable<Guid?>> SearchProductAsync(int index, string value, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await LoadProductsAsync(index, value);
+
+        return _productLists[index].OrderBy(p => p.Name).Select(p => (Guid?)p.Id);
+    }
+
+
+    private async Task OpenAddProductDialogAsync(int index)
+    {
+        var result = await BlazorService.OpenAddProductDialogAsync(_receiptResponse!.Items.ToList()[index].Description.FirstCharToUpper());
+        if (result is not null && !result.Canceled && result.Data is ProductDto newProduct)
+        {
+            _productLists[index].Add(newProduct);
+            _receipt.Items[index].ProductId = (Guid?)newProduct.Id;
+        }
+    }
+
+    private async Task OpenEditProductDialogAsync(int index)
+    {
+        var productId = _receipt.Items[index].ProductId;
+        var product = _productLists[index].FirstOrDefault(p => p.Id == productId);
+        if (product is null || productId is null || productId == Guid.Empty)
+        {
+            Snackbar.Add("No hay producto seleccionado para editar.", Severity.Warning);
+            return;
+        }
+
+        var result = await BlazorService.OpenEditProductDialogAsync(productId.Value);
+        if (result is not null && !result.Canceled && result.Data is ProductDto updatedProduct)
+        {
+            product.Name = updatedProduct.Name;
+            product.SizingId = updatedProduct.SizingId;
+            product.SizingValue = updatedProduct.SizingValue;
+            product.Sizing = updatedProduct.Sizing;
+        }
+    }
+    #endregion
+
+
+    #region RECEIPT
+    private async Task InitializeReceiptAsync()
+    {
+        if (_receiptResponse is null)
+        {
+            _errorMessage = "No hay datos leídos de la API";
+            return;
+        }
+
+        var store = stores.FirstOrDefault(s => 
+            s.SourceName is not null &&
+            s.SourceName.ToLower().RemoveAllSpaces() == _receiptResponse.Merchant.ToLower().RemoveAllSpaces());
+
+        _receipt.StoreId = store is null? Guid.Empty: store.Id;
+        _receipt.SourceId = _receiptResponse.Id;
+        _receiptLocalDate = ((DateTime)_receiptResponse.TransactionDateUtc!).ToLocalTime();
+        _receipt.Items = [];
+
+        for (int i = 0; i < _receiptResponse.Items.Count(); i++)
+        {
+            _productLists.Add([]);
+
+            var responseItem = _receiptResponse.Items.ToList()[i];
+
+            var newItem = new ReceiptItemDto
+            {
+                ProductId = Guid.Empty,
+                Quantity = responseItem.Quantity,
+                Amount = responseItem.Amount,
+                SourceDescription = responseItem.Description
+            };
+
+            var response = await ReceiptApi.GetProductBySourceDescription(newItem.SourceDescription);
+            if (response.IsSuccessStatusCode && response.Content is ProductDto productFound)
+            {
+                _productLists[i].Add(productFound);
+                newItem.ProductId = productFound.Id;
+            }   
+
+            _receipt.Items.Add(newItem);
+        }
+    }
+
+    private async Task<bool> CreateReceiptAsync()
+    {
+        _receipt.TransactionDateUtc = ((DateTime)_receiptLocalDate!).ToUniversalTime();
+
+        var response = await ReceiptApi.CreateAsync(_receipt);
+        if (response.IsSuccessStatusCode)
+        {
+            return true;
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+            return false;
+        }
+    }
+
+    private bool IsValidReceipt()
+    {
+        bool isValid = _receipt.StoreId.HasValue && _receipt.StoreId.Value != Guid.Empty &&
+            _receipt.Items is not null && _receipt.Items.Any() &&
+            _receipt.Items.All(item =>
+                item.ProductId.HasValue &&
+                item.ProductId != Guid.Empty &&
+                item.Quantity != 0 &&
+                item.Amount != 0);
+
+        return isValid;
+    }
+    #endregion
+
+    private async Task Submit()
+    {
+        bool isSaved = await CreateReceiptAsync();
+        if (isSaved)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

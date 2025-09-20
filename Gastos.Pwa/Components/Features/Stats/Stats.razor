@@ -1,0 +1,224 @@
+﻿
+@inject IStatApi StatApi
+@inject StateContainer StateContainer
+@inject BlazorService BlazorService
+@inject LocalizationService Loc
+@inject AuthenticationStateProvider authStateProvider
+
+<Alert Message="@_errorMessage" />
+
+<MudGrid>
+    <MudItem xs="3" md="2">
+        <MudSelect Label="Tipo" Value="_selectedStatPeriod" ValueChanged="((StatType stat) => OnSelectedStatChanged(stat))">
+            <MudSelectItem Value="StatType.Monthly"><MudText Class="fw-bold">@Loc.Get(RS.StatMonthly)</MudText></MudSelectItem>
+            <MudSelectItem Value="StatType.Weekly"><MudText Class="fw-bold">@Loc.Get(RS.StatWeekly)</MudText></MudSelectItem>
+            <MudSelectItem Value="StatType.Daily"><MudText Class="fw-bold">@Loc.Get(RS.StatDaily)</MudText></MudSelectItem>
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6" md="3">
+        <TableDateRange FromDate="@_localDateStart" DateStartChanged="@OnDateStartChanged" DateStartHelperText="@_dateHelperStart"
+                        ToDate="@_localDateEnd" DateEndChanged="@OnDateEndChanged" DateEndHelperText="@_dateHelperEnd"
+                        Clearable="false" DateFormat="@($"{(_selectedStatPeriod == StatType.Monthly ? "MMMyy" : "dd/MMM/yy" )}")" />
+    </MudItem>
+    <MudItem xs="3" md="2">
+        <MudButton Color="@(_paramChanged? MudBlazor.Color.Primary : MudBlazor.Color.Default)" Class="my-3" Style="max-width: 10rem;"
+                   Variant="Variant.Filled" OnClick="GetStats">
+            <MudText>@Loc.Get(RS.ActShowGraph)</MudText>
+        </MudButton>
+    </MudItem>
+</MudGrid>
+
+
+@if (SomethingToShow)
+{
+    <div class="mt-5" style="height:70vh;">
+        @if (_loading)
+        {
+            <Loading />
+        }
+        else if (_allowChartDisplay)
+        {
+            if (IsStatEmpty)
+            {
+                <MudAlert Severity="Severity.Info" ContentAlignment="HorizontalAlignment.Center" Dense="true">
+                    @Loc.Get(RS.ErrorNoRecordsFound)
+                </MudAlert>
+            }
+            else
+            {
+                <div>
+                    <MudChart ChartType="ChartType.Line" ChartSeries="@_chartSeries" XAxisLabels="@_chartXAxisLabels"
+                              ChartOptions="_chartOptions" AxisChartOptions="_axisChartOptions" 
+                              Width="100%" Height="100%" />
+                </div>
+            }
+        }
+    </div>        
+}
+
+
+
+@code {
+    private StatType _selectedStatPeriod = StatType.Monthly;
+    private DateTime? _localDateStart, _localDateEnd;
+    private string _dateHelperStart="", _dateHelperEnd = "";
+
+    private string _errorMessage = "";
+    private bool _loading, _allowChartDisplay, _paramChanged = true;
+
+    private readonly ChartOptions _chartOptions = new();
+    private readonly AxisChartOptions _axisChartOptions = new();
+    private List<ChartSeries> _chartSeries = new();
+    private string[] _chartXAxisLabels = [];
+
+
+    protected override void OnInitialized()
+    {
+        _chartOptions.YAxisFormat = "C0";
+        _chartOptions.ShowLegend = false;
+        _axisChartOptions.MatchBoundsToSize = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (StateContainer.StatsParams.DateStartUtc is null && StateContainer.StatsParams.DateEndUtc is null)
+        {
+            var result = await authStateProvider.GetAuthenticationStateAsync();
+            if (result?.User?.Identity?.IsAuthenticated ?? false)
+            {
+                StateContainer.StatsParams.DateStartUtc = DateTime.UtcNow.AddMonths(-3);
+                StateContainer.StatsParams.DateEndUtc = DateTime.UtcNow;
+            }
+            else
+            {
+                StateContainer.StatsParams.DateStartUtc = new DateTime(2025, 2, 18, 0, 0, 0, DateTimeKind.Utc);
+                StateContainer.StatsParams.DateEndUtc = new DateTime(2025, 8, 3, 0, 0, 0, DateTimeKind.Utc);
+            }
+        }
+
+        UpdateDate(0, StateContainer.StatsParams.DateStartUtc.ToLocalTime());
+        UpdateDate(1, StateContainer.StatsParams.DateEndUtc.ToLocalTime());
+    }
+
+
+    private async Task GetStats()
+    {
+        Refit.ApiResponse<List<StatDto>>? response;
+        string dateFormat;
+
+
+        _loading = true;
+        _errorMessage = "";
+        _chartXAxisLabels = [];
+        _chartSeries = [];
+
+
+        if (_localDateStart > _localDateEnd)
+        {
+            _errorMessage = Loc.Get(RS.ErrorDateStartLessThanEnd);
+            return;
+        }
+
+        response = await StatApi.GetStatsAsync(StateContainer.StatsParams);
+        if (response.IsSuccessStatusCode && response.Content is List<StatDto> stats)
+        {
+            dateFormat = _selectedStatPeriod switch
+            {
+                StatType.Monthly => "MMM",
+                _ => "d/M"
+            };
+            if (_localDateStart is null || _localDateEnd is null || 
+                ((DateTime)_localDateStart).Year != ((DateTime)_localDateEnd).Year) dateFormat += "/yy";
+
+            _chartXAxisLabels = stats
+                .Select(s => s.Date.ToLocalTimeString(dateFormat))
+                .Distinct()
+                .ToArray();
+
+            _chartSeries = [new ChartSeries() {
+                Name = Loc.Get(RS.FieldAmounts),
+                Data = stats.Select(s => (double)s.Amount).ToArray(),
+                ShowDataMarkers = true }];
+
+            _chartOptions.InterpolationOption = _chartXAxisLabels.Count() < 4 ?
+                                            InterpolationOption.Straight :
+                                            InterpolationOption.NaturalSpline;
+            _allowChartDisplay = true;
+        }
+        else
+        {
+            _errorMessage = BlazorService.GetResponseError(response);
+        }
+
+        _paramChanged = false;
+        _loading = false;
+        StateHasChanged();
+    }
+
+
+    private void OnSelectedStatChanged(StatType stat)
+    {
+        _selectedStatPeriod = stat;
+        StateContainer.StatsParams.Period = stat;
+        UpdateDate(0, _localDateStart);
+        UpdateDate(1, _localDateEnd);
+
+        _paramChanged=true;
+        _allowChartDisplay = false;
+    }
+
+    private void OnDateStartChanged(DateTime? date)
+    {
+        UpdateDate(0, date);
+        _paramChanged = true;
+        _allowChartDisplay = false;
+    }
+
+    private void OnDateEndChanged(DateTime? date)
+    {
+        UpdateDate(1, date);
+        _paramChanged = true;
+        _allowChartDisplay = false;
+    }
+
+    private void UpdateDate(int index, DateTime? date)
+    {
+        DateTimeOffset? paramDateUtc = null;
+        DateTime? localDate = date?.ToLocalTime();
+        string dateHelper = "";
+
+        if (localDate is not null)
+        {
+            DateTime localDateUtc = ((DateTime)localDate).ToUniversalTime();
+            switch (_selectedStatPeriod)
+            {
+                case StatType.Monthly:
+                    paramDateUtc = index == 0 ? localDateUtc.StartOfMonth() : localDateUtc.EndOfMonth();
+                    break;
+                case StatType.Weekly:
+                    paramDateUtc = index == 0 ? localDateUtc.StartOfWeek() : localDateUtc.EndOfWeek();
+                    dateHelper = ((DateTimeOffset)paramDateUtc).ToLocalTimeShort();
+                    break;
+                default:
+                    paramDateUtc = localDateUtc;
+                    break;
+            }            
+        }
+        if (index == 0)
+        {
+            _localDateStart = localDate;
+            StateContainer.StatsParams.DateStartUtc = paramDateUtc;
+            _dateHelperStart = dateHelper;
+        }
+        else
+        {
+            _localDateEnd = localDate;
+            StateContainer.StatsParams.DateEndUtc = paramDateUtc;
+            _dateHelperEnd = dateHelper;
+        }
+    }
+
+    private bool IsStatEmpty => !(_chartXAxisLabels.Any() && _chartSeries.Any());
+    private bool SomethingToShow => _loading || _allowChartDisplay;
+}
+

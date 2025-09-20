@@ -1,0 +1,110 @@
+@typeparam TEntity
+
+<MudTable T="TEntity" ServerData="ServerReload" @ref="table"
+          OnRowClick="RowClickEvent" RowClassFunc="SelectedRowClassFunc"
+          RowClass="cursor-pointer" Breakpoint="Breakpoint.None"
+          Hover Dense Class="bg-primary" Style="--bs-bg-opacity: 0.1;">
+    <ToolBarContent>
+        <MudSpacer />
+        <TableSearch SearchStringValue="@SearchStringValue" OnSearchStringChanged="@OnSearchStringChanged" />
+        <MudSpacer />
+        @if (ShowDateRange)
+        {
+            <TableDateRange FromDate="@FromDate" DateStartChanged="@DateStartChanged" DateStartHelperText="@DateStartHelperText"
+                       ToDate="@ToDate" DateEndChanged="@DateEndChanged" DateEndHelperText="@DateEndHelperText" />
+            <MudSpacer />
+        }
+        <TableButton Action="@TableAction.Add" OnClick="@OnAddClick" />
+    </ToolBarContent>
+    <HeaderContent>
+        <TableHeaderColumns Columns="@Columns" />
+    </HeaderContent>
+    <RowTemplate Context="context">
+        @RowTemplate(context)
+    </RowTemplate>
+    <ChildRowContent Context="context">
+        @if (ChildRowContent is not null)
+        {
+            @ChildRowContent(context)
+        }
+    </ChildRowContent>
+    <NoRecordsContent>
+        <TableNoRecordsContent />
+    </NoRecordsContent>
+    <PagerContent>
+        <TablePagerContent AllowRemoveValue="@AllowRemoveValue"
+                           AllowRemoveValueChanged="@AllowRemoveValueChanged"
+                           RowClickText="@RowClickText"
+                           PageSizeOptions="@PageSizeOptions" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [Parameter] public required Func<TableState, CancellationToken, Task<TableData<TEntity>>> ServerReload { get; set; }
+    [Parameter] public required string[] Columns { get; set; }
+    [Parameter] public required RenderFragment<TEntity> RowTemplate { get; set; }
+
+    [Parameter] public string? SearchStringValue { get; set; }
+    [Parameter] public EventCallback<string> OnSearchStringChanged { get; set; }
+
+    [Parameter] public EventCallback OnAddClick { get; set; }
+
+    [Parameter] public bool AllowRemoveValue { get; set; }
+    [Parameter] public EventCallback<bool> AllowRemoveValueChanged { get; set; }
+
+    [Parameter] public RenderFragment<TEntity>? ChildRowContent { get; set; }
+    [Parameter] public string? RowClickText { get; set; }
+    [Parameter] public Guid SelectedEntityId { get; set; }
+    [Parameter] public EventCallback<Guid> SelectedEntityIdChanged { get; set; }
+
+    [Parameter] public int[]? PageSizeOptions { get; set; } = [10, 25, 50, 100, int.MaxValue];
+
+    // Date range filter support
+    [Parameter] public bool ShowDateRange { get; set; } = false;
+    [Parameter] public DateTime? FromDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> DateStartChanged { get; set; }
+    [Parameter] public DateTime? ToDate { get; set; }
+    [Parameter] public EventCallback<DateTime?> DateEndChanged { get; set; }
+    [Parameter] public string DateStartHelperText { get; set; } = "";
+    [Parameter] public string DateEndHelperText { get; set; } = "";
+
+    private MudTable<TEntity>? table;
+    private int selectedRowNumber = -1;
+
+
+    private string SelectedRowClassFunc(TEntity element, int rowNumber)
+    {
+        if (selectedRowNumber == rowNumber)
+        {
+            selectedRowNumber = -1;
+            return string.Empty;
+        }
+        else if (table != null && table.SelectedItem is not null && table.SelectedItem.Equals(element))
+        {
+            selectedRowNumber = rowNumber;
+            return "selected-table-row";
+        }
+        else
+        {
+            return string.Empty;
+        }
+    }
+
+    private async Task RowClickEvent(TableRowClickEventArgs<TEntity> e)
+    {
+        var entity = e.Item;
+        var idProperty = entity?.GetType().GetProperty("Id");
+        if (entity is not null && idProperty is not null && idProperty.PropertyType == typeof(Guid))
+        {
+            var id = (Guid)idProperty.GetValue(entity)!;
+            var newId = SelectedEntityId == id ? Guid.Empty : id;
+            await SelectedEntityIdChanged.InvokeAsync(newId);
+        }
+    }
+
+    public async Task ReloadServerDataAsync()
+    {
+        if (table != null)
+            await table.ReloadServerData();
+    }
+}

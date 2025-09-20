@@ -1,35 +1,81 @@
 ﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @inject NavigationManager Navigation
 
-<MudText Typo="Typo.subtitle1" Class="mr-2">
-    hola
-</MudText>
+
+@implements IDisposable
+@inject StateContainer StateContainer
+@inject LocalizationService Loc
+
 <MudAppBar Elevation="3" Dense>
+    @if (StateContainer.IsMobile)
+    {
+        <Menu MenuType="superior" />
+    }
+    <MudText Typo="@(StateContainer.IsMobile ? Typo.body1 : Typo.h6)" Style="margin-left: 3rem;">
+        @StateContainer.PageTitle
+    </MudText>
+    <MudSpacer />
     <AuthorizeView>
-        <Authorized Context="authContext">
+        <Authorized>
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
                 <MudText Typo="Typo.subtitle1" Class="mr-2">
-                    @authContext.User.GetUserName()
+                    @context.User.GetUserName()
                 </MudText>
-            <MudTooltip Text="Cerrar sesión">
-                <MudIconButton Icon="@Icons.Material.Filled.Logout" 
-                              Color="Color.Inherit" 
-                              OnClick="BeginLogout" />
+            </MudHidden>
+            <MudTooltip Text="@Loc.Get(RS.ActLogout)">
+                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="BeginLogout" />
             </MudTooltip>
         </Authorized>
         <NotAuthorized>
-            <MudText Typo="Typo.subtitle1" Class="mr-2">
-                NO AUTORIZADO
-            </MudText>
-            <MudTooltip Text="Iniciar sesión">
-                <MudIconButton Icon="@Icons.Material.Filled.Login" 
-                              Color="Color.Inherit" 
-                              Href="/authentication/login" />
+            <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined" Size="@(StateContainer.IsMobile ? Size.Small: Size.Medium)">
+                @if (StateContainer.IsMobile)
+                {
+                    @Loc.Get(RS.DemoModeMessage1)
+                }
+                else
+                {
+                    @(string.Format($"{Loc.Get(RS.DemoModeMessage1)}. {Loc.Get(RS.DemoModeMessage2)}"))
+                }                
+            </MudChip>
+            <MudSpacer />       
+            <MudTooltip Text="@Loc.Get(RS.ActLogin)">
+                <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Href="authentication/login" />
             </MudTooltip>
         </NotAuthorized>
     </AuthorizeView>
+
+    <ConfigSelector />
+
 </MudAppBar>
 
 @code {
+    protected override void OnInitialized()
+    {
+        StateContainer.PageTitleChanged += OnPageTitleChanged;
+        StateContainer.BreakpointChanged += OnBreakpointChanged;
+    }
+
+    private void OnPageTitleChanged() => StateHasChanged();
+    private void OnBreakpointChanged() => StateHasChanged();
+
+    public void Dispose()
+    {
+        StateContainer.PageTitleChanged -= OnPageTitleChanged;
+        StateContainer.BreakpointChanged -= OnBreakpointChanged;
+    }
+
+    private static bool IsDebug
+    {
+        get
+        {
+#if DEBUG
+            return true;
+#else
+            return false;
+#endif
+        }
+    }
+
     private void BeginLogout()
     {
         Navigation.NavigateToLogout("/authentication/logout");

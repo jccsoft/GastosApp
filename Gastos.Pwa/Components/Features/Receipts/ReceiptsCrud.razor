@@ -1,0 +1,182 @@
+﻿@implements IDisposable
+@inject IReceiptApi ReceiptApi
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject StateContainer StateContainer
+@inject BlazorService BlazorService
+@inject NavigationManager NavigationManager
+@inject LocalizationService Loc
+@inject AuthenticationStateProvider provider
+
+
+<Alert Message="@_errorMessage" />
+
+<TableCrud TEntity="ReceiptDto" @ref="_table" ServerReload="ServerReload" Columns="@_columns"
+                 SearchStringValue="@_parameters.ProductName" OnSearchStringChanged="OnSearchChanged"
+                 OnAddClick="NavigateToTicketReading"
+                 @bind-AllowRemoveValue="@_allowRemove"
+                 @bind-SelectedEntityId="@_selectedReceiptId"
+                 RowClickText="@Loc.Get(RS.RowClickReceipt)"
+                 PageSizeOptions="new int[] { 15, 25, 50, 100, int.MaxValue }"
+                 ShowDateRange="true"
+                 FromDate="@_localDateStart" DateStartChanged="OnDateStartChanged"
+                 ToDate="@_localDateEnd" DateEndChanged="OnDateEndChanged">
+    <RowTemplate>
+        <MudTd DataLabel="@Loc.Get(RS.FieldDate)">@context.TransactionDateUtc.ToLocalTimeShort()</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.EntityStore)">@context.Store?.Name</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldAmount)">@context.Items.Sum(i => i.Amount).ToStringAmount()</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
+            <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
+            <TableButton Action="@TableAction.Info" OnClick="() => ShowReceiptInfo(context)" Hidden="@(!_allowRemove)" />
+            <TableButton Action="@TableAction.Delete" OnClick="() => DeleteReceiptAsync(context)" Hidden="@(!_allowRemove)" />
+        </MudTd>
+    </RowTemplate>
+
+    <ChildRowContent>
+        @if (context.Id == _selectedReceiptId || !string.IsNullOrEmpty(_parameters.ProductName))
+        {
+            <MudTr Class="row-detail">
+                @if (StateContainer.IsNotMobile)
+                {
+                    <MudTd></MudTd>
+                }
+                <MudTd colspan="@(StateContainer.IsMobile ? 4 : 3)" Class="cell-detail">
+                    <MudPaper Elevation="3" Style="">
+                        <ReceiptItems Items="context.Items" SearchProductName="@_parameters.ProductName" />
+                    </MudPaper>
+                </MudTd>
+            </MudTr>
+        }
+    </ChildRowContent>
+</TableCrud>  
+
+@code {
+    private TableCrud<ReceiptDto>? _table;
+    private ReceiptParameters _parameters => StateContainer.ReceiptParams;
+    private DateTime? _localDateStart, _localDateEnd;
+
+    private string _errorMessage = "";
+    private bool _allowRemove = false;
+    private Guid _selectedReceiptId = Guid.Empty;
+    private string[] _columns = null!;
+    private string _currentUserId = "";
+
+    protected override void OnInitialized()
+    {
+        StateContainer.BreakpointChanged += OnBreakpointChanged;
+        _columns = new[] { "", "", Loc.Get(RS.FieldAmount), "" };
+        _localDateStart = _parameters.FromDateUtc.ToLocalTime();
+        _localDateEnd = _parameters.ToDateUtc.ToLocalTime();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await provider.GetAuthenticationStateAsync();
+        _currentUserId = authState.User.GetUserId();
+    }
+
+    private async Task<TableData<ReceiptDto>> ServerReload(TableState state, CancellationToken token)
+    {
+        _errorMessage = "";
+        
+        TableData<ReceiptDto> output = new();
+
+        _parameters.UpdatePageInfo(state.Page, state.PageSize);
+
+        var response = await ReceiptApi.GetAllAsync(_parameters, token);
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ReceiptDto> pagedResponse)
+        {
+            if(pagedResponse.UserId != _currentUserId)
+            {
+                _errorMessage = Loc.Get(RS.ErrorUserMismatch);
+            }
+            else
+            {
+                output.Items = pagedResponse.Items;
+                output.TotalItems = pagedResponse.TotalItems;                
+            }
+        }
+        else
+        {
+            _errorMessage = BlazorService.GetResponseError(response);
+        }
+
+        StateHasChanged();
+
+        return output;
+    }
+
+    private void NavigateToTicketReading()
+    {
+        NavigationManager.NavigateTo("/ticket-reading");
+    }
+
+    private async Task OpenEditDialogAsync(ReceiptDto Receipt)
+    {
+        var result = await BlazorService.OpenEditReceiptDialogAsync(Receipt.Id);
+        if (result is not null && !result.Canceled)
+        {
+            await _table!.ReloadServerDataAsync();
+        }
+    }
+
+    private async Task DeleteReceiptAsync(ReceiptDto Receipt)
+    {
+        bool confirmedDeletion = await BlazorService.ConfirmDeletionAsync(
+            string.Format(Loc.Get(RS.AskDelete0), Loc.Get(RS.EntityReceipt)));
+
+        if (confirmedDeletion)
+        {
+            var response = await ReceiptApi.DeleteAsync(Receipt.Id);
+            if (response.IsSuccessStatusCode)
+            {
+                _allowRemove = false;
+                Snackbar.Add(Loc.Get(RS.SuccessDelete), Severity.Success);
+                await _table!.ReloadServerDataAsync();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+    }
+
+    private async Task OnSearchChanged(string searchString)
+    {
+        _parameters.ProductName = searchString;
+        await _table!.ReloadServerDataAsync();
+    }
+
+    private async Task OnDateStartChanged(DateTime? value)
+    {
+        _localDateStart = value;
+        _parameters.FromDateUtc = value.ToUniversalTime();
+
+        await _table!.ReloadServerDataAsync();
+    }
+
+    private async Task OnDateEndChanged(DateTime? value)
+    {
+        _localDateEnd = value;
+
+        _parameters.ToDateUtc = value is null ?
+            null : 
+            ((DateTime)value).AddDays(1).AddSeconds(-1).ToUniversalTime();
+
+        await _table!.ReloadServerDataAsync();
+    }
+
+
+    private async Task ShowReceiptInfo(ReceiptDto receipt)
+    {
+        await BlazorService.OpenInfoReceiptDialogAsync(receipt);
+    }
+
+
+    private void OnBreakpointChanged() => StateHasChanged();
+
+    void IDisposable.Dispose()
+    {
+        StateContainer.BreakpointChanged -= OnBreakpointChanged;
+    }
+}

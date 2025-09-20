@@ -1,0 +1,213 @@
+﻿@inject IReceiptApi ReceiptApi
+@inject IStoreApi StoreApi
+@inject BlazorService BlazorService
+@inject ISnackbar Snackbar
+@inject LocalizationService Loc
+
+
+@if (_loading)
+{
+    <Loading />
+}
+else
+{
+    <MudDialog>
+        <DialogContent>
+            <MudGrid Spacing="10" Class="mb-5">
+                <MudItem xs="1"></MudItem>
+                <MudItem xs="5">
+                    <MudSelect T="Guid?" Value="_editingReceipt!.StoreId"
+                           ValueChanged="OnStoreChanged" Placeholder="@Loc.Get(RS.ActCreate)"
+                           Variant="Variant.Text" Immediate="true" FullWidth>
+                        @foreach (var store in stores.OrderBy(s => s.Name))
+                        {
+                            <MudSelectItem Value="@((Guid?)store.Id)">@store.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="3">
+                    <MudDatePicker Style="text-align: center" Variant="Variant.Text" @bind-Date="_receiptLocalDate" DateFormat="dd/MMM" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary" Style="font-size: larger">
+                        @_editingReceipt!.Items.Sum(i => i.Amount).ToStringAmount()
+                    </MudChip>
+                </MudItem>
+            </MudGrid>
+
+            <MudTable T="ReceiptItemDto" Items="_editingReceipt!.Items.OrderBy(i => i.Product!.Name).ToList()"
+                      Dense Hover Bordered FixedHeader>
+                <HeaderContent>
+                    <MudTh></MudTh>
+                    <MudTh>@Loc.Get(RS.FieldReceiptDescription)</MudTh>
+                    <MudTh>@Loc.Get(RS.FieldQuantity)</MudTh>
+                    <MudTh>@Loc.Get(RS.FieldAmount)</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="@Loc.Get(RS.EntityProduct)">@context.Product!.Name</MudTd>
+                    <MudTd DataLabel="@Loc.Get(RS.FieldReceiptDescription)">@context.SourceDescription.FirstCharToUpper()</MudTd>
+                    <MudTd DataLabel="@Loc.Get(RS.FieldQuantity)" Class="text-center">@context.QuantityFormattedWithoutOne</MudTd>
+                    <MudTd DataLabel="@Loc.Get(RS.FieldAmount)" Class="text-center">@context.AmountFormatted</MudTd>
+                    <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
+                        <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditItemDialogAsync(context)" />
+                        <TableButton Action="@TableAction.Delete" OnClick="() => DeleteItemAsync(context)" Hidden="@(!_allowRemove)" />
+                    </MudTd>
+                </RowTemplate>
+                <FooterContent>
+                    <MudSwitch T="bool" Label="@Loc.Get(RS.TableAllowRemove)" @bind-Value="_allowRemove"
+                               Color="Color.Error" Class="mt-5" Size="Size.Small" />
+                </FooterContent>
+            </MudTable>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
+            <MudButton Color="Color.Primary" OnClick="SaveAsync" Disabled="@(!_receiptChanged)" Variant="Variant.Filled">@Loc.Get(RS.ActSave)</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid? ReceiptId { get; set; }
+
+    private ReceiptDto? _editingReceipt;
+    private DateTime? _receiptLocalDate;
+    private bool _receiptChanged = false;
+
+    private bool _isEdit => ReceiptId.HasValue && ReceiptId != Guid.Empty;
+    private bool _loading = true;
+    private bool _allowRemove = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStoresAsync();
+
+        if (_isEdit)
+        {
+            var response = await ReceiptApi.GetByIdAsync(ReceiptId!.Value);
+            if (response.IsSuccessStatusCode && response.Content is ReceiptDto receiptResponse)
+            {
+                _editingReceipt = receiptResponse;
+                _receiptLocalDate = ((DateTime)_editingReceipt.TransactionDateUtc!).ToLocalTime();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+                MudDialog.Cancel();
+            }
+        }
+        else
+        {
+            _editingReceipt = new ReceiptDto();
+        }
+
+        _loading = false;
+    }
+
+
+
+    #region ITEMS
+    private async Task OpenEditItemDialogAsync(ReceiptItemDto receiptItem)
+    {
+        var result = await BlazorService.OpenEditReceiptItemDialogAsync(receiptItem);
+        if (result is not null && !result.Canceled && result.Data is ReceiptItemDto editItem)
+        {
+            receiptItem.ProductId = editItem.ProductId;
+            receiptItem.SourceDescription = editItem.SourceDescription;
+            receiptItem.Quantity = editItem.Quantity;
+            receiptItem.Amount = editItem.Amount;
+            receiptItem.Product = editItem.Product;
+            _receiptChanged = true;
+        }
+    }
+
+    private async Task DeleteItemAsync(ReceiptItemDto receiptItem)
+    {
+        bool confirmedDeletion = await BlazorService.ConfirmDeletionAsync(
+            String.Format(Loc.Get(RS.AskDeleteReceiptItem0), receiptItem.Product!.Name));
+
+        if (confirmedDeletion)
+        {
+            _editingReceipt!.Items.Remove(receiptItem);
+            _receiptChanged = true;
+        }
+    }
+    #endregion
+
+
+    #region STORE
+    private List<StoreDto> stores = [];
+
+    private async Task LoadStoresAsync()
+    {
+        var response = await StoreApi.GetAllAsync(new StoreParameters() { PageSize = 100 });
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<StoreDto> pagedResponse)
+        {
+            stores = pagedResponse.Items;
+            stores.Insert(0, new StoreDto { Id = Guid.Empty, Name = "-", SourceName = "" });
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+    private void OnStoreChanged(Guid? storeId)
+    {
+        _editingReceipt!.StoreId = storeId.HasValue ? storeId.Value : null;
+        _receiptChanged = true;
+    }
+    #endregion
+
+
+    #region RECEIPT
+    private async Task SaveAsync()
+    {
+        _editingReceipt!.TransactionDateUtc = ((DateTime)_receiptLocalDate!).ToUniversalTime();
+
+        if (_isEdit)
+        {
+            var response = await ReceiptApi.UpdateAsync(_editingReceipt!);
+            if (response.IsSuccessStatusCode)
+            {
+                await CloseAndReturnReceipt();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+        else
+        {
+            var response = await ReceiptApi.CreateAsync(_editingReceipt!);
+            if (response.IsSuccessStatusCode)
+            {
+                await CloseAndReturnReceipt();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+    }
+
+    private async Task CloseAndReturnReceipt()
+    {
+        var response = await ReceiptApi.GetByIdAsync(_editingReceipt!.Id);
+        if (response.IsSuccessStatusCode && response.Content is ReceiptDto receipt)
+        {
+            MudDialog.Close(DialogResult.Ok(receipt));
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+    #endregion
+}

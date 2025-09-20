@@ -33,14 +33,25 @@
         <span class="dismiss">🗙</span>
     </div>
 
+
+    <!-- PWA Scripts -->
+    <script src="js/pwa-installer.js"></script>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     <script src="js/clipboard.js"></script>
     <script src="js/setCulture.js"></script>
 
+    <!-- Blazor WebAssembly -->
     <script src="_framework/blazor.webassembly.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
+
+    <!-- MudBlazor JS -->
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
+
+
+    <!-- PWA Service Worker -->
+    <script>
+        navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,9 @@
+﻿@foreach (var column in Columns)
+{
+    <MudTh>@column</MudTh>
+}
+
+@code {
+    [Parameter]
+    public required string[] Columns { get; set; }
+}

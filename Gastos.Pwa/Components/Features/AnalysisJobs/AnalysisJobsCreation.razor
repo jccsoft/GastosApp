@@ -1,0 +1,138 @@
+﻿@implements IDisposable
+
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http.Internal
+
+@inject IDocIntelApi DocIntelApi
+@inject ISnackbar Snackbar
+@inject StateContainer StateContainer
+@inject LocalizationService Loc
+@inject ILogger<AnalysisJobsCreation> Logger
+
+
+<MudStack Style="width: 100%">
+    <MudFileUpload T="IReadOnlyList<IBrowserFile>" @ref="@_fileUpload" OnFilesChanged="OnInputFileChanged" AppendMultipleFiles="true"
+                   Accept="@(string.Join(',',_acceptedFileExtensions))"
+                   Hidden="@false" InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10" InputStyle="opacity:0" tabindex="-1"
+                   @ondrop="@ClearDragClass" @ondragenter="@SetDragClass" @ondragleave="@ClearDragClass" @ondragend="@ClearDragClass">
+        <ActivatorContent>
+            <MudPaper Height="22vh" Outlined="true" Class="@_dragClass">
+                <MudText Typo="Typo.body1">
+                    @Loc.Get(RS.DragFilesHereOrClick)
+                </MudText>
+                @foreach (var fileName in _selectedFiles.Select(x => x.File.Name))
+                {
+                    <MudChip T="string" Color="Color.Dark" Text="@fileName" tabindex="-1" Size="@(StateContainer.IsMobile? Size.Small: Size.Medium)" />
+                }
+            </MudPaper>
+        </ActivatorContent>
+    </MudFileUpload>
+    <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4">
+        <MudButton OnClick="@CreateAnalysisJobsAsync" Disabled="@(!_selectedFiles.Any())" Color="Color.Primary" Variant="Variant.Filled">
+            @Loc.Get(RS.ReadReceipts)
+        </MudButton>
+        <MudSpacer />
+        <MudTooltip Text="@Loc.Get(RS.ActClearList)">
+            <MudIconButton OnClick="@ClearAsync" Disabled="@(!_selectedFiles.Any())" Icon="@Icons.Material.Filled.Clear" Variant="Variant.Outlined" Color="Color.Error" />
+        </MudTooltip>
+    </MudToolBar>
+</MudStack>
+
+@code {
+    private readonly List<SelectedFile> _selectedFiles = new();
+    private sealed record SelectedFile(IBrowserFile File, string IdempotencyKey);
+
+    private readonly List<string> _acceptedFileExtensions = new() { ".png", ".jpg", ".jpeg", ".pdf" };
+
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+
+
+    protected override void OnInitialized()
+    {
+        StateContainer.BreakpointChanged += OnBreakpointChanged;
+    }
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var files = e.GetMultipleFiles();
+        foreach (var file in files)
+        {
+            if (!_acceptedFileExtensions.Contains(Path.GetExtension(file.Name).ToLowerInvariant()))
+            {
+                Snackbar.Add(string.Format(Loc.Get(RS.ErrorFileTypeNotSupported0), file.Name), Severity.Error);
+                continue;
+            }
+            if(_selectedFiles.Any(x => x.File.Name == file.Name))
+            {
+                Snackbar.Add(string.Format(Loc.Get(RS.ErrorFileAlreadySelected0), file.Name), Severity.Warning);
+                continue;
+            }
+
+            _selectedFiles.Add(new(File: file, IdempotencyKey: Guid.NewGuid().ToString()));
+        }
+    }
+
+    private async Task CreateAnalysisJobsAsync()
+    {
+        try
+        {
+            List<Guid> jobIds = new();
+
+            foreach (var selectedFile in _selectedFiles)
+            {
+                using var stream = selectedFile.File.OpenReadStream();
+                var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var fileBytes = memoryStream.ToArray();
+
+                var apiResponse = await DocIntelApi.CreateAnalysisJobAsync(
+                    fileBytes,
+                    selectedFile.File.Name,
+                    ModelTypes.Receipt,
+                    selectedFile.IdempotencyKey);
+
+                if (apiResponse.IsSuccessStatusCode)
+                {
+                    Snackbar.Add(string.Format(Loc.Get(RS.AnalysisJobCreated), selectedFile.File.Name), Severity.Success);
+                    jobIds.Add(apiResponse.Content!.Id);
+                }
+                else
+                {
+                    Snackbar.Add(string.Format(Loc.Get(RS.ErrorWithFile), selectedFile.File.Name, apiResponse.Error.ReasonPhrase), Severity.Error);
+                }
+            }
+
+            if (jobIds.Any())
+            {
+                StateContainer.NotifyAnalysisJobCreated(jobIds);
+                await ClearAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error creating analysis jobs");
+            Snackbar.Add(Loc.Get(RS.ErrorUnknown), Severity.Error);
+        }
+    }
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        _selectedFiles.Clear();
+        ClearDragClass();
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private void ClearDragClass()
+        => _dragClass = DefaultDragClass;
+
+
+    private void OnBreakpointChanged() => StateHasChanged();
+
+    public void Dispose() => StateContainer.BreakpointChanged -= OnBreakpointChanged;
+}

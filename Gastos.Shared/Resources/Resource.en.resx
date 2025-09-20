@@ -474,4 +474,22 @@
   <data name="ThemeLight" xml:space="preserve">
     <value>Light</value>
   </data>
+  <data name="ActView0" xml:space="preserve">
+    <value>See {0}</value>
+  </data>
+  <data name="InfoReceipts0" xml:space="preserve">
+    <value>Manage your {0}</value>
+  </data>
+  <data name="InfoProducts0" xml:space="preserve">
+    <value>Manage your catalog of {0}</value>
+  </data>
+  <data name="InfoStores0" xml:space="preserve">
+    <value>Manage the {0} where you buy</value>
+  </data>
+  <data name="InfoStats0" xml:space="preserve">
+    <value>View your {0}</value>
+  </data>
+  <data name="HomeTextInstallPwa" xml:space="preserve">
+    <value>You can install it on your device for quick access from the desktop or home screen.</value>
+  </data>
 </root>

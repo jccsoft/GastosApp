@@ -1,0 +1,63 @@
+﻿@inject IReceiptApi ReceiptApi
+@inject LocalizationService Loc
+
+
+@if(_receipts is null)
+{
+    <Loading />
+}
+else if (!_receipts.Any())
+{
+    <Alert Severity="Severity.Info" Message="@Loc.Get(RS.ErrorNoReceiptsFoundForProduct)" />
+}
+else
+{
+    <MudTable T="ReceiptDto" Items="_receipts" Class="bg-secondary" Style="--bs-bg-opacity: 0.15;" Dense Hover Bordered>
+        <HeaderContent>
+            <MudTh><MudText Typo="Typo.body1">@Loc.Get(RS.LastPurchases)</MudText></MudTh>
+            <MudTh></MudTh>
+            <MudTh Class="text-center">@_columns[2]</MudTh>
+            <MudTh Class="text-center">@_columns[3]</MudTh>
+            <MudTh Class="text-center">@_columns[4]</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="@_columns[0]">@context.TransactionDateUtc.ToLocalTimeShort()</MudTd>
+            <MudTd DataLabel="@_columns[1]">@(context.Store?.Name ?? "?")</MudTd>
+            <MudTd DataLabel="@_columns[2]" Class="text-center">@context.Items[0].QuantityFormattedWithOne</MudTd>
+            <MudTd DataLabel="@_columns[3]" Class="text-center">@context.Items[0].UnitPriceFormatted</MudTd>
+            <MudTd DataLabel="@_columns[4]" Class="text-center">@context.Items[0].AmountFormatted</MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+
+@code {
+    [Parameter] public required Guid ProductId { get; set; }
+
+    private List<ReceiptDto>? _receipts;
+    private string[] _columns = null!;
+
+    protected override void OnInitialized()
+    {
+        _columns = new[] { Loc.Get(RS.FieldDate), 
+                           Loc.Get(RS.EntityStore), 
+                           Loc.Get(RS.FieldQuantity), 
+                           String.Format(Loc.Get(RS.FieldUnitPrice0), CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol), 
+                           Loc.Get(RS.FieldAmount) };
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        var parameters = new ReceiptParameters()
+        {
+            ProductId = ProductId,
+            Page = 1,
+            PageSize = 10
+        };
+        
+        var response = await ReceiptApi.GetAllAsync(parameters);
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ReceiptDto> pagedResponse)
+        {
+            _receipts = pagedResponse.Items;
+        }
+    }
+}

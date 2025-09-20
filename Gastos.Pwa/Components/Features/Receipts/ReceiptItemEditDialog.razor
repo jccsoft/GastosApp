@@ -1,0 +1,140 @@
+@inject IProductApi ProductApi
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject BlazorService BlazorService
+@inject LocalizationService Loc
+@inject ReceiptItemClientValidator Validator
+
+
+@if(_editingItem is not null)
+{
+    <MudDialog>
+        <DialogContent>
+            <MudForm Model="_editingItem" @ref="_form" Validation="@(Validator.ValidateValue)" ValidationDelay="0">
+                <MudAutocomplete T="Guid?" @bind-Value="@_editingItem.ProductId" For="@(() => _editingItem.ProductId)"
+                                 ToStringFunc="(Guid? id) => _products.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty"
+                                 SearchFunc="SearchProductAsync" Class="mb-5" Immediate />
+                <MudStack Row Class="my-5">
+                    <MudNumericField @bind-value="@_editingItem.Quantity" For="@(() => _editingItem.Quantity)" Immediate
+                                     Label="@Loc.Get(RS.FieldQuantity)" Variant="Variant.Outlined" Format="0.###" Min="1" />
+                    <MudTextField @bind-value="@_editingItem.Amount" For="@(() => _editingItem.Amount)" Immediate
+                                  Label="@Loc.Get(RS.FieldAmount)" Variant="Variant.Outlined" Adornment="Adornment.Start" AdornmentText="€" />
+                </MudStack>
+                <MudTextField Disabled Value="_editingItem!.SourceDescription" Label="@Loc.Get(RS.FieldReceiptDescription)" FullWidth="true" Class="mb-5" />
+            </MudForm>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">@Loc.Get(RS.ActCancel)</MudButton>
+            <MudButton Color="Color.Primary" OnClick="SubmitAsync" Disabled="@(!IsDataChanged)">@Loc.Get(RS.ActSave)</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ReceiptItemDto? Item { get; set; }
+
+    private ReceiptItemDto? _editingItem;
+
+    private List<ProductDto> _products = [];
+    private readonly ProductDto _emptyProduct = new() { Id = Guid.Empty, Name = "-" };
+
+    private MudForm? _form;
+
+
+    private bool IsDataChanged =>
+        Item is null ||
+        _editingItem is not null &&
+        (_editingItem!.ProductId != Item.ProductId ||
+        _editingItem!.Quantity != Item.Quantity ||
+        _editingItem!.Amount != Item.Amount);
+
+
+    protected override void OnInitialized()
+    {
+        _editingItem = new ReceiptItemDto { };
+        if (Item is null)
+        {
+            _products = [_emptyProduct];            
+        }
+        else
+        {
+            _products = [Item.Product];
+
+            _editingItem = new ReceiptItemDto
+            {
+                Id = Item.Id,
+                ProductId = Item.ProductId,
+                Product = Item.Product,
+                Quantity = Item.Quantity,
+                Amount = Item.Amount,
+                SourceDescription = Item.SourceDescription
+            };
+        }
+    }
+
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+
+        if (_form!.IsValid)
+        {
+            if (_editingItem!.ProductId != Item!.ProductId)
+            {
+                var response = await ProductApi.GetByIdAsync(_editingItem!.ProductId!.Value);
+
+                if (response.IsSuccessStatusCode && response.Content is ProductDto product)
+                {
+                    _editingItem.Product = product;
+                }
+                else
+                {
+                    BlazorService.ShowResponseError(response);
+                    return;
+                }                
+            }
+
+            MudDialog.Close(DialogResult.Ok(_editingItem));
+        }           
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+
+    #region PRODUCT
+    private async Task LoadProductsAsync(string searchString = "")
+    {
+        if (_editingItem!.ProductId == Guid.Empty && string.IsNullOrEmpty(searchString))
+        {
+            _products = [_emptyProduct];
+            return;
+        }
+
+        var parameters = new ProductParameters { PageSize = 10, SearchString = searchString };
+
+        var response = await ProductApi.GetAllAsync(parameters);
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ProductDto> pagedResponse)
+        {
+            _products = pagedResponse.Items;
+            _products.Insert(0, _emptyProduct);
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+    private async Task<IEnumerable<Guid?>> SearchProductAsync(string value, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await LoadProductsAsync(value);
+
+        return _products.OrderBy(p => p.Name).Select(p => (Guid?)p.Id);
+    }
+    #endregion
+
+}

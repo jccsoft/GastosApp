@@ -15,4 +15,10 @@ public class PaginationParameters
         get => _pageSize;
         set => _pageSize = value <= 0 ? 1 : value;
     }
+
+    public void UpdatePageInfo(int page, int pageSize)
+    {
+        Page = page + 1;
+        PageSize = pageSize;
+    }
 }

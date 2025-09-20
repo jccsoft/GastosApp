@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Gastos.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250914143343_Inicio")]
+    [Migration("20250919154903_Inicio")]
     partial class Inicio
     {
         /// <inheritdoc />
@@ -20,6 +20,7 @@ namespace Gastos.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("rc")
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -71,7 +72,7 @@ namespace Gastos.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_products_user_id_name_units_pack_sizing_value");
 
-                    b.ToTable("products", (string)null);
+                    b.ToTable("products", "rc");
                 });
 
             modelBuilder.Entity("Gastos.Api.Features.Receipts.Receipt", b =>
@@ -108,7 +109,7 @@ namespace Gastos.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_receipts_user_id_source_id");
 
-                    b.ToTable("receipts", (string)null);
+                    b.ToTable("receipts", "rc");
                 });
 
             modelBuilder.Entity("Gastos.Api.Features.Receipts.ReceiptItem", b =>
@@ -147,7 +148,7 @@ namespace Gastos.Api.Migrations
                     b.HasIndex("ReceiptId")
                         .HasDatabaseName("ix_receipt_items_receipt_id");
 
-                    b.ToTable("receipt_items", (string)null);
+                    b.ToTable("receipt_items", "rc");
                 });
 
             modelBuilder.Entity("Gastos.Api.Features.Sizings.Sizing", b =>
@@ -172,7 +173,7 @@ namespace Gastos.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_sizings_name");
 
-                    b.ToTable("sizings", (string)null);
+                    b.ToTable("sizings", "rc");
 
                     b.HasData(
                         new
@@ -236,7 +237,7 @@ namespace Gastos.Api.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_stores_user_id_name");
 
-                    b.ToTable("stores", (string)null);
+                    b.ToTable("stores", "rc");
                 });
 
             modelBuilder.Entity("Gastos.Api.Features.Products.Product", b =>

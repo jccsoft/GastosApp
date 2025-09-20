@@ -1,0 +1,72 @@
+﻿@inject LocalizationService Loc
+
+@if(MenuType == "lateral")
+{
+    <MudNavMenu Bordered>
+        @foreach (var item in MenuItems)
+        {
+            @if (item.IsDivider)
+            {
+                <MudDivider />
+            }
+            else
+            {
+                <MudNavLink Href="@item.Href" Match="@item.Match" Icon="@item.Icon">
+                    @item.Text
+                </MudNavLink>
+            }
+        }
+    </MudNavMenu>
+}
+else if (MenuType == "superior")
+{
+    <MudMenu Variant="Variant.Text" Size="Size.Medium" Color="Color.Inherit" Icon="@Icons.Material.TwoTone.MoreVert">
+        @foreach (var item in MenuItems)
+        {
+            @if (item.IsDivider)
+            {
+                <MudDivider />
+            }
+            else
+            {
+                <MudMenuItem Href="@item.Href" Icon="@item.Icon" Label="@item.Text" />
+            }
+        }
+    </MudMenu>
+}
+
+
+@code{
+    [Parameter] public string MenuType { get; set; } = "superior";
+
+    private sealed class MenuItem
+    {
+        public string Href { get; set; } = string.Empty;
+        public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+        public string Icon { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public bool IsDivider { get; set; } = false;
+    }
+
+    private readonly List<MenuItem> MenuItems = new();
+
+    private void CreateNavLink(string href, string icon, string text, NavLinkMatch match = NavLinkMatch.Prefix)
+    {
+        MenuItems.Add( new MenuItem { Href = href, Match = match, Icon = icon, Text = text });
+    }
+
+    private void CreateDivider() => MenuItems.Add(new MenuItem { IsDivider = true });
+
+    protected override void OnInitialized()
+    {
+        CreateNavLink("/", Icons.Material.Filled.Home, @Loc.Get(RS.Home), NavLinkMatch.All);
+        CreateDivider();
+        CreateNavLink("ticket-reading", Icons.Material.Filled.ReadMore, string.Format(Loc.Get(RS.Reading0), Loc.Get(RS.EntityReceipts)));
+        CreateDivider();
+        CreateNavLink("receipts", Icons.Material.Filled.ReceiptLong, @Loc.Get(RS.EntityReceipts));
+        CreateNavLink("products", Icons.Material.Filled.Article, @Loc.Get(RS.EntityProducts));
+        CreateNavLink("stores", Icons.Material.Filled.Storefront, @Loc.Get(RS.EntityStores));
+        CreateDivider();
+        CreateNavLink("stats", Icons.Material.Filled.QueryStats, @Loc.Get(RS.EntityStats));
+    }
+}

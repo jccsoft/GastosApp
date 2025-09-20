@@ -13,11 +13,11 @@
     <Copy SourceFiles="@(SourceFile)" DestinationFiles="@(DestinationFile)" SkipUnchangedFiles="true" />
   </Target>
   
-  <ItemGroup>
-    <PackageReference Include="Auth0.AspNetCore.Authentication" />
+  <ItemGroup>   
     <PackageReference Include="DocIntel.Api.Sdk" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
       <PrivateAssets>all</PrivateAssets>
@@ -32,6 +32,7 @@
     <Folder Include="Features\Stores\" />
     <Folder Include="Features\Receipts\" />
     <Folder Include="Features\Products\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <ItemGroup>

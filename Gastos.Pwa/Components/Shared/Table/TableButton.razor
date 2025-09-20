@@ -1,0 +1,53 @@
+﻿@inject LocalizationService Loc
+
+
+<MudTooltip Text="@_tooltipText">
+    <MudIconButton Icon="@_icon"
+                   Color="@_color"
+                   Size="@_size"
+                   OnClick="@OnClick"
+                   Class="@Class"
+                   hidden="@Hidden" />
+</MudTooltip>
+
+@code {
+    [Parameter] public required TableAction Action { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public Size? Size { get; set; }
+    [Parameter] public Color? Color { get; set; }
+    [Parameter] public string? ToolTipText { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool Hidden { get; set; } = false;
+
+    private Size _size => Size ?? (Action == TableAction.Add ? MudBlazor.Size.Medium : MudBlazor.Size.Small);
+
+    private Color _color => Action switch
+    {
+        TableAction.Delete => MudBlazor.Color.Error,
+        TableAction.Info => MudBlazor.Color.Info,
+        _ => MudBlazor.Color.Primary
+    };
+
+    private string _tooltipText => ToolTipText ?? (
+        Action switch
+        {
+            TableAction.Add => Loc.Get(RS.ActCreate),
+            TableAction.Edit => Loc.Get(RS.ActEdit),
+            TableAction.Delete => Loc.Get(RS.ActDelete),
+            TableAction.Info => "Info",
+            TableAction.AddTicket => $"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}",
+            _ => ""
+        } 
+    );
+
+    private string? _icon => Action switch
+    {
+        TableAction.Add => Icons.Material.Filled.Add,
+        TableAction.Edit => Icons.Material.Filled.Edit,
+        TableAction.Delete => Icons.Material.Filled.Delete,
+        TableAction.Info => Icons.Material.Filled.Info,
+        TableAction.AddTicket => Icons.Material.Filled.PostAdd,
+        _ => null
+    };
+
+}

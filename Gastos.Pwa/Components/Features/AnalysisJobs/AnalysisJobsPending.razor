@@ -1,0 +1,309 @@
+﻿@implements IDisposable
+
+@using static DocIntel.Contracts.Responses.Common.AnalysisJobStatusResponse
+
+@inject IDocIntelApi DocIntelApi
+@inject IReceiptApi ReceiptApi
+@inject PersistentComponentState ApplicationState
+@inject ISnackbar Snackbar
+@inject StateContainer StateContainer
+@inject BlazorService BlazorService
+@inject ILogger<AnalysisJobsPending> Logger
+@inject LocalizationService Loc
+
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <Alert Message="@_errorMessage" />
+}
+else if(_analysisJobs is null)
+{
+    <Loading Class="mt-4" />
+}
+else if (_analysisJobs.ItemsCount == 0)
+{
+    <MudText Typo="Typo.body1" Class="mt-4">@Loc.Get(RS.ErrorNoPendingReceipts)</MudText>
+}
+else
+{
+    <MudTable Items="@_analysisJobs.Items" 
+              Dense Hover Breakpoint="Breakpoint.Sm" Class="mb-5"
+              Loading="@_loading" LoadingProgressColor="Color.Info">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">@Loc.Get(RS.PendingReceipts)</MudText>
+        </ToolBarContent>
+    <HeaderContent>
+        <TableHeaderColumns Columns="@_columns" />
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="@_columns[0]">@context.FileName</MudTd>
+        <MudTd DataLabel="@_columns[1]">@context.CreatedAtUtc.ToLocalTimeLong()</MudTd>
+        <MudTd DataLabel="@_columns[2]">@context.CompletedAtUtc.ToLocalTimeLong()</MudTd>
+        <MudTd DataLabel="@_columns[3]">
+            @((AnalysisJobStatusResponse)context.Status switch
+            {
+                Pending or InProgress => 
+                    (@<Loading Size="Size.Small" Class="ml-3" />),
+                Successful => 
+                    (@<MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success" />),
+                Failed =>
+                    (@<MudList T="string">
+                        @foreach (var error in context.Errors)
+                            {
+                                <MudListItem Text="@error" />
+                            }
+                    </MudList>),
+                    _ => (@<MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" />)
+            })
+        </MudTd>
+        <MudTd DataLabel="@_columns[4]">
+            @if (!_loading)
+            {
+                @if (context.ReceiptCreated)
+                {
+                    <MudTooltip Text="@Loc.Get(RS.ErrorReceiptAlreadyCreated)">
+                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" />
+                    </MudTooltip>
+                }
+                else
+                {
+                    <TableButton Action="@TableAction.AddTicket" 
+                                    OnClick="(() => OpenCreateReceiptDialogAsync(context.Id, context.DocumentId, context.FileName))" 
+                                    Hidden="@(context.DocumentId is null || context.Status != (int)AnalysisJobStatusResponse.Successful)" />
+                }
+
+                <TableButton Action="@TableAction.Delete" 
+                            OnClick="() => DeleteAnalysisJobAsync(context)" 
+                            Hidden="@(!_allowRemove)" />                        
+            }
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <TablePagerContent @bind-AllowRemoveValue="@_allowRemove" ShowPageSizeOptions="false" />
+    </PagerContent>
+    </MudTable>
+}
+
+@code {
+
+    private PendingJobCollection? _analysisJobs;
+    private PersistingComponentStateSubscription _persistingSubscription;
+
+    private string? _errorMessage;
+    private string[] _columns = null!;
+    private bool _loading = false;
+    private bool _allowRemove = false;
+
+    private System.Timers.Timer? _refreshTimer;
+    private const int _refreshIntervalMilliseconds = 1000;
+
+    protected override void OnInitialized()  
+    {    
+        StateContainer.AnalysisJobCreated += OnAnalysisJobCreated;  
+        StateContainer.BreakpointChanged += OnBreakpointChanged;
+
+        _columns = new[] { Loc.Get(RS.EntityFile), Loc.Get(RS.FieldDateCreation), Loc.Get(RS.FieldDateCompleted), Loc.Get(RS.FieldStatus), Loc.Get(RS.FieldActions) };
+
+        _refreshTimer = new System.Timers.Timer(_refreshIntervalMilliseconds);
+        _refreshTimer.Elapsed += TimerElapsed;  
+    }  
+
+    protected override async Task OnInitializedAsync()
+    {
+        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistData);
+
+        if (ApplicationState.TryTakeFromJson<PendingJobCollection>(nameof(_analysisJobs), out var restoredData) && restoredData is not null)
+        {
+            _analysisJobs = restoredData;
+            CheckPendingJobsStatus();
+        }
+        else
+        {
+            await FetchAnalysisJobsAsync();
+        }        
+    }
+
+
+    private async Task FetchAnalysisJobsAsync()
+    {
+        try
+        {
+            _loading = true;
+            _analysisJobs = null;
+
+            GetAllAnalysisJobsRequest request = new() { Page = 1, PageSize = 100 };
+
+            var responseGetAll = await DocIntelApi.GetAllAnalysisJobsAsync(request);
+
+            if (responseGetAll.IsSuccessStatusCode && responseGetAll.Content is AnalysisJobCollectionResponse collectionResponse)
+            {
+                _analysisJobs = GetPendingJobCollection(collectionResponse);
+
+                var jobsWithDocumentId = _analysisJobs.Items.Where(i => i.DocumentId is not null).ToList();
+
+                var receiptTasks = jobsWithDocumentId
+                    .Select(async job =>
+                    {
+                        var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)job.DocumentId!);
+                        if (responseReceipt.IsSuccessStatusCode &&
+                            responseReceipt.Content is ReceiptResponse receiptResponse &&
+                            receiptResponse.TransactionDateUtc is not null)
+                        {
+                            var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
+                                receiptResponse.Merchant,
+                                (DateTime)receiptResponse.TransactionDateUtc);
+
+                            bool receiptExists = responseExists.IsSuccessStatusCode && responseExists.Content;
+
+                            job.ReceiptCreated = receiptExists;
+                        }
+                    })
+                    .ToList();
+
+                await Task.WhenAll(receiptTasks);
+
+                CheckPendingJobsStatus();
+            }
+            else
+            {
+                _errorMessage = BlazorService.GetResponseError(responseGetAll);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error fetching analysis jobs");
+            _errorMessage = Loc.Get(RS.DocIntelNoResponse);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+
+    private void CheckPendingJobsStatus()
+    {
+        if (_analysisJobs is not null &&
+            _analysisJobs.Items.Any(i => 
+                i.Status == (int)AnalysisJobStatusResponse.Pending || 
+                i.Status == (int)AnalysisJobStatusResponse.InProgress))
+        {
+            _refreshTimer?.Start();
+        }
+    }
+
+    private async void TimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        _refreshTimer?.Stop();
+        await InvokeAsync(async () => await FetchAnalysisJobsAsync());
+    }
+
+
+
+    #region ACTIONS
+    private async Task OpenCreateReceiptDialogAsync(Guid analysisJobId, Guid? receiptId, string fileName)
+    {
+        if(!receiptId.HasValue || receiptId == Guid.Empty)
+        {
+            Snackbar.Add(Loc.Get(RS.ErrorNoReceiptFoundForAnalysisJob), Severity.Error);
+            return;
+        }
+
+        var result = await BlazorService.OpenCreateReceiptDialogAsync(receiptId, fileName);
+        if (result is not null && !result.Canceled)
+        {
+            _loading = true;
+
+            StateHasChanged();
+
+            await DocIntelApi.DeleteAnalysisJobAsync(analysisJobId);
+
+            await FetchAnalysisJobsAsync();
+        }
+    }
+
+    private async Task DeleteAnalysisJobAsync(AnalysisJobResponse analysisJobResponse)
+    {
+        bool confirmedDeletion = await BlazorService.ConfirmDeletionAsync(
+            string.Format(Loc.Get(RS.AskDeleteAnalysisJob0), analysisJobResponse.FileName));
+
+        if (confirmedDeletion)
+        {
+            var response = await DocIntelApi.DeleteAnalysisJobAsync(analysisJobResponse.Id);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add(Loc.Get(RS.SuccessDelete), Severity.Success);
+                _allowRemove = false;
+                await FetchAnalysisJobsAsync();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+    }
+
+    private void OnAnalysisJobCreated(List<Guid> jobIds)
+    {
+        _ = FetchAnalysisJobsAsync();
+    }
+    #endregion
+
+
+
+    private Task PersistData()
+    {
+        if (_analysisJobs is not null)
+        {
+            ApplicationState.PersistAsJson(nameof(_analysisJobs), _analysisJobs);            
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void OnBreakpointChanged() => StateHasChanged();
+
+    void IDisposable.Dispose()
+    {
+        StateContainer.AnalysisJobCreated -= OnAnalysisJobCreated;
+        StateContainer.BreakpointChanged -= OnBreakpointChanged;
+
+        _refreshTimer?.Dispose();
+        _persistingSubscription.Dispose();
+    } 
+
+
+
+    #region PENDING ANALYSIS JOBS
+
+    private sealed class PendingAnalysisJob : AnalysisJobResponse
+    {
+        public bool ReceiptCreated { get; set; } = false;
+    }
+    private sealed class PendingJobCollection: PagedResponse<PendingAnalysisJob> { }
+
+
+    private PendingJobCollection GetPendingJobCollection(AnalysisJobCollectionResponse analysisJobCollectionResponse)
+    {
+        return new PendingJobCollection
+        {
+            Items = analysisJobCollectionResponse.Items
+                .Select(item => new PendingAnalysisJob
+                {
+                    Id = item.Id,
+                    FileName = item.FileName,
+                    CreatedAtUtc = item.CreatedAtUtc,
+                    CompletedAtUtc = item.CompletedAtUtc,
+                    DocumentId = item.DocumentId,
+                    Status = item.Status,
+                    Errors = item.Errors,
+                    ReceiptCreated = false
+                }).ToList(),
+            ItemsCount = analysisJobCollectionResponse.ItemsCount,
+            Page = analysisJobCollectionResponse.Page,
+            PageSize = analysisJobCollectionResponse.PageSize
+        };
+    }
+    #endregion
+}

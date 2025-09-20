@@ -4,17 +4,17 @@
 @inject StateContainer StateContainer
 @inject ThemeService ThemeService
 
-@* <BreakpointMonitor /> *@
+<BreakpointMonitor />
 
 <MudLayout>
     <AppBar />
-        @* @if (StateContainer.IsNotMobile)
+        @if (StateContainer.IsNotMobile)
         {    
             <MudDrawer @bind-Open="_open" ClipMode="@DrawerClipMode.Always" Breakpoint="@Breakpoint.Lg" Elevation="3"
                        Variant="@DrawerVariant.Mini" OpenMiniOnHover >
                 <Menu MenuType="lateral" />
             </MudDrawer>
-        } *@
+        }
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="pt-6">
             @Body
@@ -40,7 +40,7 @@
                    CloseOnEscapeKey="true" />
 
 @code {
-    // private bool _open = false;
+    private bool _open = false;
     private MudTheme? _theme = null;
     private bool _isDarkMode = true;
 

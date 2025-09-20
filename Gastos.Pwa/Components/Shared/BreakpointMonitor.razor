@@ -1,0 +1,37 @@
+﻿@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+@inject IBrowserViewportService BrowserViewportService
+@inject BlazorService BlazorService
+@inject StateContainer StateContainer
+
+@code {
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 250,
+        NotifyOnBreakpointOnly = true
+    };
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync() => await BrowserViewportService.UnsubscribeAsync(this);
+
+    async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
+    {
+        StateContainer.CurrentBreakpoint = browserViewportEventArgs.Breakpoint;
+        await BlazorService.BrowserLogAsync($"Breakpoint: {browserViewportEventArgs.Breakpoint}");
+
+        await InvokeAsync(StateHasChanged);
+    }
+}

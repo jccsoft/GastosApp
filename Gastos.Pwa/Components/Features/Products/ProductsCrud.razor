@@ -1,0 +1,138 @@
+@implements IDisposable
+@inject IProductApi ProductApi
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject StateContainer StateContainer
+@inject BlazorService BlazorService
+@inject LocalizationService Loc
+
+
+<Alert Message="@_errorMessage" />
+
+<TableCrud TEntity="ProductDto" @ref="_table" ServerReload="ServerReload" Columns="@_columns"
+                 SearchStringValue="@_parameters.SearchString" OnSearchStringChanged="OnSearch"
+                 OnAddClick="OpenAddDialogAsync"
+                 @bind-AllowRemoveValue="@_allowRemove"
+                 @bind-SelectedEntityId="@_selectedProductId"
+                 RowClickText="@Loc.Get(RS.RowClickProduct)">
+
+    <RowTemplate>
+        <MudTd DataLabel="@Loc.Get(RS.FieldName)" Class="product-text">@context.FullName</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldImage)">
+            <MudImage Src="@context.ImageUrl" Class="rounded-lg product-image" />
+        </MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
+            <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
+            <TableButton Action="@TableAction.Delete" OnClick="() => DeleteProductAsync(context)" Hidden="@(!_allowRemove)" />
+        </MudTd>
+    </RowTemplate>
+
+    <ChildRowContent>
+        @if (context.Id == _selectedProductId)
+        {
+            <MudTr Class="row-detail">
+                @if (StateContainer.IsNotMobile)
+                {
+                    <MudTd></MudTd>                    
+                }
+                <MudTd colspan="@(StateContainer.IsMobile ? 3: 2)" Class="cell-detail">
+                    <MudPaper Elevation="3" Style="">
+                        <ProductReceipts ProductId="context.Id" />
+                    </MudPaper>
+                </MudTd>
+            </MudTr>
+        }
+    </ChildRowContent>
+
+</TableCrud>
+
+@code {
+    private TableCrud<ProductDto>? _table;
+    private ProductParameters _parameters => StateContainer.ProductParams;
+    private string _errorMessage = "";
+    private bool _allowRemove = false;
+    private Guid _selectedProductId = Guid.Empty;
+    private readonly string[] _columns = new[] { "","", "" };
+
+    protected override void OnInitialized()
+    {
+        StateContainer.BreakpointChanged += OnBreakpointChanged;
+    }
+
+    private async Task<TableData<ProductDto>> ServerReload(TableState state, CancellationToken token)
+    {
+        _errorMessage = "";
+
+        TableData<ProductDto> output = new();
+
+        _parameters.UpdatePageInfo(state.Page, state.PageSize);
+
+        var response = await ProductApi.GetAllAsync(_parameters, token);
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ProductDto> pagedResponse)
+        {
+            output.Items = pagedResponse.Items;
+            output.TotalItems = pagedResponse.TotalItems;
+            StateHasChanged();
+        }
+        else
+        {
+            _errorMessage = BlazorService.GetResponseError(response);
+        }
+
+        return output;
+    }
+
+    private async Task OpenAddDialogAsync()
+    {
+        var result = await BlazorService.OpenAddProductDialogAsync();
+        if (result is not null && !result.Canceled)
+        {
+            await _table!.ReloadServerDataAsync();
+        }
+    }
+
+    private async Task OpenEditDialogAsync(ProductDto product)
+    {
+        var result = await BlazorService.OpenEditProductDialogAsync(product.Id);
+        if (result is not null && !result.Canceled)
+        {
+            await _table!.ReloadServerDataAsync();
+        }
+    }
+
+    private async Task DeleteProductAsync(ProductDto product)
+    {
+        bool confirmedDeletion = await BlazorService.ConfirmDeletionAsync(
+            string.Format(Loc.Get(RS.AskDelete0), product.Name));
+
+        if (confirmedDeletion)
+        {
+            var response = await ProductApi.DeleteAsync(product.Id);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add(Loc.Get(RS.SuccessDelete), Severity.Success);
+                _allowRemove = false;
+                await _table!.ReloadServerDataAsync();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+    }
+
+    private async Task OnSearch(string searchString)
+    {
+        _parameters.SearchString = searchString;
+        await _table!.ReloadServerDataAsync();
+    }
+
+
+
+    private void OnBreakpointChanged() => StateHasChanged();
+
+    void IDisposable.Dispose()
+    {
+        StateContainer.BreakpointChanged -= OnBreakpointChanged;
+    }
+}

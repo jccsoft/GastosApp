@@ -1,6 +1,5 @@
-﻿using Auth0.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Gastos.Api.Shared.Extensions;
 
@@ -10,34 +9,28 @@ public static class Auth0Extensions
     {
         var authOptions = builder.Configuration.GetSection(Auth0Options.ConfigurationSection).Get<Auth0Options>();
 
-        builder.Services.AddAuth0WebAppAuthentication(options =>
-        {
-            options.Domain = authOptions!.Domain;
-            options.ClientId = authOptions!.ClientId;
-        });
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                // Configuración para Auth0
+                options.Authority = $"https://{authOptions!.Domain}/";
+                options.Audience = authOptions.Audience;
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = $"https://{authOptions.Domain}/",
+                    ValidAudience = authOptions.Audience,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+        builder.Services.AddAuthorization();
 
         return builder;
     }
-
-    public static void MapAuth0Endpoints(this WebApplication app)
-    {
-        app.MapGet("account/login", async (HttpContext context, string returnUrl = "/") =>
-        {
-            var authenticationProperties = new LoginAuthenticationPropertiesBuilder()
-                 .WithRedirectUri(returnUrl)
-                 .Build();
-            await context.ChallengeAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
-        });
-
-
-        app.MapGet("account/logout", async (context) =>
-        {
-            var authenticationProperties = new LogoutAuthenticationPropertiesBuilder()
-                 .WithRedirectUri("/")
-                 .Build();
-            await context.SignOutAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
-            await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        });
-    }
-
 }

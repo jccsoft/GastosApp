@@ -1,4 +1,7 @@
 global using Gastos.Pwa.Components;
+global using Gastos.Pwa.Components.Features.Products;
+global using Gastos.Pwa.Components.Features.Receipts;
+global using Gastos.Pwa.Components.Features.Stores;
 global using Gastos.Pwa.Features;
 global using Gastos.Pwa.Shared.Extensions;
 global using Gastos.Pwa.Shared.Services;
@@ -6,6 +9,9 @@ global using Gastos.Shared.Api;
 global using Gastos.Shared.Entities.Dto;
 global using Gastos.Shared.Entities.Request;
 global using Gastos.Shared.Entities.Response;
+global using Gastos.Shared.Resources;
 global using Microsoft.JSInterop;
 global using MudBlazor;
 global using Refit;
+global using System.Globalization;
+global using RS = Gastos.Shared.Resources.ResourceStrings;

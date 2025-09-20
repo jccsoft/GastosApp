@@ -1,0 +1,9 @@
+﻿<MudLink Href="@Href">
+    <MudFab Color="Color.Dark" StartIcon="@(Icon)" Label="@(Label)" Style="width: 11rem;" Size="Size.Large" />
+</MudLink>
+
+@code {
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Label { get; set; }
+}

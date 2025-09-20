@@ -1,0 +1,109 @@
+﻿@inject IStoreApi StoreApi
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject StateContainer StateContainer
+@inject BlazorService BlazorService
+@inject LocalizationService Loc
+
+
+<Alert Message="@_errorMessage" />
+
+<TableCrud TEntity="StoreDto" @ref="_table" ServerReload="ServerReload" Columns="@_columns"
+                 SearchStringValue="@_parameters.SearchString" OnSearchStringChanged="OnSearch"
+                 OnAddClick="OpenAddDialogAsync"
+                 @bind-AllowRemoveValue="@_allowRemove"
+                 @bind-SelectedEntityId="@_selectedStoreId"
+                 RowClickText="">
+
+    <RowTemplate>
+        <MudTd DataLabel="@Loc.Get(RS.EntityProduct)">@context.Name</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldReceiptDescription)">@context.SourceName.FirstCharToUpper()</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
+            <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
+            <TableButton Action="@TableAction.Delete" OnClick="() => DeleteStoreAsync(context)" Hidden="@(!_allowRemove)" />
+        </MudTd>
+    </RowTemplate>
+</TableCrud>
+
+@code {
+    private TableCrud<StoreDto>? _table;
+    private StoreParameters _parameters => StateContainer.StoreParams;
+    private string _errorMessage = "";
+    private bool _allowRemove = false;
+    private Guid _selectedStoreId = Guid.Empty;
+    private string[] _columns = null!;
+
+    protected override void OnInitialized()
+    {
+        _columns = new[] { "", Loc.Get(RS.FieldReceiptDescription), "" };
+    }
+
+    private async Task<TableData<StoreDto>> ServerReload(TableState state, CancellationToken token)
+    {
+        _errorMessage = "";
+        
+        TableData<StoreDto> output = new();
+
+        _parameters.UpdatePageInfo(state.Page, state.PageSize);
+
+        var response = await StoreApi.GetAllAsync(_parameters, token);
+        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<StoreDto> pagedResponse)
+        {
+            output.Items = pagedResponse.Items;
+            output.TotalItems = pagedResponse.TotalItems;
+            StateHasChanged();
+        }
+        else
+        {
+            _errorMessage = BlazorService.GetResponseError(response);
+        }
+
+        return output;
+    }
+
+    private async Task OpenAddDialogAsync()
+    {
+        var result = await BlazorService.OpenAddStoreDialogAsync();
+        if (result is not null && !result.Canceled)
+        {
+            await _table!.ReloadServerDataAsync();
+        }
+    }
+
+    private async Task OpenEditDialogAsync(StoreDto store)
+    {
+        var result = await BlazorService.OpenEditStoreDialogAsync(store.Id);
+        if (result is not null && !result.Canceled)
+        {
+            await _table!.ReloadServerDataAsync();
+        }
+    }
+
+    private async Task DeleteStoreAsync(StoreDto store)
+    {
+        bool confirmedDeletion = await BlazorService.ConfirmDeletionAsync(
+            string.Format(Loc.Get(RS.AskDelete0), store.Name));
+
+        if (confirmedDeletion)
+        {
+            var response = await StoreApi.DeleteAsync(store.Id);
+            if (response.IsSuccessStatusCode)
+            {
+                _allowRemove = false;
+                Snackbar.Add(Loc.Get(RS.SuccessDelete), Severity.Success);
+                await _table!.ReloadServerDataAsync();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+    }
+
+    private async Task OnSearch(string searchString)
+    {
+        _parameters.SearchString = searchString;
+        await _table!.ReloadServerDataAsync();
+    }
+
+}

@@ -1,6 +1,4 @@
-﻿using Gastos.Shared.Resources;
-using System.Globalization;
-using RS = Gastos.Shared.Resources.ResourceStrings;
+﻿using static Gastos.Shared.Resources.LocalizationConstants;
 
 namespace Gastos.Pwa.Shared.Services;
 
@@ -58,87 +56,94 @@ public class BlazorService(
         await js.InvokeVoidAsync("console.log", message);
     }
 
+    public async Task SetCultureAsync(string? culture)
+    {
+        if (!string.IsNullOrEmpty(culture) && culture != CultureInfo.CurrentCulture.Name)
+        {
+            await js.InvokeVoidAsync(SetCultureFunction, culture);
+        }
+    }
 
-    //#region DIALOGS
-    //public async Task<DialogResult?> OpenCreateReceiptDialogAsync(Guid? id, string filename)
-    //{
-    //    var parameters = new DialogParameters
-    //    {
-    //        ["DocIntelReceiptId"] = id,
-    //        ["Filename"] = filename
-    //    };
-    //    var dialog = await dialogService.ShowAsync<ReceiptCreateFromDocIntelDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}", parameters);
-    //    var result = await dialog.Result;
+    #region DIALOGS
+    public async Task<DialogResult?> OpenCreateReceiptDialogAsync(Guid? id, string filename)
+    {
+        var parameters = new DialogParameters
+        {
+            ["DocIntelReceiptId"] = id,
+            ["Filename"] = filename
+        };
+        var dialog = await dialogService.ShowAsync<ReceiptCreateFromDocIntelDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}", parameters);
+        var result = await dialog.Result;
 
-    //    return result;
-    //}
+        return result;
+    }
 
-    //public async Task<DialogResult?> OpenEditReceiptDialogAsync(Guid id)
-    //{
-    //    var dialogParameters = new DialogParameters { ["ReceiptId"] = id };
-    //    var dialog = await dialogService.ShowAsync<ReceiptEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Medium });
-    //    var result = await dialog.Result;
+    public async Task<DialogResult?> OpenEditReceiptDialogAsync(Guid id)
+    {
+        var dialogParameters = new DialogParameters { ["ReceiptId"] = id };
+        var dialog = await dialogService.ShowAsync<ReceiptEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Medium });
+        var result = await dialog.Result;
 
-    //    return result;
-    //}
+        return result;
+    }
 
-    //public async Task<DialogResult?> OpenEditReceiptItemDialogAsync(ReceiptItemDto receiptItem)
-    //{
-    //    var dialogParameters = new DialogParameters { ["Item"] = receiptItem };
-    //    var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{Loc.Get(RS.ActEdit)} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
-    //    var result = await dialog.Result;
+    public async Task<DialogResult?> OpenEditReceiptItemDialogAsync(ReceiptItemDto receiptItem)
+    {
+        var dialogParameters = new DialogParameters { ["Item"] = receiptItem };
+        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{Loc.Get(RS.ActEdit)} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
+        var result = await dialog.Result;
 
-    //    return result;
-    //}
+        return result;
+    }
 
-    //public async Task<DialogResult?> OpenInfoReceiptDialogAsync(ReceiptDto receipt)
-    //{
-    //    var dialogParameters = new DialogParameters { ["Receipt"] = receipt };
-    //    var dialog = await dialogService.ShowAsync<ReceiptInfo>($"Info {Loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
-    //    var result = await dialog.Result;
+    public async Task<DialogResult?> OpenInfoReceiptDialogAsync(ReceiptDto receipt)
+    {
+        var dialogParameters = new DialogParameters { ["Receipt"] = receipt };
+        var dialog = await dialogService.ShowAsync<ReceiptInfo>($"Info {Loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
+        var result = await dialog.Result;
 
-    //    return result;
-    //}
-
-
-
-    //public async Task<DialogResult?> OpenAddProductDialogAsync(string initialName = "")
-    //{
-    //    var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
-    //    var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
-    //    var result = await dialog.Result;
-
-    //    return result;
-    //}
-    //public async Task<DialogResult?> OpenEditProductDialogAsync(Guid id)
-    //{
-    //    var dialogParameters = new DialogParameters { ["ProductId"] = id };
-    //    var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
-    //    var result = await dialog.Result;
-
-    //    return result;
-    //}
+        return result;
+    }
 
 
 
-    //public async Task<DialogResult?> OpenAddStoreDialogAsync(string initialName = "")
-    //{
-    //    var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
-    //    var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
-    //    var result = await dialog.Result;
+    public async Task<DialogResult?> OpenAddProductDialogAsync(string initialName = "")
+    {
+        var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
+        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var result = await dialog.Result;
 
-    //    return result;
-    //}
+        return result;
+    }
+    public async Task<DialogResult?> OpenEditProductDialogAsync(Guid id)
+    {
+        var dialogParameters = new DialogParameters { ["ProductId"] = id };
+        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var result = await dialog.Result;
 
-    //public async Task<DialogResult?> OpenEditStoreDialogAsync(Guid id)
-    //{
-    //    var dialogParameters = new DialogParameters { ["StoreId"] = id };
-    //    var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
-    //    var result = await dialog.Result;
+        return result;
+    }
 
-    //    return result;
-    //}
-    //#endregion
+
+
+    public async Task<DialogResult?> OpenAddStoreDialogAsync(string initialName = "")
+    {
+        var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
+        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var result = await dialog.Result;
+
+        return result;
+    }
+
+    public async Task<DialogResult?> OpenEditStoreDialogAsync(Guid id)
+    {
+        var dialogParameters = new DialogParameters { ["StoreId"] = id };
+        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var result = await dialog.Result;
+
+        return result;
+    }
+    #endregion
 
 
     #region COPY TEXT

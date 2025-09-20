@@ -13,8 +13,9 @@ app.UseMyRequestLocalization();
 
 app.MapDefaultEndpoints();
 
+app.UseCors();
 app.UseAuthentication();
-//app.UseAuthorization();
+app.UseAuthorization();
 
 app.MapOpenApi();
 
@@ -22,12 +23,9 @@ await app.ApplyMigrationsAsync();
 
 app.UseHttpsRedirection();
 
-app.MapAuth0Endpoints();
-
 app.MapDocIntelApiForwarder();
 
 app.MapMyApiEndpoints();
-//app.MapApiEndpointsForwarder();
 
 await app.RunAsync();
 

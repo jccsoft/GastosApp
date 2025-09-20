@@ -13,8 +13,12 @@ public partial class Inicio : Migration
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.EnsureSchema(
+            name: Schemas.Default);
+
         migrationBuilder.CreateTable(
             name: "sizings",
+            schema: Schemas.Default,
             columns: table => new
             {
                 id = table.Column<int>(type: "integer", nullable: false)
@@ -28,6 +32,7 @@ public partial class Inicio : Migration
 
         migrationBuilder.CreateTable(
             name: "stores",
+            schema: Schemas.Default,
             columns: table => new
             {
                 id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -42,6 +47,7 @@ public partial class Inicio : Migration
 
         migrationBuilder.CreateTable(
             name: "products",
+            schema: Schemas.Default,
             columns: table => new
             {
                 id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -58,6 +64,7 @@ public partial class Inicio : Migration
                 table.ForeignKey(
                     name: "fk_products_sizings_sizing_id",
                     column: x => x.sizing_id,
+                    principalSchema: "rc",
                     principalTable: "sizings",
                     principalColumn: "id",
                     onDelete: ReferentialAction.Restrict);
@@ -65,6 +72,7 @@ public partial class Inicio : Migration
 
         migrationBuilder.CreateTable(
             name: "receipts",
+            schema: Schemas.Default,
             columns: table => new
             {
                 id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -79,6 +87,7 @@ public partial class Inicio : Migration
                 table.ForeignKey(
                     name: "fk_receipts_stores_store_id",
                     column: x => x.store_id,
+                    principalSchema: "rc",
                     principalTable: "stores",
                     principalColumn: "id",
                     onDelete: ReferentialAction.Restrict);
@@ -86,6 +95,7 @@ public partial class Inicio : Migration
 
         migrationBuilder.CreateTable(
             name: "receipt_items",
+            schema: Schemas.Default,
             columns: table => new
             {
                 id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -101,20 +111,23 @@ public partial class Inicio : Migration
                 table.ForeignKey(
                     name: "fk_receipt_items_products_product_id",
                     column: x => x.product_id,
+                    principalSchema: "rc",
                     principalTable: "products",
                     principalColumn: "id",
                     onDelete: ReferentialAction.Restrict);
                 table.ForeignKey(
                     name: "fk_receipt_items_receipts_receipt_id",
                     column: x => x.receipt_id,
+                    principalSchema: "rc",
                     principalTable: "receipts",
                     principalColumn: "id",
                     onDelete: ReferentialAction.Cascade);
             });
 
         migrationBuilder.InsertData(
+            schema: Schemas.Default,
             table: "sizings",
-            columns: new[] { "id", "name" },
+            columns: ["id", "name"],
             values: new object[,]
             {
                 { 1, "ml" },
@@ -127,46 +140,54 @@ public partial class Inicio : Migration
 
         migrationBuilder.CreateIndex(
             name: "ix_products_sizing_id",
+            schema: Schemas.Default,
             table: "products",
             column: "sizing_id");
 
         migrationBuilder.CreateIndex(
             name: "ix_products_user_id_name_units_pack_sizing_value",
+            schema: Schemas.Default,
             table: "products",
-            columns: new[] { "user_id", "name", "units_pack", "sizing_value" },
+            columns: ["user_id", "name", "units_pack", "sizing_value"],
             unique: true);
 
         migrationBuilder.CreateIndex(
             name: "ix_receipt_items_product_id",
+            schema: Schemas.Default,
             table: "receipt_items",
             column: "product_id");
 
         migrationBuilder.CreateIndex(
             name: "ix_receipt_items_receipt_id",
+            schema: Schemas.Default,
             table: "receipt_items",
             column: "receipt_id");
 
         migrationBuilder.CreateIndex(
             name: "ix_receipts_store_id",
+            schema: Schemas.Default,
             table: "receipts",
             column: "store_id");
 
         migrationBuilder.CreateIndex(
             name: "ix_receipts_user_id_source_id",
+            schema: Schemas.Default,
             table: "receipts",
-            columns: new[] { "user_id", "source_id" },
+            columns: ["user_id", "source_id"],
             unique: true);
 
         migrationBuilder.CreateIndex(
             name: "ix_sizings_name",
+            schema: Schemas.Default,
             table: "sizings",
             column: "name",
             unique: true);
 
         migrationBuilder.CreateIndex(
             name: "ix_stores_user_id_name",
+            schema: Schemas.Default,
             table: "stores",
-            columns: new[] { "user_id", "name" },
+            columns: ["user_id", "name"],
             unique: true);
     }
 
@@ -174,18 +195,23 @@ public partial class Inicio : Migration
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropTable(
-            name: "receipt_items");
+            name: "receipt_items",
+            schema: Schemas.Default);
 
         migrationBuilder.DropTable(
-            name: "products");
+            name: "products",
+            schema: Schemas.Default);
 
         migrationBuilder.DropTable(
-            name: "receipts");
+            name: "receipts",
+            schema: Schemas.Default);
 
         migrationBuilder.DropTable(
-            name: "sizings");
+            name: "sizings",
+            schema: Schemas.Default);
 
         migrationBuilder.DropTable(
-            name: "stores");
+            name: "stores",
+            schema: Schemas.Default);
     }
 }

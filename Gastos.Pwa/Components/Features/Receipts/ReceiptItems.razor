@@ -1,0 +1,42 @@
+﻿@inject LocalizationService Loc
+
+
+@if(_items is not null && _items.Any())
+{
+    <MudTable T="ReceiptItemDto" Items="_items" Class="bg-secondary" Style="--bs-bg-opacity: 0.15;"
+              Dense Hover Bordered>
+        <HeaderContent>
+            <MudTh></MudTh>
+            <MudTh Class="text-center">@Loc.Get(RS.FieldQuantity)</MudTh>
+            <MudTh Class="text-center">@(String.Format(Loc.Get(RS.FieldUnitPrice0), CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol))</MudTh>
+            <MudTh Class="text-center">@Loc.Get(RS.FieldAmount)</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="@Loc.Get(RS.EntityProduct)">@context.Product!.Name</MudTd>
+            <MudTd DataLabel="@Loc.Get(RS.FieldQuantity)" Class="text-center">@context.QuantityFormattedWithoutOne</MudTd>
+            <MudTd DataLabel="@(String.Format(Loc.Get(RS.FieldUnitPrice0), CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol))" Class="text-center">@context.UnitPriceFormatted</MudTd>
+            <MudTd DataLabel="@Loc.Get(RS.FieldAmount)" Class="text-center">@context.AmountFormatted</MudTd>
+        </RowTemplate>
+    </MudTable>    
+}
+
+
+@code {
+    [Parameter] public required List<ReceiptItemDto> Items { get; set; }
+    [Parameter] public string? SearchProductName { get; set; }
+
+    private List<ReceiptItemDto>? _items;
+
+    protected override void OnParametersSet()
+    {
+        IEnumerable<ReceiptItemDto> query = Items;
+
+        if (!string.IsNullOrEmpty(SearchProductName))
+        {
+            var search = SearchProductName.Trim().ToLower().RemoveAccents();
+            query = query.Where(i => i.Product!.Name!.ToLower().RemoveAccents().Contains(search));
+        }
+
+        _items = query.OrderBy(i => i.Product!.Name).ToList();
+    }
+}

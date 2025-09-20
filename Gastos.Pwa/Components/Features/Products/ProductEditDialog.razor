@@ -1,0 +1,186 @@
+@inject BlazorService BlazorService
+@inject IProductApi ProductApi
+@inject ISizingApi SizingApi
+@inject LocalizationService Loc
+@inject ProductClientValidator Validator
+
+@if (_loading)
+{
+    <Loading />
+}
+else if (_editingProduct is not null)
+{
+    <MudDialog>
+        <DialogContent>
+            <MudForm Model="_editingProduct" @ref="_form" Validation="@(Validator.ValidateValue)" ValidationDelay="0">
+
+                <MudTextField @bind-Value="_editingProduct.Name" Label="@Loc.Get(RS.FieldName)" 
+                              For="@(() => _editingProduct.Name)"
+                              @ref="_focusName" FullWidth Class="mb-5" />
+
+                <MudStack Row Class="mb-5" AlignItems="AlignItems.Baseline">
+                    <MudSelect T="int?" Value="_editingProduct.SizingId" ValueChanged="OnSizingChanged" Label="@Loc.Get(RS.FieldUnit)" 
+                               For="@(() => _editingProduct.SizingId)"
+                               FullWidth Dense Margin="Margin.Normal">
+                        <MudSelectItem T="int?" Value="null">@Loc.Get(RS.NoUnit)</MudSelectItem>
+                        @foreach (var sizing in _sizings)
+                        {
+                            <MudSelectItem T="int?" Value="@sizing.Id">@sizing.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudTextField T="decimal?" @bind-Value="_editingProduct!.SizingValue" Label="@_sizingLabel" 
+                                  For="@(() => _editingProduct.SizingValue)"
+                                  @ref="_focusSizing" Margin="Margin.Normal" Converter="BlazorService.DecimalConverter" />
+                    <MudNumericField T="int" @bind-Value="_editingProduct!.UnitsPack" Label="@Loc.Get(RS.FieldUnitsPack)" Min="1" For="@(() => _editingProduct.UnitsPack)" />
+                </MudStack>
+
+                <MudTextField @bind-Value="_editingProduct.ImageUrl" Label="@($"Url {Loc.Get(RS.FieldImage)}")" For="@(() => _editingProduct.ImageUrl)"
+                              FullWidth="true" Class="mb-5"/>
+
+            </MudForm>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
+            <MudButton OnClick="SubmitAsync" Variant="Variant.Filled"
+                       Color="@(_isEdit ? Color.Primary : Color.Success)">
+                @(_isEdit? Loc.Get(RS.ActSave) : Loc.Get(RS.ActCreate))
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid? ProductId { get; set; }
+    [Parameter] public string InitialName { get; set; } = string.Empty;
+
+    private ProductDto? _editingProduct;
+    private List<SizingDto> _sizings = new();
+    private bool _isEdit => ProductId.HasValue && ProductId != Guid.Empty;
+    private bool _loading = true;
+    private MudTextField<string>? _focusName;
+    private bool _firstFocus = false;
+    private MudTextField<decimal?>? _focusSizing;
+
+    private MudForm? _form;
+
+    private string _sizingLabel => _editingProduct!.SizingId switch
+    {
+        1 => Loc.Get(RS.SizingMilliliters),
+        2 => Loc.Get(RS.SizingCentiliters),
+        3 => Loc.Get(RS.SizingLiters),
+        4 => Loc.Get(RS.SizingGrams),
+        5 => Loc.Get(RS.SizingKilos),
+        6 => Loc.Get(RS.SizingUnits),
+        _ => Loc.Get(RS.SizingUnitValue)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSizingsAsync();
+
+        if (_isEdit)
+        {
+            var response = await ProductApi.GetByIdAsync(ProductId!.Value);
+            if (response.IsSuccessStatusCode && response.Content is not null)
+            {
+                _editingProduct = response.Content;
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+                MudDialog.Cancel();
+            }
+        }
+        else
+        {
+            _editingProduct = new ProductDto() { Name = InitialName };
+        }
+
+        _loading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_firstFocus && _focusName is not null)
+        {
+            await Task.Delay(100);
+            await _focusName.FocusAsync();
+            _firstFocus = true;
+            if(!_isEdit) await _focusName.SelectAsync();
+        }
+    }
+
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+
+        if (!_form!.IsValid)
+            return;
+
+        
+        if (_isEdit)
+        {
+            var response = await ProductApi.UpdateAsync(_editingProduct!);
+            if (response.IsSuccessStatusCode)
+            {
+                await CloseAndReturnProduct();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }
+        else
+        {
+            var response = await ProductApi.CreateAsync(_editingProduct!);
+            if (response.IsSuccessStatusCode)
+            {
+                await CloseAndReturnProduct();
+            }
+            else
+            {
+                BlazorService.ShowResponseError(response);
+            }
+        }        
+    }
+
+    private async Task LoadSizingsAsync()
+    {
+        var response = await SizingApi.GetAllAsync();
+        if (response.IsSuccessStatusCode && response.Content is List<SizingDto> sizings)
+        {
+            _sizings = sizings;
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+            MudDialog.Cancel();
+        }
+    }
+
+    private async Task OnSizingChanged(int? sizingId)
+    {
+        _editingProduct!.SizingId = sizingId;
+        await _focusSizing!.FocusAsync();
+    }
+
+    private async Task CloseAndReturnProduct()
+    {
+        var response = await ProductApi.GetByIdAsync(_editingProduct!.Id);
+        if (response.IsSuccessStatusCode && response.Content is ProductDto product)
+        {
+            MudDialog.Close(DialogResult.Ok(product));
+        }
+        else
+        {
+            BlazorService.ShowResponseError(response);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+}

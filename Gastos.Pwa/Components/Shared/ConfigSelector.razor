@@ -1,0 +1,75 @@
+@implements IDisposable
+
+@inject BlazorService BlazorService
+@inject LocalizationService Loc
+@inject ThemeService ThemeService
+
+
+<MudMenu>
+    <ActivatorContent>
+        <MudIconButton Icon="@Icons.Material.Filled.Settings" aria-label="configuración" Color="Color.Inherit" />
+    </ActivatorContent>
+    <ChildContent>
+
+        <MudMenu Label="@Loc.Get(RS.Language)" StartIcon="@Icons.Material.Filled.Language">
+            @foreach (var kvp in SupportedCultures.Cultures)
+            {
+                <MudMenuItem Label="@kvp.Value" OnClick="(() => OnCultureChangedAsync(kvp.Key))"
+                             Icon="@(kvp.Key == CultureInfo.CurrentCulture.Name ? Icons.Material.Filled.Check : null)" />
+            }
+        </MudMenu>
+
+        <MudMenu Label="@Loc.Get(RS.Themes)" StartIcon="@Icons.Material.Filled.Palette">
+            @foreach (var theme in _themes)
+            {
+                <MudMenuItem Label="@GetThemeDisplayName(theme)" OnClick="(() => OnThemeChangedAsync(theme))"
+                             Icon="@(theme == _currentTheme ? Icons.Material.Filled.Check : null)" />
+            }
+        </MudMenu>
+
+    </ChildContent>
+</MudMenu>
+
+
+@code {
+    private ThemeMode _currentTheme = ThemeMode.Auto;
+    private readonly ThemeMode[] _themes = [ThemeMode.Light, ThemeMode.Dark, ThemeMode.Auto];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _currentTheme = await ThemeService.GetThemeAsync();
+        ThemeService.ThemeChanged += OnThemeServiceChanged;
+    }
+
+    private async Task OnCultureChangedAsync(string culture)
+    {
+        await BlazorService.SetCultureAsync(culture);
+    }
+
+    private async Task OnThemeChangedAsync(ThemeMode theme)
+    {
+        await ThemeService.SetThemeAsync(theme);
+    }
+
+    private void OnThemeServiceChanged()
+    {
+        _currentTheme = ThemeService.CurrentTheme;
+        StateHasChanged();
+    }
+
+    private string GetThemeDisplayName(ThemeMode theme)
+    {
+        return theme switch
+        {
+            ThemeMode.Light => Loc.Get(RS.ThemeLight),
+            ThemeMode.Dark => Loc.Get(RS.ThemeDark),
+            ThemeMode.Auto => Loc.Get(RS.ThemeAuto),
+            _ => theme.ToString()
+        };
+    }
+
+    public void Dispose()
+    {
+        ThemeService.ThemeChanged -= OnThemeServiceChanged;
+    }
+}

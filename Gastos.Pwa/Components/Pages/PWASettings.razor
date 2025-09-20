@@ -1,0 +1,341 @@
+@page "/pwa-settings"
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+
+<PageTitle>Configuración PWA - Registro de Compras</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4">
+        <MudIcon Icon="Icons.Material.Filled.Settings" Class="mr-2" />
+        Configuración PWA
+    </MudText>
+
+    <MudGrid>
+        <!-- Información de Instalación -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Estado de Instalación</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (isInstalled)
+                    {
+                        <MudAlert Severity="Severity.Success" Icon="Icons.Material.Filled.CheckCircle">
+                            <MudText>La aplicación está instalada como PWA</MudText>
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Icon="Icons.Material.Filled.GetApp">
+                            <MudText>La aplicación puede instalarse como PWA</MudText>
+                        </MudAlert>
+                        
+                        @if (canInstall)
+                        {
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Primary" 
+                                     StartIcon="Icons.Material.Filled.GetApp"
+                                     OnClick="InstallPWA"
+                                     Class="mt-3">
+                                Instalar Aplicación
+                            </MudButton>
+                        }
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Información del Dispositivo -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Información del Dispositivo</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudSimpleTable Dense="true">
+                        <tbody>
+                            <tr>
+                                <td><strong>Plataforma:</strong></td>
+                                <td>@deviceInfo.Platform</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Navegador:</strong></td>
+                                <td>@deviceInfo.Browser</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Modo de Visualización:</strong></td>
+                                <td>@deviceInfo.DisplayMode</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Soporte PWA:</strong></td>
+                                <td>
+                                    @if (deviceInfo.SupportsPWA)
+                                    {
+                                        <MudChip T="string" Icon="Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small">Soportado</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Icon="Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small">No Soportado</MudChip>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Cache y Datos Offline -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Gestión de Cache</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body1" Class="mb-3">
+                        Tamaño aproximado del cache: <strong>@cacheSize</strong>
+                    </MudText>
+                    
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudButton Variant="Variant.Outlined" 
+                                     Color="Color.Info" 
+                                     StartIcon="Icons.Material.Filled.Refresh"
+                                     OnClick="UpdateCache"
+                                     FullWidth="true">
+                                Actualizar Cache
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudButton Variant="Variant.Outlined" 
+                                     Color="Color.Warning" 
+                                     StartIcon="Icons.Material.Filled.Clear"
+                                     OnClick="ClearCache"
+                                     FullWidth="true">
+                                Limpiar Cache
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Instrucciones de Instalación -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Instrucciones de Instalación</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTabs>
+                        <MudTabPanel Text="Windows">
+                            <div class="mt-3">
+                                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome/Edge:</strong></MudText>
+                                <ol>
+                                    <li>Busca el ícono de instalación en la barra de direcciones</li>
+                                    <li>Haz clic en "Instalar Registro de Compras"</li>
+                                    <li>La app aparecerá en el menú de inicio</li>
+                                </ol>
+                            </div>
+                        </MudTabPanel>
+                        <MudTabPanel Text="Android">
+                            <div class="mt-3">
+                                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome:</strong></MudText>
+                                <ol>
+                                    <li>Toca el menú de tres puntos (⋮)</li>
+                                    <li>Selecciona "Añadir a pantalla de inicio"</li>
+                                    <li>Confirma la instalación</li>
+                                </ol>
+                            </div>
+                        </MudTabPanel>
+                        <MudTabPanel Text="iOS">
+                            <div class="mt-3">
+                                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Safari:</strong></MudText>
+                                <ol>
+                                    <li>Toca el botón de compartir (□↗)</li>
+                                    <li>Selecciona "Añadir a pantalla de inicio"</li>
+                                    <li>Personaliza el nombre si es necesario</li>
+                                    <li>Toca "Añadir"</li>
+                                </ol>
+                            </div>
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private bool isInstalled = false;
+    private bool canInstall = false;
+    private string cacheSize = "Calculando...";
+    
+    private DeviceInfo deviceInfo = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await GetDeviceInfo();
+            await GetCacheInfo();
+            await CheckInstallStatus();
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetDeviceInfo()
+    {
+        try
+        {
+            var userAgent = await JS.InvokeAsync<string>("eval", "navigator.userAgent");
+            var platform = await JS.InvokeAsync<string>("eval", "navigator.platform");
+            var displayMode = await JS.InvokeAsync<string>("eval", "window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'");
+            
+            deviceInfo.Platform = platform;
+            deviceInfo.Browser = GetBrowserFromUserAgent(userAgent);
+            deviceInfo.DisplayMode = displayMode;
+            deviceInfo.SupportsPWA = CheckPWASupport(userAgent);
+        }
+        catch (Exception)
+        {
+            deviceInfo.Platform = "Desconocido";
+            deviceInfo.Browser = "Desconocido";
+            deviceInfo.DisplayMode = "browser";
+            deviceInfo.SupportsPWA = false;
+        }
+    }
+
+    private async Task GetCacheInfo()
+    {
+        try
+        {
+            // Estimar el tamaño del cache usando Storage API si está disponible
+            var result = await JS.InvokeAsync<string>("eval", @"
+                (async () => {
+                    if ('storage' in navigator && 'estimate' in navigator.storage) {
+                        const estimate = await navigator.storage.estimate();
+                        const used = estimate.usage || 0;
+                        return (used / 1024 / 1024).toFixed(2) + ' MB';
+                    }
+                    return 'No disponible';
+                })()
+            ");
+            cacheSize = result;
+        }
+        catch
+        {
+            cacheSize = "No disponible";
+        }
+    }
+
+    private async Task CheckInstallStatus()
+    {
+        try
+        {
+            isInstalled = await JS.InvokeAsync<bool>("eval", "window.matchMedia('(display-mode: standalone)').matches");
+            
+            // Verificar si se puede instalar
+            canInstall = await JS.InvokeAsync<bool>("eval", "'serviceWorker' in navigator");
+        }
+        catch
+        {
+            isInstalled = false;
+            canInstall = false;
+        }
+    }
+
+    private async Task InstallPWA()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", @"
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    const { outcome } = await window.deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        console.log('PWA installed');
+                    }
+                    window.deferredPrompt = null;
+                }
+            ");
+            Snackbar.Add("Aplicación instalada correctamente", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("No se pudo instalar la aplicación", Severity.Error);
+        }
+    }
+
+    private async Task UpdateCache()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", @"
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({command: 'update'});
+                }
+            ");
+            Snackbar.Add("Cache actualizado", Severity.Success);
+            await GetCacheInfo();
+        }
+        catch
+        {
+            Snackbar.Add("Error al actualizar el cache", Severity.Error);
+        }
+    }
+
+    private async Task ClearCache()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", @"
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                }
+            ");
+            Snackbar.Add("Cache limpiado", Severity.Success);
+            await GetCacheInfo();
+        }
+        catch
+        {
+            Snackbar.Add("Error al limpiar el cache", Severity.Error);
+        }
+    }
+
+    private string GetBrowserFromUserAgent(string userAgent)
+    {
+        if (userAgent.Contains("Edg/")) return "Microsoft Edge";
+        if (userAgent.Contains("Chrome/")) return "Google Chrome";
+        if (userAgent.Contains("Firefox/")) return "Mozilla Firefox";
+        if (userAgent.Contains("Safari/") && !userAgent.Contains("Chrome")) return "Safari";
+        return "Otro";
+    }
+
+    private bool CheckPWASupport(string userAgent)
+    {
+        // Verificar soporte básico para PWA
+        return userAgent.Contains("Chrome/") || 
+               userAgent.Contains("Edg/") || 
+               userAgent.Contains("Firefox/") ||
+               userAgent.Contains("Safari/");
+    }
+
+    public class DeviceInfo
+    {
+        public string Platform { get; set; } = "";
+        public string Browser { get; set; } = "";
+        public string DisplayMode { get; set; } = "";
+        public bool SupportsPWA { get; set; } = false;
+    }
+}

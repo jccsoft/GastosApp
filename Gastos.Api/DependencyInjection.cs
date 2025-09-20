@@ -13,6 +13,16 @@ public static class DependencyInjection
             .AddValidatorsFromAssemblyContaining<Gastos.Shared.IApplicationMarker>(ServiceLifetime.Scoped)
             .AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
+
         builder
             .AddAuth0Services()
             .AddDatabaseServices()
