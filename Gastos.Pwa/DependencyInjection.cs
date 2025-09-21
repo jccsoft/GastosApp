@@ -1,4 +1,6 @@
 using FluentValidation;
+using Gastos.Shared.Options;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Gastos.Pwa;
@@ -19,7 +21,11 @@ public static class DependencyInjection
             .AddScoped<ThemeService>()
             .AddScoped<INetworkStatusService, NetworkStatusService>();
 
+
         // Configuración OIDC para Auth0
+        var authOptions = builder.Configuration
+            .GetSection(Auth0Options.ConfigurationSection).Get<Auth0Options>();
+
         builder.Services.AddOidcAuthentication(options =>
         {
             // Usar configuración del archivo appsettings.json
@@ -36,19 +42,30 @@ public static class DependencyInjection
             options.ProviderOptions.DefaultScopes.Add("openid");
             options.ProviderOptions.DefaultScopes.Add("profile");
             options.ProviderOptions.DefaultScopes.Add("email");
-            options.ProviderOptions.DefaultScopes.Add("https://gastos-api"); // ✅ Agregar el audience como scope
+            options.ProviderOptions.DefaultScopes.Add(authOptions!.Audience);
 
             options.ProviderOptions.AdditionalProviderParameters.Add("federated", "");
-            options.ProviderOptions.AdditionalProviderParameters.Add("audience", "https://gastos-api"); // ✅ Especificar audience
+            options.ProviderOptions.AdditionalProviderParameters.Add("audience", authOptions!.Audience);
         });
 
 
-        builder.Services.AddTransient<BearerTokenHttpHandler>();
 
         var apiBaseAddress = builder.Configuration["ApiBaseAddress"] ?? "";
-        builder.Services.AddRefitClients(
-            baseUrl: apiBaseAddress,
-            addHandler: true);
+
+        builder.Services.AddTransient(sp =>
+        {
+            //var authHandler = sp.GetRequiredService<AuthorizationMessageHandler>();
+            var logger = sp.GetRequiredService<ILogger<BearerTokenHttpHandler>>();
+            var tokenProvider = sp.GetRequiredService<IAccessTokenProvider>();
+
+            //authHandler.ConfigureHandler(
+            //    authorizedUrls: [apiBaseAddress],
+            //    scopes: [authOptions!.Audience]);
+
+            return new BearerTokenHttpHandler(tokenProvider, logger);
+        });
+
+        builder.Services.AddRefitClients(apiBaseAddress);
 
         return builder;
     }

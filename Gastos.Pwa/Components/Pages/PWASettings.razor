@@ -180,7 +180,7 @@
     private bool canInstall = false;
     private string cacheSize = "Calculando...";
     
-    private DeviceInfo deviceInfo = new();
+    private readonly DeviceInfo deviceInfo = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

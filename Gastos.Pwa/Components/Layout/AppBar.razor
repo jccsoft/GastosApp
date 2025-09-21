@@ -64,18 +64,6 @@
         StateContainer.BreakpointChanged -= OnBreakpointChanged;
     }
 
-    private static bool IsDebug
-    {
-        get
-        {
-#if DEBUG
-            return true;
-#else
-            return false;
-#endif
-        }
-    }
-
     private void BeginLogout()
     {
         Navigation.NavigateToLogout("/authentication/logout");

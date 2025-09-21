@@ -8,16 +8,15 @@ public static class RefitExtensions
 {
     public static IServiceCollection AddRefitClients(
         this IServiceCollection services,
-        string baseUrl,
-        bool addHandler = true)
+        string baseUrl)
     {
         services
-            .AddRefitClient<IDocIntelApi>(baseUrl, addHandler)
-            .AddRefitClient<IProductApi>(baseUrl, addHandler)
-            .AddRefitClient<IStoreApi>(baseUrl, addHandler)
-            .AddRefitClient<IReceiptApi>(baseUrl, addHandler)
-            .AddRefitClient<ISizingApi>(baseUrl, addHandler)
-            .AddRefitClient<IStatApi>(baseUrl, addHandler);
+            .AddRefitClient<IDocIntelApi>(baseUrl)
+            .AddRefitClient<IProductApi>(baseUrl)
+            .AddRefitClient<IStoreApi>(baseUrl)
+            .AddRefitClient<IReceiptApi>(baseUrl)
+            .AddRefitClient<ISizingApi>(baseUrl)
+            .AddRefitClient<IStatApi>(baseUrl);
 
         return services;
     }
@@ -25,39 +24,22 @@ public static class RefitExtensions
 
     private static IServiceCollection AddRefitClient<TInterface>(
         this IServiceCollection services,
-        string baseUrl,
-        bool addHandler)
+        string baseUrl)
         where TInterface : class
     {
-        void configClient(HttpClient c) { c.BaseAddress = new Uri(baseUrl); }
+        void configClient(HttpClient c)
+        {
+            c.BaseAddress = new Uri(baseUrl);
+            c.Timeout = TimeSpan.FromSeconds(30);
+        }
+
         RefitSettings settings = new() { UrlParameterFormatter = new IsoDateTimeUrlParameterFormatter() };
 
         var builder = services
             .AddRefitClient<TInterface>(settings)
             .ConfigureHttpClient(configClient);
 
-        if (addHandler)
-            builder.AddHttpMessageHandler<BearerTokenHttpHandler>();
-
-        //builder.AddStandardResilienceHandler(options =>
-        //{
-        //    // Configure retry policy to exclude Unauthorized responses
-        //    options.Retry.ShouldHandle = args =>
-        //    {
-        //        // Don't retry on Unauthorized responses
-        //        if (args.Outcome.Result?.StatusCode == HttpStatusCode.Unauthorized)
-        //        {
-        //            return ValueTask.FromResult(false);
-        //        }
-
-        //        // For other cases, retry on exceptions or non-success status codes (except Unauthorized)
-        //        var shouldRetry = args.Outcome.Exception is not null ||
-        //                         (args.Outcome.Result?.IsSuccessStatusCode == false &&
-        //                          args.Outcome.Result?.StatusCode != HttpStatusCode.Unauthorized);
-
-        //        return ValueTask.FromResult(shouldRetry);
-        //    };
-        //});
+        builder.AddHttpMessageHandler<BearerTokenHttpHandler>();
 
         return services;
     }

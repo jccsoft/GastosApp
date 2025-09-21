@@ -1,4 +1,4 @@
-﻿namespace Gastos.Api.Shared.Options;
+﻿namespace Gastos.Shared.Options;
 
 public sealed class Auth0Options
 {
