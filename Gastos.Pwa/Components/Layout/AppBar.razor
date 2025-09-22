@@ -1,12 +1,12 @@
-﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+﻿@implements IDisposable
 @inject NavigationManager Navigation
-
-
-@implements IDisposable
 @inject StateContainer StateContainer
 @inject LocalizationService Loc
 
 <MudAppBar Elevation="3" Dense>
+
+    <NoNetworkChip />
+
     @if (StateContainer.IsMobile)
     {
         <Menu MenuType="superior" />
@@ -55,6 +55,11 @@
         StateContainer.BreakpointChanged += OnBreakpointChanged;
     }
 
+    private void BeginLogout()
+    {
+        Navigation.NavigateToLogout("/authentication/logout");
+    }
+
     private void OnPageTitleChanged() => StateHasChanged();
     private void OnBreakpointChanged() => StateHasChanged();
 
@@ -62,10 +67,5 @@
     {
         StateContainer.PageTitleChanged -= OnPageTitleChanged;
         StateContainer.BreakpointChanged -= OnBreakpointChanged;
-    }
-
-    private void BeginLogout()
-    {
-        Navigation.NavigateToLogout("/authentication/logout");
     }
 }

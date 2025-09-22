@@ -1,0 +1,46 @@
+﻿@implements IAsyncDisposable
+@inject INetworkStatusService NetworkService
+@inject LocalizationService Loc
+
+@if (!isOnline)
+{
+    <MudChip T="string" Icon="@Icons.Material.Filled.CloudOff" IconColor="Color.Warning"
+             Variant="Variant.Text" Color="Color.Warning">
+        @Loc.Get(RS.NoNetworkMessage)
+    </MudChip>
+}
+
+@code {
+    private bool isOnline = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize network service
+        if (NetworkService is NetworkStatusService networkService)
+        {
+            await networkService.InitializeAsync();
+        }
+
+        // Subscribe to network changes
+        NetworkService.NetworkStatusChanged += OnNetworkStatusChanged;
+
+        // Get initial network status
+        isOnline = await NetworkService.IsOnlineAsync();
+    }
+
+    private void OnNetworkStatusChanged(bool online)
+    {
+        isOnline = online;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        NetworkService.NetworkStatusChanged -= OnNetworkStatusChanged;
+        if (NetworkService is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync();
+        }
+    }
+
+}

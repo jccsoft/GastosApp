@@ -492,4 +492,7 @@
   <data name="HomeTextInstallPwa" xml:space="preserve">
     <value>Puedes instalarla en tu dispositivo para acceder rápidamente desde el escritorio o pantalla de inicio.</value>
   </data>
+  <data name="NoNetworkMessage" xml:space="preserve">
+    <value>Sin conexión</value>
+  </data>
 </root>

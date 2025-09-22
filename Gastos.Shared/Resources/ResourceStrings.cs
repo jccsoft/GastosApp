@@ -88,6 +88,7 @@ public enum ResourceStrings
     SizingUnits,
     SizingUnitValue,
     NoUnit,
+    NoNetworkMessage,
     PendingReceipts,
     Reading0,
     ReadReceipts,
