@@ -12,8 +12,7 @@ public static class StoreEndpoints
         {
             try
             {
-                var userId = httpContext.GetUserId();
-                var pagedStores = await storeRepo.GetAllAsync(userId, parameters, token);
+                var pagedStores = await storeRepo.GetAllAsync(httpContext.GetUserId(), parameters, token);
 
                 var response = pagedStores.ToDto(store => store.ToDto());
 

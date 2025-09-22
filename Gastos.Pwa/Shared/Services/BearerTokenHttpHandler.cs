@@ -38,12 +38,18 @@ public class BearerTokenHttpHandler(
         {
             logger.LogWarning(ex, "🔐 Token no disponible, redirigiendo al login");
             ex.Redirect();
-            throw;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
+            {
+                RequestMessage = request
+            };
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "💥 Error en request");
-            throw;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError)
+            {
+                RequestMessage = request
+            };
         }
     }
 }

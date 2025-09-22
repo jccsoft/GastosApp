@@ -26,8 +26,7 @@ public static class MappingExtensions
             UnitsPack = product.UnitsPack,
             SizingId = product.SizingId,
             SizingValue = product.SizingValue,
-            Sizing = product.Sizing?.ToDto(),
-            ReceiptItems = product.ReceiptItems?.Select(ri => ri.ToDto()).ToList() ?? []
+            Sizing = product.Sizing?.ToDto()
         };
     }
 
@@ -38,8 +37,7 @@ public static class MappingExtensions
             Id = store.Id,
             UserId = store.UserId,
             Name = store.Name,
-            SourceName = store.SourceName,
-            Receipts = store.Receipts?.Select(r => r.ToDto()).ToList() ?? []
+            SourceName = store.SourceName
         };
     }
 
@@ -63,7 +61,6 @@ public static class MappingExtensions
         {
             Id = item.Id,
             ReceiptId = item.ReceiptId,
-            Receipt = item.Receipt.ToDto(),
             ProductId = item.ProductId,
             Product = item.Product?.ToDto(),
             SourceDescription = item.SourceDescription,
@@ -77,8 +74,7 @@ public static class MappingExtensions
         return new SizingDto
         {
             Id = sizing.Id,
-            Name = sizing.Name,
-            Products = sizing.Products?.Select(p => p.ToDto()).ToList() ?? []
+            Name = sizing.Name
         };
     }
 

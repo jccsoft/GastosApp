@@ -13,10 +13,4 @@ builder.Services.AddMudServices();
 
 builder.AddMyPwaServices();
 
-// ✅ Configurar logging detallado
-builder.Logging
-    .SetMinimumLevel(LogLevel.Debug)
-    .AddFilter("Microsoft.AspNetCore.Components.WebAssembly.Authentication", LogLevel.Debug)
-    .AddFilter("System.Net.Http", LogLevel.Debug);
-
 await builder.Build().RunAsync();

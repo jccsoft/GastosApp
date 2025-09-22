@@ -33,6 +33,7 @@ public class ProductRepository(AppDbContext context) : IProductRepository
         query = query.OrderBy(p => p.Name);
 
         var pagedResponse = await ApiPagedResponse<Product>.CreateAsync(
+            userId,
             query,
             parameters.Page,
             parameters.PageSize);

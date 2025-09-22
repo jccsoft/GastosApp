@@ -1,4 +1,5 @@
-﻿@implements IDisposable
+﻿@using System.Security.Claims
+@implements IDisposable
 @inject IReceiptApi ReceiptApi
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -71,7 +72,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await provider.GetAuthenticationStateAsync();
+        var authState = await provider.GetAuthenticationStateAsync();        
         _currentUserId = authState.User.GetUserId();
     }
 

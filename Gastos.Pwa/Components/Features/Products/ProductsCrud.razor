@@ -5,6 +5,7 @@
 @inject StateContainer StateContainer
 @inject BlazorService BlazorService
 @inject LocalizationService Loc
+@inject AuthenticationStateProvider provider
 
 
 <Alert Message="@_errorMessage" />
@@ -52,11 +53,18 @@
     private string _errorMessage = "";
     private bool _allowRemove = false;
     private Guid _selectedProductId = Guid.Empty;
-    private readonly string[] _columns = new[] { "","", "" };
+    private readonly string[] _columns = new[] { "", "", "" };
+    private string _currentUserId = "";
 
     protected override void OnInitialized()
     {
         StateContainer.BreakpointChanged += OnBreakpointChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await provider.GetAuthenticationStateAsync();
+        _currentUserId = authState.User.GetUserId();
     }
 
     private async Task<TableData<ProductDto>> ServerReload(TableState state, CancellationToken token)
@@ -70,14 +78,22 @@
         var response = await ProductApi.GetAllAsync(_parameters, token);
         if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ProductDto> pagedResponse)
         {
-            output.Items = pagedResponse.Items;
-            output.TotalItems = pagedResponse.TotalItems;
-            StateHasChanged();
+            if (pagedResponse.UserId != _currentUserId)
+            {
+                _errorMessage = Loc.Get(RS.ErrorUserMismatch);
+            }
+            else
+            {
+                output.Items = pagedResponse.Items;
+                output.TotalItems = pagedResponse.TotalItems;
+            }
         }
         else
         {
             _errorMessage = BlazorService.GetResponseError(response);
         }
+
+        StateHasChanged();
 
         return output;
     }

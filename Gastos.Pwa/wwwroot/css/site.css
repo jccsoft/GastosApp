@@ -1,0 +1,36 @@
+﻿.mud-navmenu.mud-navmenu-default .mud-nav-link.active:not(.mud-nav-link-disabled) {
+    color: white;
+}
+
+.mud-toolbar-appbar {
+    background-color: var(--mud-palette-app-background);
+}
+
+.mud-drawer-content {
+    background-color: var(--mud-palette-drawer-background);
+}
+
+.mud-table-row:hover:not(.row-detail) {
+    background-color: var(--mud-palette-table-striped ) !important;
+}
+
+.cell-detail thead {
+    background-color: rgb(255, 255, 255, .05) !important;
+}
+
+.product-text {
+    padding-top: 22px !important;
+    padding-bottom: 16px !important;
+}
+
+.product-image {
+    max-height: 3rem;
+    opacity: 0.5;
+}
+
+    .product-image:hover {
+        position: relative;
+        transform: scale(3);
+        opacity: 1;
+        z-index: 1;
+    }

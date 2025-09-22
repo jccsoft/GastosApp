@@ -29,7 +29,10 @@ public static class UserExtensions
     {
         if (user.HasNoClaims()) return DemoUserId;
 
-        var claim = user.GetClaim_NameIdentifier();
+        var claim = user.GetClaim_Sub();
+        if (claim is not null) return claim.Value;
+
+        claim = user.GetClaim_NameIdentifier();
         if (claim is not null) return claim.Value;
 
         claim = user.GetClaim_ObjectIdentifier();
@@ -73,6 +76,7 @@ public static class UserExtensions
     private static Claim? GetClaim_NameIdentifier(this ClaimsPrincipal user) => user.Claims.FirstOrDefault(c => c.Type.Contains("nameidentifier"));
     private static Claim? GetClaim_ObjectIdentifier(this ClaimsPrincipal user) => user.Claims.FirstOrDefault(c => c.Type.Contains("objectidentifier") || c.Type == "oid");
     private static Claim? GetClaim_Name(this ClaimsPrincipal user) => user.Claims.FirstOrDefault(c => c.Type == "name");
+    private static Claim? GetClaim_Sub(this ClaimsPrincipal user) => user.Claims.FirstOrDefault(c => c.Type == "sub");
     private static Claim? GetClaim_PreferredName(this ClaimsPrincipal user) => user.Claims.FirstOrDefault(c => c.Type.Contains("preferred_username"));
     private static Claim? GetClaim_EMail(this ClaimsPrincipal user) => user.Claims.FirstOrDefault(c => c.Type.Contains("mail"));
 

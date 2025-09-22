@@ -32,6 +32,7 @@ public class StoreRepository(AppDbContext context) : IStoreRepository
         query = query.OrderBy(s => s.Name);
 
         var pagedResponse = await ApiPagedResponse<Store>.CreateAsync(
+            userId,
             query,
             parameters.Page,
             parameters.PageSize);

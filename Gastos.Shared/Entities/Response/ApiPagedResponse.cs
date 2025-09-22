@@ -18,6 +18,7 @@ public sealed record ApiPagedResponse<T>
 
 
     public static async Task<ApiPagedResponse<T>> CreateAsync(
+        string userId,
         IQueryable<T> query,
         int page,
         int pageSize)
@@ -31,6 +32,7 @@ public sealed record ApiPagedResponse<T>
 
         return new ApiPagedResponse<T>
         {
+            UserId = userId,
             Items = items,
             Page = page,
             PageSize = pageSize,

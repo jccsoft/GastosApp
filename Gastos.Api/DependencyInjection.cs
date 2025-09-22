@@ -24,7 +24,7 @@ public static class DependencyInjection
         });
 
         builder
-            .AddAuth0Services()
+            .AddAuthServices()
             .AddDatabaseServices()
             .AddRepoServices();
 

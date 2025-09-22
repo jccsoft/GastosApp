@@ -46,11 +46,10 @@ public class ReceiptRepository(AppDbContext context) : IReceiptRepository
         query = query.OrderByDescending(r => r.TransactionDateUtc);
 
         var pagedResponse = await ApiPagedResponse<Receipt>.CreateAsync(
+            userId,
             query,
             parameters.Page,
             parameters.PageSize);
-
-        pagedResponse.UserId = userId;
 
         return pagedResponse;
     }
