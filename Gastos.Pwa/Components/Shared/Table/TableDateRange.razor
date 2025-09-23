@@ -2,9 +2,11 @@
 
 <MudStack Row Spacing="2" Class="date-range-filter">
     <MudDatePicker Date="@_fromDate" DateChanged="OnDateStartChanged" Label="@Loc.Get(RS.FieldDateFrom)" 
-                   DateFormat="@DateFormat" Clearable="@Clearable" HelperText="@DateStartHelperText" Variant="Variant.Text" />
+                   DateFormat="@DateFormat" Clearable="@Clearable" HelperText="@DateStartHelperText" 
+                   Variant="Variant.Text" />
     <MudDatePicker Date="@_toDate" DateChanged="OnDateEndChange" Label="@Loc.Get(RS.FieldDateTo)" 
-                   DateFormat="@DateFormat" Clearable="@Clearable" HelperText="@DateEndHelperText" Variant="Variant.Text" />
+                   DateFormat="@DateFormat" Clearable="@Clearable" HelperText="@DateEndHelperText" 
+                   Variant="Variant.Text" />
 </MudStack>
 
 @code {

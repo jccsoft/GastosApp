@@ -69,6 +69,7 @@ public enum ResourceStrings
     FieldUnitPrice0,
     FieldUnitsPack,
     InfoProducts0,
+    InfoReadingReceipts,
     InfoReceipts0,
     InfoStats0,
     InfoStores0,

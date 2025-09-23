@@ -495,4 +495,7 @@
   <data name="NoNetworkMessage" xml:space="preserve">
     <value>No connection</value>
   </data>
+  <data name="InfoReadingReceipts" xml:space="preserve">
+    <value>Read new reeipts from PDF, images or photos</value>
+  </data>
 </root>

@@ -1,4 +1,8 @@
-﻿.mud-navmenu.mud-navmenu-default .mud-nav-link.active:not(.mud-nav-link-disabled) {
+﻿html {
+    font-size: 16px;
+}
+
+.mud-navmenu.mud-navmenu-default .mud-nav-link.active:not(.mud-nav-link-disabled) {
     color: white;
 }
 
@@ -34,3 +38,18 @@
         opacity: 1;
         z-index: 1;
     }
+
+
+.menu-card-button {
+    /*background-color: red;*/
+    transition: background-color 0.3s ease;
+}
+
+    .menu-card-button:hover {
+        background-color: var(--mud-palette-primary) !important;
+    }
+@media screen and (max-width: 576px) {
+    html {
+        font-size: 14px;
+    }
+}

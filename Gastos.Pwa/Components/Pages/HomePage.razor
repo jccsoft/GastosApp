@@ -1,0 +1,81 @@
+@page "/"
+@inject LocalizationService Loc
+@inject PwaService PwaService
+
+<PageHeading Title="@Loc.Get(RS.AppTitle)" IsHome="true" />
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <AuthorizeView>
+        <Authorized>
+            <MudText Typo="Typo.h4" GutterBottom="true" Class="my-5">@Greeting(context.User.GetUserName())</MudText>
+            <MudText>@_welcomeText</MudText>
+            <br />
+            @if (!_isInstalled)
+            {
+                <MudText>@Loc.Get(RS.HomeTextInstallPwa)</MudText>                
+            }
+        </Authorized>
+        <NotAuthorized>
+            <MudText Typo="Typo.h4" GutterBottom="true" Class="my-5">@Greeting("")</MudText>
+            <MudText>@_welcomeText</MudText>
+            @if (!_isInstalled)
+            {
+                <MudText>@Loc.Get(RS.HomeTextInstallPwa)</MudText>
+            }
+            <MudText Class="mt-5">@_unauthorizedText</MudText>
+        </NotAuthorized>
+    </AuthorizeView>
+
+    <MudGrid Class="mt-5">
+        <MudItem xs="12" sm="6" md="2">
+            <MenuCard Href="/ticket-reading" Color="Color.Success" Icon="@Icons.Material.Filled.ReadMore"
+                      Title="@(string.Format(Loc.Get(RS.Reading0), Loc.Get(RS.EntityReceipts)))" 
+                      Description="@Loc.Get(RS.InfoReadingReceipts)" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MenuCard Href="/receipts" Color="Color.Info" Icon="@Icons.Material.Filled.ReceiptLong" 
+                      Title="@Loc.Get(RS.EntityReceipts)" 
+                      Description="@(string.Format(Loc.Get(RS.InfoReceipts0),Loc.Get(RS.EntityReceipts)))" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MenuCard Href="/products" Color="Color.Info" Icon="@Icons.Material.Filled.Article"
+                      Title="@Loc.Get(RS.EntityProducts)" 
+                      Description="@(string.Format(Loc.Get(RS.InfoProducts0), Loc.Get(RS.EntityProducts)))" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MenuCard Href="/stores" Color="Color.Info" Icon="@Icons.Material.Filled.Storefront"
+                      Title="@Loc.Get(RS.EntityStores)" 
+                      Description="@(string.Format(Loc.Get(RS.InfoStores0), Loc.Get(RS.EntityStores)))" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="2">
+            <MenuCard Href="/stats" Color="Color.Primary" Icon="@Icons.Material.Filled.QueryStats"
+                      Title="@Loc.Get(RS.EntityStats)" 
+                      Description="@(string.Format(Loc.Get(RS.InfoStats0), Loc.Get(RS.EntityStats)))" />
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private bool _isInstalled = false;
+    private bool _canInstall = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isInstalled = await PwaService.IsInstalledAsync();
+            _canInstall = await PwaService.CanInstallAsync();
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private string Greeting(string username) => string.Format(Loc.Get(RS.Hello0), username);
+    private MarkupString _welcomeText => (MarkupString)(string.Format(Loc.Get(RS.HomeTextWellcome0), $"<strong>{Loc.Get(RS.AppTitle)}</strong>"));
+    private string _unauthorizedText => string.Format(Loc.Get(RS.HomeTextLoginToStart0), Loc.Get(RS.ActLogin));
+}

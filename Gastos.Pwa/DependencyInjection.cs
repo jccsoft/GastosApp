@@ -13,6 +13,7 @@ public static class DependencyInjection
             .AddScoped<StateContainer>()
             .AddScoped<BlazorService>()
             .AddScoped<ThemeService>()
+            .AddScoped<PwaService>()
             .AddScoped<INetworkStatusService, NetworkStatusService>();
 
         builder.AddAuthServices();

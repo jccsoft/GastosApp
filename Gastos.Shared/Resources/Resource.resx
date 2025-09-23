@@ -495,4 +495,7 @@
   <data name="NoNetworkMessage" xml:space="preserve">
     <value>Sin conexión</value>
   </data>
+  <data name="InfoReadingReceipts" xml:space="preserve">
+    <value>Lee nuevos tíquets desde pdf, imágenes o fotos</value>
+  </data>
 </root>
