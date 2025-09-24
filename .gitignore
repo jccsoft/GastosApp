@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /Gastos.Api/appsettings.Development.json
 /Gastos.Pwa/wwwroot/appsettings.Development.json
+/scripts
+/DEPLOYMENT-SUMMARY.md
+/README-Azure.md

@@ -4,6 +4,7 @@
     <File Path="Auth0Config.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
+    <File Path="docs/azure-deployment.md" />
     <File Path="DuplicarRegistros.txt" />
     <File Path="Info.txt" />
     <File Path="README.md" />

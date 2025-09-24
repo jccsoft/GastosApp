@@ -1,0 +1,115 @@
+name: Deploy Gastos App to Azure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  API_PROJECT_PATH: 'Gastos.Api/Gastos.Api.csproj'
+  PWA_PROJECT_PATH: 'Gastos.Pwa/Gastos.Pwa.csproj'
+
+jobs:
+  build-and-deploy-api:
+    runs-on: ubuntu-latest
+    name: Deploy API to Azure App Service
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    
+    steps:
+    - name: 🛒 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🔄 Restore dependencies
+      run: dotnet restore
+      
+    - name: 🏗️ Build API
+      run: dotnet build ${{ env.API_PROJECT_PATH }} --no-restore --configuration Release
+      
+    - name: 🧪 Run tests
+      run: dotnet test --no-build --verbosity normal --configuration Release
+      
+    - name: 📦 Publish API
+      run: dotnet publish ${{ env.API_PROJECT_PATH }} -c Release -o ./api-publish --no-build
+      
+    - name: 🚀 Deploy to Azure App Service
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'jcdcGastosApi'
+        publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+        package: ./api-publish
+        
+    - name: ✅ API Deployment Success
+      run: |
+        echo "✅ API deployed successfully to: https://jcdcgastosapi.azurewebsites.net"
+        echo "🔍 Check API health: https://jcdcgastosapi.azurewebsites.net/health"
+
+  build-and-deploy-pwa:
+    runs-on: ubuntu-latest
+    name: Deploy PWA to Azure Static Web Apps
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    
+    steps:
+    - name: 🛒 Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        lfs: false
+        
+    - name: 🔧 Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🌐 Build and Deploy PWA
+      id: builddeploy
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "./Gastos.Pwa"
+        output_location: "wwwroot"
+        app_build_command: "dotnet publish -c Release"
+        
+    - name: ✅ PWA Deployment Success
+      run: |
+        echo "✅ PWA deployed successfully to: https://thankful-desert-0e532df03.1.azurestaticapps.net"
+        echo "🔍 Check PWA health: https://thankful-desert-0e532df03.1.azurestaticapps.net"
+
+  # Job that only runs on PRs to validate builds
+  validate-pr:
+    runs-on: ubuntu-latest
+    name: Validate PR Build
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: 🛒 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup .NET ${{ env.DOTNET_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🔄 Restore dependencies
+      run: dotnet restore
+      
+    - name: 🏗️ Build API
+      run: dotnet build ${{ env.API_PROJECT_PATH }} --no-restore --configuration Release
+      
+    - name: 🏗️ Build PWA
+      run: dotnet build ${{ env.PWA_PROJECT_PATH }} --no-restore --configuration Release
+      
+    - name: 🧪 Run tests
+      run: dotnet test --no-build --verbosity normal --configuration Release
+      
+    - name: ✅ PR Validation Success
+      run: echo "✅ All builds and tests passed for PR!"

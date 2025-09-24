@@ -17,9 +17,24 @@ public static class DependencyInjection
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
+                if (builder.Environment.IsDevelopment())
+                {
+                    // Allow any origin in development
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                }
+                else
+                {
+                    // Production: only allow specific origins
+                    policy.WithOrigins(
+                        "https://thankful-desert-0e532df03.1.azurestaticapps.net",
+                        "https://jcdcgastosapi.azurewebsites.net"
+                    )
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+                }
             });
         });
 
