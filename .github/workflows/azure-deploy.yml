@@ -27,6 +27,19 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
+    - name: 🔐 Configure local NuGet source
+      run: |
+        # Create .nuget-local directory if it doesn't exist
+        mkdir -p .nuget-local
+        
+        # Add local NuGet source if packages exist
+        if [ -d ".nuget-local" ] && [ "$(ls -A .nuget-local)" ]; then
+          dotnet nuget add source "$(pwd)/.nuget-local" --name "local-packages"
+        fi
+        
+        # List configured sources for debugging
+        dotnet nuget list source
+        
     - name: 🔄 Restore dependencies
       run: dotnet restore
       
@@ -68,21 +81,39 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: 🌐 Build and Deploy PWA
+    - name: 🔐 Configure local NuGet source  
+      run: |
+        mkdir -p .nuget-local
+        if [ -d ".nuget-local" ] && [ "$(ls -A .nuget-local)" ]; then
+          dotnet nuget add source "$(pwd)/.nuget-local" --name "local-packages"
+        fi
+        
+    - name: 🔄 Restore PWA dependencies
+      run: dotnet restore ${{ env.PWA_PROJECT_PATH }}
+        
+    - name: 🏗️ Build PWA
+      run: dotnet build ${{ env.PWA_PROJECT_PATH }} --no-restore --configuration Release
+        
+    - name: 📦 Publish PWA
+      run: dotnet publish ${{ env.PWA_PROJECT_PATH }} -c Release -o ./pwa-publish
+        
+    - name: 🌐 Deploy to Azure Static Web Apps
       id: builddeploy
       uses: Azure/static-web-apps-deploy@v1
       with:
         azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: "upload"
-        app_location: "./Gastos.Pwa"
-        output_location: "wwwroot"
-        app_build_command: "dotnet publish -c Release"
+        # Use the pre-built output
+        app_location: "./pwa-publish/wwwroot"
+        # No build needed since we pre-built
+        skip_app_build: true
+        # No output location needed since we're using pre-built
         
     - name: ✅ PWA Deployment Success
       run: |
-        echo "✅ PWA deployed successfully to: https://thankful-desert-0e532df03.1.azurestaticapps.net"
-        echo "🔍 Check PWA health: https://thankful-desert-0e532df03.1.azurestaticapps.net"
+        echo "✅ PWA deployed successfully to: https://jcdcgastosapp.azurestaticapps.net"
+        echo "🔍 Check PWA health: https://jcdcgastosapp.azurestaticapps.net"
 
   # Job that only runs on PRs to validate builds
   validate-pr:
@@ -98,6 +129,13 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🔐 Configure local NuGet source
+      run: |
+        mkdir -p .nuget-local
+        if [ -d ".nuget-local" ] && [ "$(ls -A .nuget-local)" ]; then
+          dotnet nuget add source "$(pwd)/.nuget-local" --name "local-packages"
+        fi
         
     - name: 🔄 Restore dependencies
       run: dotnet restore
