@@ -81,13 +81,6 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: 🔐 Configure local NuGet source PWA 
-      run: |
-        mkdir -p .nuget-local
-        if [ -d ".nuget-local" ] && [ "$(ls -A .nuget-local)" ]; then
-          dotnet nuget add source "$(pwd)/.nuget-local" --name "local-packages"
-        fi
-        
     - name: 🔄 Restore PWA dependencies
       run: dotnet restore ${{ env.PWA_PROJECT_PATH }}
         
