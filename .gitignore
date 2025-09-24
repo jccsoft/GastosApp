@@ -206,6 +206,9 @@ PublishScripts/
 *.nuget.props
 *.nuget.targets
 
+# EXCEPCIÓN: Permitir paquetes NuGet locales en .nuget-local
+!.nuget-local/*.nupkg
+
 # Microsoft Azure Build Output
 csx/
 *.build.csdef
