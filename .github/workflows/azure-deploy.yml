@@ -27,7 +27,7 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: 🔐 Configure local NuGet source
+    - name: 🔐 Configure local NuGet source API
       run: |
         # Create .nuget-local directory if it doesn't exist
         mkdir -p .nuget-local
@@ -81,7 +81,7 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: 🔐 Configure local NuGet source  
+    - name: 🔐 Configure local NuGet source PWA 
       run: |
         mkdir -p .nuget-local
         if [ -d ".nuget-local" ] && [ "$(ls -A .nuget-local)" ]; then
