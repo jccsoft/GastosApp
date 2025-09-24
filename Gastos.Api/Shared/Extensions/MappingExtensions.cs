@@ -139,7 +139,7 @@ public static class MappingExtensions
         {
             Id = dto.Id,
             ReceiptId = dto.ReceiptId,
-            Receipt = dto.Receipt.ToEntity(),
+            Receipt = null!, // avoid circular reference
             ProductId = dto.ProductId,
             Product = dto.Product?.ToEntity(),
             SourceDescription = dto.SourceDescription,
