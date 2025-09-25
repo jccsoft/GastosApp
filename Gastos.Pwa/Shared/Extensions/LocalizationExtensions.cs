@@ -1,4 +1,4 @@
-﻿using Gastos.Shared.Resources;
+﻿using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using static Gastos.Shared.Resources.LocalizationConstants;
 
 namespace Gastos.Pwa.Shared.Extensions;
@@ -13,17 +13,19 @@ public static class LocalizationExtensions
         return services;
     }
 
-    //public static void UseMyRequestLocalization(this WebAssemblyHost app)
-    //{
-    //    CultureInfo[]? supportedCultures = [.. SupportedCultures.Cultures.Select(c => new CultureInfo(c.Key))];
+    public static async Task InitializeCultureAsync(this WebAssemblyHost host)
+    {
+        var js = host.Services.GetRequiredService<IJSRuntime>();
 
-    //    var options = new RequestLocalizationOptions
-    //    {
-    //        DefaultRequestCulture = new RequestCulture(SupportedCultures.DefaultCultureKey),
-    //        SupportedCultures = supportedCultures,
-    //        SupportedUICultures = supportedCultures
-    //    };
+        var cultureKey = await js.InvokeAsync<string>(GetItemFunction, CultureKey);
 
-    //    app.UseRequestLocalization(options);
-    //}
+        if (string.IsNullOrWhiteSpace(cultureKey) || SupportedCultures.Cultures.All(c => c.Key != cultureKey))
+        {
+            cultureKey = SupportedCultures.DefaultCultureKey;
+        }
+
+        var defaultCulture = new CultureInfo(cultureKey);
+        CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
+        CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
+    }
 }
