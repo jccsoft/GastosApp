@@ -1,6 +1,6 @@
 {
-  "name": "GastosApp",
-  "short_name": "GastosApp",
+  "name": "Registro de Tíquets",
+  "short_name": "Registro de Tíquets",
   "id": "./",
   "start_url": "./",
   "display": "standalone",

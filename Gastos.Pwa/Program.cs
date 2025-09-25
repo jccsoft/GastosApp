@@ -13,8 +13,6 @@ builder.Services.AddMudServices();
 
 builder.AddMyPwaServices();
 
-//await builder.Build().RunAsync();
-
 var host = builder.Build();
 
 await host.InitializeCultureAsync();
