@@ -1,6 +1,6 @@
 {
-  "name": "Gastos.Pwa",
-  "short_name": "Gastos.Pwa",
+  "name": "GastosApp",
+  "short_name": "GastosApp",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
