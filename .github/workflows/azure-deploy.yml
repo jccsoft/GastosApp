@@ -27,19 +27,6 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
-    - name: 🔐 Configure local NuGet source API
-      run: |
-        # Create .nuget-local directory if it doesn't exist
-        mkdir -p .nuget-local
-        
-        # Add local NuGet source if packages exist
-        if [ -d ".nuget-local" ] && [ "$(ls -A .nuget-local)" ]; then
-          dotnet nuget add source "$(pwd)/.nuget-local" --name "local-packages"
-        fi
-        
-        # List configured sources for debugging
-        dotnet nuget list source
-        
     - name: 🔄 Restore dependencies
       run: dotnet restore
       
