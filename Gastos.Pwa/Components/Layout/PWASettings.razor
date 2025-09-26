@@ -4,6 +4,8 @@
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject IWebAssemblyHostEnvironment HostEnvironment
+@inject BlazorService BlazorService
+
 
 <PageHeading Title="Configuración PWA" IsHome="true" />
 
@@ -11,10 +13,6 @@
     <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4">
         <MudIcon Icon="Icons.Material.Filled.Settings" Class="mr-2" />
         Configuración PWA
-    </MudText>
-    <br />
-    <MudText>
-        <strong>Base Address:</strong> @HostEnvironment.BaseAddress
     </MudText>
     <br />
     <MudGrid>
@@ -92,7 +90,9 @@
                             </tr>
                             <tr>
                                 <td><strong>Base Address:</strong></td>
-                                <td>@HostEnvironment.BaseAddress</td>
+                                <td>@HostEnvironment.BaseAddress
+                                    <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="() => CopyText(HostEnvironment.BaseAddress)" />
+                                </td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
@@ -201,6 +201,11 @@
             await CheckInstallStatus();
             StateHasChanged();
         }
+    }
+
+    private async Task CopyText(string textToCopy)
+    {
+        await BlazorService.CopyText(textToCopy);
     }
 
     private async Task GetDeviceInfo()
