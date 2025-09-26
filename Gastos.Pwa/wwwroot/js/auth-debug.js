@@ -4,7 +4,7 @@ window.AuthDebugger = {
     getEnvironmentInfo: () => {
         return {
             userAgent: navigator.userAgent,
-            platform: navigator.platform,
+            platform: navigator.userAgentData.platform,
             displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
             baseUrl: window.location.origin,
             currentUrl: window.location.href,
