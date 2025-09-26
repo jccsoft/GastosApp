@@ -6,7 +6,6 @@
 @inject IWebAssemblyHostEnvironment HostEnvironment
 @inject BlazorService BlazorService
 
-
 <PageHeading Title="Configuración PWA" IsHome="true" />
 
 <MudContainer MaxWidth="MaxWidth.Medium">
@@ -29,6 +28,7 @@
                     {
                         <MudAlert Severity="Severity.Success" Icon="Icons.Material.Filled.CheckCircle">
                             <MudText>La aplicación está instalada como PWA</MudText>
+                            <MudText Typo="Typo.caption">Modo: @displayMode</MudText>
                         </MudAlert>
                     }
                     else
@@ -46,6 +46,14 @@
                                      Class="mt-3">
                                 Instalar Aplicación
                             </MudButton>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Warning" Icon="Icons.Material.Filled.Info" Class="mt-3">
+                                <MudText>Para instalar la aplicación:</MudText>
+                                <MudText>• Busca el ícono de instalación en la barra de direcciones del navegador</MudText>
+                                <MudText>• O usa el menú del navegador para "Instalar aplicación"</MudText>
+                            </MudAlert>
                         }
                     }
                 </MudCardContent>
@@ -73,7 +81,7 @@
                             </tr>
                             <tr>
                                 <td><strong>Modo de Visualización:</strong></td>
-                                <td>@deviceInfo.DisplayMode</td>
+                                <td>@displayMode</td>
                             </tr>
                             <tr>
                                 <td><strong>Soporte PWA:</strong></td>
@@ -92,6 +100,19 @@
                                 <td><strong>Base Address:</strong></td>
                                 <td>@HostEnvironment.BaseAddress
                                     <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="() => CopyText(HostEnvironment.BaseAddress)" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Service Worker:</strong></td>
+                                <td>
+                                    @if (hasServiceWorker)
+                                    {
+                                        <MudChip T="string" Icon="Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small">Activo</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Icon="Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small">No disponible</MudChip>
+                                    }
                                 </td>
                             </tr>
                         </tbody>
@@ -119,7 +140,8 @@
                                      Color="Color.Info" 
                                      StartIcon="Icons.Material.Filled.Refresh"
                                      OnClick="UpdateCache"
-                                     FullWidth="true">
+                                     FullWidth="true"
+                                     Disabled="@(!hasServiceWorker)">
                                 Actualizar Cache
                             </MudButton>
                         </MudItem>
@@ -137,6 +159,29 @@
             </MudCard>
         </MudItem>
 
+        <!-- Debug de Autenticación (solo en desarrollo) -->
+        @if (HostEnvironment.IsDevelopment())
+        {
+            <MudItem xs="12">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Debug de Autenticación</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudButton Variant="Variant.Outlined" 
+                                 Color="Color.Secondary" 
+                                 StartIcon="Icons.Material.Filled.BugReport"
+                                 Href="/debug-auth"
+                                 FullWidth="true">
+                            Abrir Debug de Autenticación
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+
         <!-- Instrucciones de Instalación -->
         <MudItem xs="12">
             <MudCard>
@@ -152,7 +197,7 @@
                                 <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome/Edge:</strong></MudText>
                                 <ol>
                                     <li>Busca el ícono de instalación en la barra de direcciones</li>
-                                    <li>Haz clic en "Instalar Registro de Compras"</li>
+                                    <li>Haz clic en "Instalar Registro de Tíquets"</li>
                                     <li>La app aparecerá en el menú de inicio</li>
                                 </ol>
                             </div>
@@ -188,7 +233,9 @@
 @code {
     private bool isInstalled = false;
     private bool canInstall = false;
+    private bool hasServiceWorker = false;
     private string cacheSize = "Calculando...";
+    private string displayMode = "browser";
     
     private readonly DeviceInfo deviceInfo = new();
 
@@ -199,6 +246,7 @@
             await GetDeviceInfo();
             await GetCacheInfo();
             await CheckInstallStatus();
+            await CheckServiceWorker();
             StateHasChanged();
         }
     }
@@ -214,18 +262,15 @@
         {
             var userAgent = await JS.InvokeAsync<string>("eval", "navigator.userAgent");
             var platform = await JS.InvokeAsync<string>("eval", "navigator.platform");
-            var displayMode = await JS.InvokeAsync<string>("eval", "window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'");
             
             deviceInfo.Platform = platform;
             deviceInfo.Browser = GetBrowserFromUserAgent(userAgent);
-            deviceInfo.DisplayMode = displayMode;
             deviceInfo.SupportsPWA = CheckPWASupport(userAgent);
         }
         catch (Exception)
         {
             deviceInfo.Platform = "Desconocido";
             deviceInfo.Browser = "Desconocido";
-            deviceInfo.DisplayMode = "browser";
             deviceInfo.SupportsPWA = false;
         }
     }
@@ -257,15 +302,43 @@
     {
         try
         {
-            isInstalled = await JS.InvokeAsync<bool>("eval", "window.matchMedia('(display-mode: standalone)').matches");
+            // Usar el PWAInstaller mejorado si está disponible
+            var pwaInstallerAvailable = await JS.InvokeAsync<bool>("eval", "typeof window.PWAInstaller !== 'undefined'");
             
-            // Verificar si se puede instalar
-            canInstall = await JS.InvokeAsync<bool>("eval", "'serviceWorker' in navigator");
+            if (pwaInstallerAvailable)
+            {
+                isInstalled = await JS.InvokeAsync<bool>("eval", "window.PWAInstaller.isInstalled()");
+                canInstall = await JS.InvokeAsync<bool>("eval", "window.PWAInstaller.canInstall()");
+                displayMode = await JS.InvokeAsync<string>("eval", "window.PWAInstaller.getDisplayMode()");
+            }
+            else
+            {
+                // Fallback al método original
+                isInstalled = await JS.InvokeAsync<bool>("eval", "window.matchMedia('(display-mode: standalone)').matches");
+                canInstall = await JS.InvokeAsync<bool>("eval", "'serviceWorker' in navigator");
+                displayMode = isInstalled ? "standalone" : "browser";
+            }
         }
         catch
         {
             isInstalled = false;
             canInstall = false;
+            displayMode = "browser";
+        }
+    }
+
+    private async Task CheckServiceWorker()
+    {
+        try
+        {
+            hasServiceWorker = await JS.InvokeAsync<bool>("eval", @"
+                'serviceWorker' in navigator && 
+                navigator.serviceWorker.controller !== null
+            ");
+        }
+        catch
+        {
+            hasServiceWorker = false;
         }
     }
 
@@ -273,21 +346,40 @@
     {
         try
         {
-            await JS.InvokeVoidAsync("eval", @"
-                if (window.deferredPrompt) {
-                    window.deferredPrompt.prompt();
-                    const { outcome } = await window.deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        console.log('PWA installed');
-                    }
-                    window.deferredPrompt = null;
+            var pwaInstallerAvailable = await JS.InvokeAsync<bool>("eval", "typeof window.PWAInstaller !== 'undefined'");
+            
+            if (pwaInstallerAvailable)
+            {
+                var installed = await JS.InvokeAsync<bool>("eval", "window.PWAInstaller.install()");
+                if (installed)
+                {
+                    Snackbar.Add("Aplicación instalada correctamente", Severity.Success);
+                    await CheckInstallStatus();
                 }
-            ");
-            Snackbar.Add("Aplicación instalada correctamente", Severity.Success);
+                else
+                {
+                    Snackbar.Add("No se pudo instalar la aplicación o el usuario canceló", Severity.Warning);
+                }
+            }
+            else
+            {
+                // Fallback al método original
+                await JS.InvokeVoidAsync("eval", @"
+                    if (window.deferredPrompt) {
+                        window.deferredPrompt.prompt();
+                        const { outcome } = await window.deferredPrompt.userChoice;
+                        if (outcome === 'accepted') {
+                            console.log('PWA installed');
+                        }
+                        window.deferredPrompt = null;
+                    }
+                ");
+                Snackbar.Add("Aplicación instalada correctamente", Severity.Success);
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            Snackbar.Add("No se pudo instalar la aplicación", Severity.Error);
+            Snackbar.Add($"Error al instalar la aplicación: {ex.Message}", Severity.Error);
         }
     }
 
@@ -298,9 +390,13 @@
             await JS.InvokeVoidAsync("eval", @"
                 if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({command: 'update'});
+                    console.log('Cache update requested');
                 }
             ");
-            Snackbar.Add("Cache actualizado", Severity.Success);
+            Snackbar.Add("Solicitud de actualización de cache enviada", Severity.Success);
+            
+            // Esperar un poco y actualizar la información del cache
+            await Task.Delay(2000);
             await GetCacheInfo();
         }
         catch
@@ -317,9 +413,10 @@
                 if ('caches' in window) {
                     const cacheNames = await caches.keys();
                     await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('All caches cleared');
                 }
             ");
-            Snackbar.Add("Cache limpiado", Severity.Success);
+            Snackbar.Add("Cache limpiado correctamente", Severity.Success);
             await GetCacheInfo();
         }
         catch
@@ -350,7 +447,6 @@
     {
         public string Platform { get; set; } = "";
         public string Browser { get; set; } = "";
-        public string DisplayMode { get; set; } = "";
         public bool SupportsPWA { get; set; } = false;
     }
 }

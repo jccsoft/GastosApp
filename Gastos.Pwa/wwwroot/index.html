@@ -34,11 +34,25 @@
         <span class="dismiss">🗙</span>
     </div>
 
-
     <!-- PWA Scripts -->
     <script src="js/pwa-installer.js"></script>
     <script src="js/pwa-helper.js"></script>
+    
+    <!-- Authentication Script -->
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    
+    <!-- Debug Script - Only in Development -->
+    <script>
+        // Cargar script de debug solo en desarrollo
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            const script = document.createElement('script');
+            script.src = 'js/auth-debug.js';
+            document.head.appendChild(script);
+            console.log('🔧 Development mode detected - Auth debug script loaded');
+        }
+    </script>
+    
+    <!-- Utility Scripts -->
     <script src="js/clipboard.js"></script>
     <script src="js/setCulture.js"></script>
 
@@ -49,10 +63,31 @@
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
 
-
     <!-- PWA Service Worker -->
     <script>
-        navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js', { 
+                updateViaCache: 'none' 
+            })
+            .then(registration => {
+                console.log('ServiceWorker registration successful:', registration);
+                
+                // Escuchar actualizaciones del service worker
+                registration.addEventListener('updatefound', () => {
+                    console.log('ServiceWorker update found');
+                });
+            })
+            .catch(error => {
+                console.log('ServiceWorker registration failed:', error);
+            });
+
+            // Escuchar cambios en el service worker
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('ServiceWorker controller changed');
+                // Opcional: recargar la página cuando hay un nuevo service worker
+                // window.location.reload();
+            });
+        }
     </script>
 </body>
 

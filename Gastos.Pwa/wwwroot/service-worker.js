@@ -5,11 +5,26 @@ self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+self.addEventListener('message', event => {
+    if (event.data && event.data.command === 'update') {
+        self.skipWaiting();
+    }
+});
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
 const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+
+// Rutas de autenticación que siempre deben ir a la red
+const authRoutes = [
+    '/authentication/login',
+    '/authentication/logout',
+    '/authentication/login-callback',
+    '/authentication/logout-callback',
+    '/authentication/login-failed',
+    '/authentication/logout-failed'
+];
 
 async function onInstall(event) {
     console.info('Service worker: Install');
@@ -34,6 +49,15 @@ async function onActivate(event) {
 }
 
 async function onFetch(event) {
+    // Para rutas de autenticación, siempre ir a la red
+    if (authRoutes.some(route => event.request.url.includes(route))) {
+        console.log('Service worker: Authentication route detected, going to network:', event.request.url);
+        return fetch(event.request).catch(() => {
+            // Si falla la red, servir index.html para que Blazor maneje el routing
+            return caches.open(cacheName).then(cache => cache.match('index.html'));
+        });
+    }
+
     let cachedResponse = null;
     if (event.request.method === 'GET') {
         // For all navigation requests, try to serve index.html from cache

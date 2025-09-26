@@ -10,6 +10,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
     // Update UI notify the user they can install the PWA
     showInstallPromotion();
+    console.log('PWA install prompt available');
 });
 
 // Listen for the appinstalled event
@@ -31,8 +32,6 @@ function showInstallPromotion() {
     if (installButton) {
         installButton.style.display = 'block';
     }
-    
-    console.log('PWA install prompt available');
 }
 
 // Function to hide install promotion
@@ -77,37 +76,52 @@ function createInstallButton() {
     document.body.appendChild(installButton);
     
     // Add CSS animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-    `;
-    document.head.appendChild(style);
+    if (!document.getElementById('pwa-animations')) {
+        const style = document.createElement('style');
+        style.id = 'pwa-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideInFromTop {
+                from { transform: translateY(-100%); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 // Function to install PWA
 async function installPWA() {
     if (!deferredPrompt) {
-        return;
+        console.log('No deferred prompt available');
+        return false;
     }
     
-    // Show the install prompt
-    deferredPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-    } else {
-        console.log('User dismissed the install prompt');
+    try {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+        } else {
+            console.log('User dismissed the install prompt');
+        }
+        
+        // Clear the deferred prompt
+        deferredPrompt = null;
+        hideInstallPromotion();
+        
+        return outcome === 'accepted';
+    } catch (error) {
+        console.error('Error during PWA installation:', error);
+        return false;
     }
-    
-    // Clear the deferred prompt
-    deferredPrompt = null;
-    hideInstallPromotion();
 }
 
 // Function to show welcome message
@@ -140,18 +154,43 @@ function showWelcomeMessage() {
     }, 3000);
 }
 
-// Check if already installed and running in standalone mode
-if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('PWA is running in standalone mode');
-} else {
-    console.log('PWA is running in browser mode');
+// Function to check PWA display mode
+function getPWADisplayMode() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)');
+    
+    if (document.referrer.startsWith('android-app://')) {
+        return 'twa';
+    } else if (navigator.standalone || isStandalone.matches) {
+        return 'standalone';
+    }
+    return 'browser';
 }
+
+// Function to handle authentication routes in PWA mode
+function handleAuthRedirect(url) {
+    if (getPWADisplayMode() === 'standalone') {
+        // En modo PWA, usar window.location para navegación
+        window.location.href = url;
+    } else {
+        // En modo browser, comportamiento normal
+        return true;
+    }
+}
+
+// Check if already installed and running in standalone mode
+const displayMode = getPWADisplayMode();
+console.log(`PWA is running in ${displayMode} mode`);
 
 // Export functions for use in Blazor components
 window.PWAInstaller = {
     canInstall: () => !!deferredPrompt,
-    isInstalled: () => window.matchMedia('(display-mode: standalone)').matches,
+    isInstalled: () => displayMode === 'standalone' || displayMode === 'twa',
+    getDisplayMode: () => displayMode,
     install: installPWA,
     showPromotion: showInstallPromotion,
-    hidePromotion: hideInstallPromotion
+    hidePromotion: hideInstallPromotion,
+    handleAuthRedirect: handleAuthRedirect
 };
+
+// Store the deferred prompt for global access
+window.deferredPrompt = deferredPrompt;
