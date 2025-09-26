@@ -1,4 +1,4 @@
-﻿namespace Gastos.Pwa.Shared.Services;
+namespace Gastos.Pwa.Shared.Services;
 
 public class PwaService(IJSRuntime jsRuntime)
 {
