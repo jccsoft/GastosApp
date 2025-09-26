@@ -27,7 +27,10 @@
             }
         </MudMenu>
 
-        <MudMenuItem Href="/pwa-settings" Icon="@Icons.Material.Filled.AppSettingsAlt" Label="Configuración PWA" />
+        <MudMenu Label="Info" StartIcon="@Icons.Material.Filled.MiscellaneousServices">
+            <MudMenuItem Label="PWA" Href="/pwa-settings" Icon="@Icons.Material.Filled.AppSettingsAlt" />
+            <MudMenuItem Label="Auth" Href="/debug-auth" Icon="@Icons.Material.Filled.VerifiedUser" />
+        </MudMenu>
 
     </ChildContent>
 </MudMenu>
