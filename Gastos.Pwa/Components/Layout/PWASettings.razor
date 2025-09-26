@@ -1,7 +1,9 @@
 @page "/pwa-settings"
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
+@inject IWebAssemblyHostEnvironment HostEnvironment
 
 <PageHeading Title="Configuración PWA" IsHome="true" />
 
@@ -10,7 +12,11 @@
         <MudIcon Icon="Icons.Material.Filled.Settings" Class="mr-2" />
         Configuración PWA
     </MudText>
-
+    <br />
+    <MudText>
+        <strong>Base Address:</strong> @HostEnvironment.BaseAddress
+    </MudText>
+    <br />
     <MudGrid>
         <!-- Información de Instalación -->
         <MudItem xs="12">
@@ -83,6 +89,10 @@
                                         <MudChip T="string" Icon="Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small">No Soportado</MudChip>
                                     }
                                 </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Base Address:</strong></td>
+                                <td>@HostEnvironment.BaseAddress</td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
