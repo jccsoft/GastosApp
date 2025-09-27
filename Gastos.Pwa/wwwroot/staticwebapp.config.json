@@ -1,10 +1,6 @@
 {
   "routes": [
     {
-      "route": "/authentication/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
       "route": "/authentication/login-callback",
       "allowedRoles": ["anonymous"]
     },
