@@ -29,4 +29,9 @@
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
+  <!-- Asegurar que staticwebapps.config.json se incluya en el deploy -->
+  <ItemGroup>
+    <Content Include="wwwroot\staticwebapps.config.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -1,31 +1,5 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html"
-  },
-  "routes": [
-    {
-      "route": "/authentication/login-callback",
-      "serve": "/index.html"
-    },
-    {
-      "route": "/authentication/logout-callback",
-      "serve": "/index.html"
-    },
-    {
-      "route": "/authentication/login-failed",
-      "serve": "/index.html"
-    },
-    {
-      "route": "/authentication/logout-failed",
-      "serve": "/index.html"
-    },
-    {
-      "route": "/debug-auth",
-      "serve": "/index.html"
-    },
-    {
-      "route": "/pwa-settings",
-      "serve": "/index.html"
-    }
-  ]
+  }
 }
