@@ -59,6 +59,148 @@
             return config;
         },
 
+        // Test de diagnóstico completo de Azure Static Web Apps
+        testAzureDeepDiagnosis: async () => {
+            console.group('🔧 === DEEP AZURE STATIC WEB APPS DIAGNOSIS ===');
+            
+            const diagnosis = {};
+            
+            // 1. Verificar el archivo de configuración exacto
+            try {
+                const configResponse = await fetch('/staticwebapps.config.json', { cache: 'no-cache' });
+                const configText = await configResponse.text();
+                const configJson = JSON.parse(configText);
+                
+                diagnosis.configFile = {
+                    exists: true,
+                    size: configText.length,
+                    routes: configJson.routes,
+                    navigationFallback: configJson.navigationFallback,
+                    responseOverrides: configJson.responseOverrides
+                };
+                
+                console.log('📄 Config file content:', configJson);
+            } catch (error) {
+                diagnosis.configFile = { exists: false, error: error.message };
+            }
+            
+            // 2. Test de cada ruta con información completa
+            const routes = [
+                '/authentication/login-callback',
+                '/authentication/logout-callback',
+                '/authentication/login-failed', 
+                '/authentication/logout-failed'
+            ];
+            
+            diagnosis.routeTests = [];
+            
+            for (const route of routes) {
+                try {
+                    // Test GET completo
+                    const response = await fetch(route, { 
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                        }
+                    });
+                    
+                    const responseText = await response.text();
+                    const responseHeaders = {};
+                    response.headers.forEach((value, key) => {
+                        responseHeaders[key] = value;
+                    });
+                    
+                    const routeResult = {
+                        route,
+                        status: response.status,
+                        statusText: response.statusText,
+                        ok: response.ok,
+                        url: response.url,
+                        redirected: response.redirected,
+                        headers: responseHeaders,
+                        contentLength: responseText.length,
+                        isIndexHtml: responseText.includes('<div id="app">') && responseText.includes('blazor.webassembly.js'),
+                        containsBlazor: responseText.includes('blazor'),
+                        contentPreview: responseText.substring(0, 200)
+                    };
+                    
+                    diagnosis.routeTests.push(routeResult);
+                    
+                    console.log(`${response.ok ? '✅' : '❌'} ${route}:`, routeResult);
+                    
+                } catch (error) {
+                    const errorResult = {
+                        route,
+                        status: 'ERROR',
+                        error: error.message
+                    };
+                    diagnosis.routeTests.push(errorResult);
+                    console.error(`❌ ${route} error:`, error);
+                }
+            }
+            
+            // 3. Test específico con parámetros como lo haría Auth0
+            try {
+                const callbackWithParams = '/authentication/login-callback?code=test123&state=teststate';
+                const response = await fetch(callbackWithParams, { 
+                    method: 'GET',
+                    cache: 'no-cache' 
+                });
+                
+                diagnosis.parameterTest = {
+                    url: callbackWithParams,
+                    status: response.status,
+                    ok: response.ok,
+                    finalUrl: response.url,
+                    redirected: response.redirected
+                };
+                
+                console.log('🔗 Parameter test:', diagnosis.parameterTest);
+            } catch (error) {
+                diagnosis.parameterTest = { error: error.message };
+            }
+            
+            // 4. Test de navegación fallback específico
+            try {
+                const randomRoute = '/this-route-should-not-exist-' + Date.now();
+                const response = await fetch(randomRoute, { method: 'GET' });
+                
+                diagnosis.fallbackTest = {
+                    testUrl: randomRoute,
+                    status: response.status,
+                    shouldBe200: response.status === 200,
+                    url: response.url
+                };
+                
+                console.log('🔄 Fallback test:', diagnosis.fallbackTest);
+            } catch (error) {
+                diagnosis.fallbackTest = { error: error.message };
+            }
+            
+            // 5. Análisis de headers específicos de Azure
+            try {
+                const response = await fetch('/', { method: 'HEAD' });
+                const azureHeaders = {};
+                response.headers.forEach((value, key) => {
+                    if (key.toLowerCase().includes('azure') || 
+                        key.toLowerCase().includes('x-') ||
+                        key.toLowerCase().includes('server')) {
+                        azureHeaders[key] = value;
+                    }
+                });
+                
+                diagnosis.azureHeaders = azureHeaders;
+                console.log('🌐 Azure headers:', azureHeaders);
+            } catch (error) {
+                diagnosis.azureHeaders = { error: error.message };
+            }
+            
+            console.groupEnd();
+            
+            return diagnosis;
+        },
+
         // Logs de autenticación
         logAuthEvent: (event, details) => {
             try {
@@ -135,17 +277,21 @@
                 });
             }
 
-            // Test callback URL specifically
+            // Test callback URL specifically - CAMBIO A GET PARA VER CONTENIDO REAL
             try {
                 const callbackUrl = `${window.location.origin}/authentication/login-callback`;
                 const response = await fetch(callbackUrl, { 
-                    method: 'HEAD',
+                    method: 'GET',
                     cache: 'no-cache'
                 });
+                
+                const responseText = await response.text();
+                const isIndexHtml = responseText.includes('<div id="app">');
+                
                 tests.push({
                     test: 'Auth Callback URL',
-                    status: response.ok || response.status === 200 ? 'OK' : 'FAIL',
-                    details: `${response.status} ${response.statusText}`
+                    status: response.ok && isIndexHtml ? 'OK' : 'FAIL',
+                    details: `${response.status} ${response.statusText} - ${isIndexHtml ? 'Returns index.html' : 'Wrong content'}`
                 });
             } catch (error) {
                 tests.push({
@@ -253,19 +399,24 @@
                 try {
                     const url = `${window.location.origin}${route}`;
                     const response = await fetch(url, { 
-                        method: 'HEAD',
+                        method: 'GET', // Cambiado a GET
                         cache: 'no-cache'
                     });
+                    
+                    const responseText = await response.text();
+                    const isIndexHtml = responseText.includes('<div id="app">') && responseText.includes('blazor.webassembly.js');
                     
                     results.push({
                         route,
                         status: response.status,
-                        ok: response.ok || response.status === 200,
+                        ok: response.ok && isIndexHtml, // OK solo si es 200 Y devuelve index.html
                         statusText: response.statusText,
                         headers: {
                             contentType: response.headers.get('content-type'),
                             cacheControl: response.headers.get('cache-control')
-                        }
+                        },
+                        isIndexHtml: isIndexHtml,
+                        contentLength: responseText.length
                     });
                 } catch (error) {
                     results.push({
@@ -273,7 +424,9 @@
                         status: 'ERROR',
                         ok: false,
                         statusText: error.message,
-                        headers: {}
+                        headers: {},
+                        isIndexHtml: false,
+                        contentLength: 0
                     });
                 }
             }
@@ -368,6 +521,7 @@
                     connectivity: await window.AuthDebugger.testConnectivity(),
                     pwaRouting: await window.AuthDebugger.testPWARouting(),
                     azureStaticWebApps: await window.AuthDebugger.testAzureStaticWebApps(),
+                    deepDiagnosis: await window.AuthDebugger.testAzureDeepDiagnosis(),
                     recentLogs: window.AuthDebugger.getStoredLogs().slice(-10),
                     serviceWorkerInfo: await window.AuthDebugger.getServiceWorkerInfo()
                 };
@@ -481,7 +635,7 @@
 
     console.log('🔐 Auth Debugger loaded successfully');
     console.log('🔧 Available methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport()');
-    console.log('🔧 New methods: testAzureStaticWebApps(), getAuth0Configuration()');
+    console.log('🔧 New methods: testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
 
     // Log inicial
     window.AuthDebugger.logAuthEvent('AuthDebugger Initialized', {
