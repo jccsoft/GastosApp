@@ -14,7 +14,7 @@
             try {
                 return {
                     userAgent: navigator.userAgent || 'N/A',
-                    platform: navigator.userAgentData?.platform || navigator.platform || 'N/A',
+                    platform: navigator.userAgentData?.platform || 'N/A',
                     displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
                     baseUrl: window.location.origin,
                     currentUrl: window.location.href,
