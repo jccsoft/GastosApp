@@ -44,17 +44,8 @@
     <!-- Authentication Script -->
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
     
-    <!-- Debug Script - Only in Development -->
-    <script>
-        // Cargar script de debug solo en desarrollo
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            const script = document.createElement('script');
-            script.src = 'js/auth-debug.js';
-            script.onload = () => console.log('🔧 Auth debug script loaded');
-            document.head.appendChild(script);
-            console.log('🔧 Development mode detected - Loading auth debug script');
-        }
-    </script>
+    <!-- Auth Debug Script - Always load for troubleshooting -->
+    <script src="js/auth-debug.js"></script>
     
     <!-- Utility Scripts -->
     <script src="js/clipboard.js"></script>
@@ -113,6 +104,13 @@
 
     <!-- Error Handling for Authentication -->
     <script>
+        // Detectar modo de desarrollo vs producción
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.hostname.includes('localhost');
+
+        console.log(`🔧 Environment: ${isDevelopment ? 'Development' : 'Production'}`);
+
         // Manejo global de errores relacionados con autenticación
         window.addEventListener('error', function(event) {
             if (event.filename && event.filename.includes('authentication')) {
@@ -135,10 +133,22 @@
         // Log del estado inicial de la aplicación
         console.log('🚀 Application loading...', {
             url: window.location.href,
+            hostname: window.location.hostname,
             isPWA: window.matchMedia('(display-mode: standalone)').matches,
             hasServiceWorker: 'serviceWorker' in navigator,
+            isDevelopment: isDevelopment,
             userAgent: navigator.userAgent
         });
+
+        // Verificar que AuthDebugger se haya cargado después de un delay
+        setTimeout(() => {
+            if (typeof window.AuthDebugger !== 'undefined') {
+                console.log('✅ AuthDebugger loaded successfully');
+                console.log('🔧 Available: window.AuthDebugger.generateReport(), testPWARouting(), etc.');
+            } else {
+                console.warn('⚠️ AuthDebugger not loaded - Debug tools not available');
+            }
+        }, 2000);
     </script>
 </body>
 

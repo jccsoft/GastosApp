@@ -48,8 +48,115 @@
     .menu-card-button:hover {
         background-color: var(--mud-palette-primary) !important;
     }
+
+/* Estilos para herramientas de debug PWA */
+.debug-container {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.debug-log-entry {
+    border-left: 4px solid var(--mud-palette-info);
+    padding-left: 12px;
+    margin-bottom: 8px;
+}
+
+.debug-success {
+    border-left-color: var(--mud-palette-success) !important;
+}
+
+.debug-error {
+    border-left-color: var(--mud-palette-error) !important;
+}
+
+.debug-warning {
+    border-left-color: var(--mud-palette-warning) !important;
+}
+
+.debug-code-block {
+    background-color: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    overflow-x: auto;
+}
+
+.pwa-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.pwa-status-standalone {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+}
+
+.pwa-status-browser {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+}
+
+.test-result-grid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 2fr 1fr 3fr;
+    align-items: center;
+}
+
+.test-result-status {
+    justify-self: start;
+}
+
+/* Mejoras para modo PWA */
+@media (display-mode: standalone) {
+    body {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    .debug-container {
+        padding: 16px;
+        margin: 8px;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+    }
+}
+
+/* Responsive design para herramientas de debug */
+@media screen and (max-width: 768px) {
+    .debug-code-block {
+        font-size: 0.75em;
+        padding: 8px;
+    }
+    
+    .test-result-grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    
+    .test-result-status {
+        justify-self: center;
+    }
+}
+
 @media screen and (max-width: 576px) {
     html {
         font-size: 14px;
+    }
+    
+    .debug-container {
+        font-size: 0.8em;
+    }
+    
+    .pwa-status-indicator {
+        font-size: 0.7em;
     }
 }
