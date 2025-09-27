@@ -1,6 +1,8 @@
 @page "/debug-auth"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using System.Text.Json
+@using System.Text.Json.Serialization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -316,6 +318,12 @@
     private string displayMode = "browser";
     private bool isPWA = false;
 
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     protected override async Task OnInitializedAsync()
     {
         await RefreshState();
@@ -355,7 +363,7 @@
             if (debuggerAvailable)
             {
                 var logsJson = await JSRuntime.InvokeAsync<string>("eval", "JSON.stringify(window.AuthDebugger.getStoredLogs())");
-                var logs = System.Text.Json.JsonSerializer.Deserialize<AuthLog[]>(logsJson);
+                var logs = System.Text.Json.JsonSerializer.Deserialize<AuthLog[]>(logsJson, _jsonOptions);
                 recentLogs = logs?.ToList() ?? new List<AuthLog>();
             }
         }
@@ -382,7 +390,7 @@
                     })()
                 ");
                 
-                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson);
+                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson, _jsonOptions);
                 testResults = results?.ToList() ?? new List<TestResult>();
                 
                 Snackbar.Add("Test de conectividad completado", Severity.Success);
@@ -421,7 +429,7 @@
                     })()
                 ");
                 
-                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson);
+                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson, _jsonOptions);
                 testResults = results?.ToList() ?? new List<TestResult>();
                 
                 Snackbar.Add("Test de rutas PWA completado", Severity.Success);
@@ -509,6 +517,7 @@
 
     public class TestResult
     {
+        [JsonProperty]
         public string Test { get; set; } = "";
         public string Status { get; set; } = "";
         public string Details { get; set; } = "";
