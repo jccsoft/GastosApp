@@ -14,7 +14,7 @@
             try {
                 return {
                     userAgent: navigator.userAgent || 'N/A',
-                    platform: navigator.userAgentData?.platform || 'N/A',
+                    platform: navigator.userAgentData?.platform || navigator.platform || 'N/A',
                     displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
                     baseUrl: window.location.origin,
                     currentUrl: window.location.href,
@@ -32,6 +32,31 @@
                 console.warn('AuthDebugger: Error getting environment info:', error);
                 return { error: error.message };
             }
+        },
+
+        // Obtener configuración de Auth0 desde múltiples fuentes posibles
+        getAuth0Configuration: async () => {
+            const config = {};
+            
+            try {
+                // Intentar obtener desde appsettings.json
+                const response = await fetch('/appsettings.json', { cache: 'no-cache' });
+                if (response.ok) {
+                    const appSettings = await response.json();
+                    if (appSettings.Auth0) {
+                        Object.assign(config, appSettings.Auth0);
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not load appsettings.json:', error);
+            }
+
+            // También buscar en window.authConfig (si existe)
+            if (window.authConfig) {
+                Object.assign(config, window.authConfig);
+            }
+
+            return config;
         },
 
         // Logs de autenticación
@@ -87,7 +112,7 @@
             }
         },
 
-        // Test de conectividad
+        // Test de conectividad mejorado
         testConnectivity: async () => {
             const tests = [];
             
@@ -134,14 +159,24 @@
             try {
                 const configUrl = `${window.location.origin}/staticwebapps.config.json`;
                 const response = await fetch(configUrl, { 
-                    method: 'HEAD',
+                    method: 'GET',
                     cache: 'no-cache'
                 });
-                tests.push({
-                    test: 'StaticWebApps Config',
-                    status: response.ok ? 'OK' : 'FAIL',
-                    details: `${response.status} ${response.statusText}`
-                });
+                
+                if (response.ok) {
+                    const configContent = await response.json();
+                    tests.push({
+                        test: 'StaticWebApps Config',
+                        status: 'OK',
+                        details: `Found ${configContent.routes?.length || 0} routes configured`
+                    });
+                } else {
+                    tests.push({
+                        test: 'StaticWebApps Config',
+                        status: 'FAIL',
+                        details: `${response.status} ${response.statusText}`
+                    });
+                }
             } catch (error) {
                 tests.push({
                     test: 'StaticWebApps Config',
@@ -150,10 +185,10 @@
                 });
             }
 
-            // Test Auth0 authority si está disponible
-            const authConfig = window.authConfig || {};
-            if (authConfig.Authority) {
-                try {
+            // Test Auth0 authority
+            try {
+                const authConfig = await window.AuthDebugger.getAuth0Configuration();
+                if (authConfig.Authority) {
                     const wellKnownUrl = `${authConfig.Authority}/.well-known/openid_configuration`;
                     const response = await fetch(wellKnownUrl);
                     tests.push({
@@ -161,41 +196,49 @@
                         status: response.ok ? 'OK' : 'FAIL',
                         details: `${response.status} ${response.statusText}`
                     });
-                } catch (error) {
+                } else {
                     tests.push({
-                        test: 'Auth0 Well-Known',
-                        status: 'ERROR',
-                        details: error.message
+                        test: 'Auth0 Configuration',
+                        status: 'WARNING',
+                        details: 'Auth configuration not found in appsettings.json or window.authConfig'
                     });
                 }
-            } else {
+            } catch (error) {
                 tests.push({
                     test: 'Auth0 Configuration',
-                    status: 'WARNING',
-                    details: 'Auth configuration not found in window.authConfig'
+                    status: 'ERROR',
+                    details: error.message
                 });
             }
 
             return tests;
         },
 
-        // Verificar configuración
-        checkConfiguration: () => {
-            const config = window.authConfig || {};
-            const issues = [];
+        // Verificar configuración mejorada
+        checkConfiguration: async () => {
+            try {
+                const config = await window.AuthDebugger.getAuth0Configuration();
+                const issues = [];
 
-            if (!config.Authority) issues.push('Missing Authority');
-            if (!config.ClientId) issues.push('Missing ClientId');
-            if (!config.Audience) issues.push('Missing Audience');
+                if (!config.Authority) issues.push('Missing Authority');
+                if (!config.ClientId) issues.push('Missing ClientId');
+                if (!config.Audience) issues.push('Missing Audience');
 
-            return {
-                config,
-                issues,
-                isValid: issues.length === 0
-            };
+                return {
+                    config,
+                    issues,
+                    isValid: issues.length === 0
+                };
+            } catch (error) {
+                return {
+                    config: {},
+                    issues: ['Error loading configuration: ' + error.message],
+                    isValid: false
+                };
+            }
         },
 
-        // Test específico para PWA
+        // Test específico para PWA con información detallada
         testPWARouting: async () => {
             const routes = [
                 '/authentication/login-callback',
@@ -218,19 +261,74 @@
                         route,
                         status: response.status,
                         ok: response.ok || response.status === 200,
-                        statusText: response.statusText
+                        statusText: response.statusText,
+                        headers: {
+                            contentType: response.headers.get('content-type'),
+                            cacheControl: response.headers.get('cache-control')
+                        }
                     });
                 } catch (error) {
                     results.push({
                         route,
                         status: 'ERROR',
                         ok: false,
-                        statusText: error.message
+                        statusText: error.message,
+                        headers: {}
                     });
                 }
             }
             
             return results;
+        },
+
+        // Test de Azure Static Web Apps específico
+        testAzureStaticWebApps: async () => {
+            const tests = [];
+            
+            // Test del archivo de configuración
+            try {
+                const configUrl = `${window.location.origin}/staticwebapps.config.json`;
+                const response = await fetch(configUrl);
+                
+                if (response.ok) {
+                    const config = await response.json();
+                    tests.push({
+                        test: 'Config File Exists',
+                        status: 'OK',
+                        details: 'File found and parsed'
+                    });
+                    
+                    // Verificar rutas configuradas
+                    const authRoutes = config.routes?.filter(r => r.route.includes('authentication')) || [];
+                    tests.push({
+                        test: 'Auth Routes Configured',
+                        status: authRoutes.length > 0 ? 'OK' : 'FAIL',
+                        details: `${authRoutes.length} auth routes found`
+                    });
+                    
+                    // Verificar navigationFallback
+                    tests.push({
+                        test: 'Navigation Fallback',
+                        status: config.navigationFallback ? 'OK' : 'WARNING',
+                        details: config.navigationFallback ? 'Configured' : 'Not configured'
+                    });
+                    
+                } else {
+                    tests.push({
+                        test: 'Config File Exists',
+                        status: 'FAIL',
+                        details: `${response.status} ${response.statusText}`
+                    });
+                }
+            } catch (error) {
+                tests.push({
+                    test: 'Config File Exists',
+                    status: 'ERROR',
+                    details: error.message
+                });
+            }
+            
+            return tests;
         },
 
         // Simular callback para testing
@@ -266,9 +364,10 @@
                 const report = {
                     timestamp: new Date().toISOString(),
                     environment: window.AuthDebugger.getEnvironmentInfo(),
-                    configuration: window.AuthDebugger.checkConfiguration(),
+                    configuration: await window.AuthDebugger.checkConfiguration(),
                     connectivity: await window.AuthDebugger.testConnectivity(),
                     pwaRouting: await window.AuthDebugger.testPWARouting(),
+                    azureStaticWebApps: await window.AuthDebugger.testAzureStaticWebApps(),
                     recentLogs: window.AuthDebugger.getStoredLogs().slice(-10),
                     serviceWorkerInfo: await window.AuthDebugger.getServiceWorkerInfo()
                 };
@@ -382,6 +481,7 @@
 
     console.log('🔐 Auth Debugger loaded successfully');
     console.log('🔧 Available methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport()');
+    console.log('🔧 New methods: testAzureStaticWebApps(), getAuth0Configuration()');
 
     // Log inicial
     window.AuthDebugger.logAuthEvent('AuthDebugger Initialized', {

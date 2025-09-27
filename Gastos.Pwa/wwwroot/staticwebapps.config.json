@@ -1,23 +1,19 @@
 {
   "routes": [
     {
-      "route": "/authentication/login-callback*",
+      "route": "/authentication/login-callback",
       "rewrite": "/index.html"
     },
     {
-      "route": "/authentication/logout-callback*",
+      "route": "/authentication/logout-callback",
       "rewrite": "/index.html"
     },
     {
-      "route": "/authentication/login-failed*",
+      "route": "/authentication/login-failed",
       "rewrite": "/index.html"
     },
     {
-      "route": "/authentication/logout-failed*",
-      "rewrite": "/index.html"
-    },
-    {
-      "route": "/authentication/*",
+      "route": "/authentication/logout-failed",
       "rewrite": "/index.html"
     },
     {
@@ -27,21 +23,9 @@
     {
       "route": "/pwa-settings",
       "rewrite": "/index.html"
-    },
-    {
-      "route": "/*",
-      "rewrite": "/index.html"
     }
   ],
   "responseOverrides": {
-    "401": {
-      "redirect": "/authentication/login",
-      "statusCode": 302
-    },
-    "403": {
-      "redirect": "/authentication/login",
-      "statusCode": 302
-    },
     "404": {
       "rewrite": "/index.html",
       "statusCode": 200
@@ -49,7 +33,15 @@
   },
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/js/*", "/_framework/*", "/_content/*", "/lib/*", "/*.{ico,png,jpg,gif,svg,webmanifest}"]
+    "exclude": [
+      "/images/*",
+      "/css/*",
+      "/js/*",
+      "/_framework/*",
+      "/_content/*",
+      "/lib/*",
+      "*.{ico,png,jpg,gif,svg,webmanifest,json}"
+    ]
   },
   "mimeTypes": {
     ".webmanifest": "application/manifest+json"

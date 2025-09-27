@@ -47,6 +47,9 @@
     <!-- Auth Debug Script - Always load for troubleshooting -->
     <script src="js/auth-debug.js"></script>
     
+    <!-- Azure Routing Test - Load after auth-debug -->
+    <script src="js/azure-routing-test.js"></script>
+    
     <!-- Utility Scripts -->
     <script src="js/clipboard.js"></script>
     <script src="js/setCulture.js"></script>
@@ -140,15 +143,20 @@
             userAgent: navigator.userAgent
         });
 
-        // Verificar que AuthDebugger se haya cargado después de un delay
+        // Verificar que todos los debuggers se hayan cargado
         setTimeout(() => {
-            if (typeof window.AuthDebugger !== 'undefined') {
-                console.log('✅ AuthDebugger loaded successfully');
-                console.log('🔧 Available: window.AuthDebugger.generateReport(), testPWARouting(), etc.');
-            } else {
-                console.warn('⚠️ AuthDebugger not loaded - Debug tools not available');
+            const debuggers = [];
+            if (typeof window.AuthDebugger !== 'undefined') debuggers.push('AuthDebugger');
+            if (typeof window.PWAInstaller !== 'undefined') debuggers.push('PWAInstaller');
+            if (typeof window.PWARoutingDebug !== 'undefined') debuggers.push('PWARoutingDebug');
+            if (typeof window.testAzureRouting !== 'undefined') debuggers.push('AzureRoutingTest');
+            
+            console.log(`✅ Debug tools loaded: ${debuggers.join(', ')}`);
+            
+            if (debuggers.length === 0) {
+                console.warn('⚠️ No debug tools loaded - Troubleshooting may be limited');
             }
-        }, 2000);
+        }, 3000);
     </script>
 </body>
 
