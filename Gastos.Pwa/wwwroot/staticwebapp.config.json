@@ -50,8 +50,5 @@
     ".blat": "application/octet-stream",
     ".br": "application/x-brotli",
     ".gz": "application/gzip"
-  },
-  "platform": {
-    "apiRuntime": "dotnet:9.0"
   }
 }
