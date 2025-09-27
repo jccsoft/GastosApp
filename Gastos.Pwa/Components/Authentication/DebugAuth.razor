@@ -4,59 +4,323 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
 
-<h3>Estado de Autenticación - Debug</h3>
+<PageTitle>Debug de Autenticación</PageTitle>
 
-<MudPaper Class="pa-4 ma-2">
-    <MudText Typo="Typo.h6">Estado del Usuario:</MudText>
-    @if (authenticationState != null)
-    {
-        <MudText>Autenticado: @authenticationState.User.Identity?.IsAuthenticated</MudText>
-        <MudText>Nombre: @authenticationState.User.Identity?.Name</MudText>
-        <MudText>Tipo de autenticación: @authenticationState.User.Identity?.AuthenticationType</MudText>
-        
-        <MudText Typo="Typo.h6" Class="mt-4">Claims:</MudText>
-        @foreach (var claim in authenticationState.User.Claims)
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudText Typo="Typo.h3" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
+        Debug de Autenticación PWA
+    </MudText>
+
+    <!-- Estado del Usuario -->
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudCard Class="mb-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Estado del Usuario</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (authenticationState != null)
+                    {
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                                <tr>
+                                    <td><strong>Autenticado:</strong></td>
+                                    <td>
+                                        @if (authenticationState.User.Identity?.IsAuthenticated == true)
+                                        {
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small">✓ Sí</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudChip T="string" Color="Color.Error" Size="Size.Small">✗ No</MudChip>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Nombre:</strong></td>
+                                    <td>@(authenticationState.User.Identity?.Name ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tipo Auth:</strong></td>
+                                    <td>@(authenticationState.User.Identity?.AuthenticationType ?? "N/A")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Claims:</strong></td>
+                                    <td>@authenticationState.User.Claims.Count()</td>
+                                </tr>
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                    else
+                    {
+                        <MudProgressLinear Indeterminate="true" />
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Información del Entorno -->
+        <MudItem xs="12" md="6">
+            <MudCard Class="mb-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Información del Entorno</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudSimpleTable Dense="true">
+                        <tbody>
+                            <tr>
+                                <td><strong>URL Actual:</strong></td>
+                                <td>@Navigation.Uri</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Base URL:</strong></td>
+                                <td>@Navigation.BaseUri</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Modo Display:</strong></td>
+                                <td>@displayMode</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Es PWA:</strong></td>
+                                <td>
+                                    @if (isPWA)
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">✓ Sí</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Info" Size="Size.Small">Browser</MudChip>
+                                    }
+                                </td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Acciones de Testing -->
+        <MudItem xs="12">
+            <MudCard Class="mb-4">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Acciones de Testing</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Primary" 
+                                     FullWidth="true"
+                                     OnClick="TestConnectivity"
+                                     StartIcon="@Icons.Material.Filled.NetworkCheck">
+                                Test Conectividad
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Secondary" 
+                                     FullWidth="true"
+                                     OnClick="TestPWARouting"
+                                     StartIcon="@Icons.Material.Filled.Route">
+                                Test Rutas PWA
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Info" 
+                                     FullWidth="true"
+                                     OnClick="GenerateReport"
+                                     StartIcon="@Icons.Material.Filled.Assessment">
+                                Generar Reporte
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Outlined" 
+                                     Color="Color.Warning" 
+                                     FullWidth="true"
+                                     OnClick="ClearLogs"
+                                     StartIcon="@Icons.Material.Filled.Clear">
+                                Limpiar Logs
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
+        <!-- Test Results -->
+        @if (testResults.Any())
         {
-            <MudText>@claim.Type: @claim.Value</MudText>
+            <MudItem xs="12">
+                <MudCard Class="mb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Resultados de Tests</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudSimpleTable>
+                            <thead>
+                                <tr>
+                                    <th>Test</th>
+                                    <th>Estado</th>
+                                    <th>Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var result in testResults)
+                                {
+                                    <tr>
+                                        <td>@result.Test</td>
+                                        <td>
+                                            @if (result.Status == "OK")
+                                            {
+                                                <MudChip T="string" Color="Color.Success" Size="Size.Small">@result.Status</MudChip>
+                                            }
+                                            else if (result.Status == "FAIL")
+                                            {
+                                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">@result.Status</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudChip T="string" Color="Color.Error" Size="Size.Small">@result.Status</MudChip>
+                                            }
+                                        </td>
+                                        <td>@result.Details</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
         }
-    }
-</MudPaper>
 
-<MudStack Direction="Row" Wrap="Wrap.Wrap" Spacing="2" Class="ma-2">
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="LogoutModern">
-        Logout Moderno (.NET 9)
-    </MudButton>
+        <!-- Logs Recientes -->
+        @if (recentLogs.Any())
+        {
+            <MudItem xs="12">
+                <MudCard Class="mb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Logs Recientes de Autenticación</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTimeline TimelineOrientation="TimelineOrientation.Vertical">
+                            @foreach (var log in recentLogs.TakeLast(10).Reverse())
+                            {
+                                <MudTimelineItem>
+                                    <ItemContent>
+                                        <div>
+                                            <MudText Typo="Typo.subtitle2">@log.Event</MudText>
+                                            <MudText Typo="Typo.caption">@log.Timestamp</MudText>
+                                            @if (log.Details != null)
+                                            {
+                                                <MudText Typo="Typo.body2" Class="mt-1">@log.Details.ToString()</MudText>
+                                            }
+                                        </div>
+                                    </ItemContent>
+                                </MudTimelineItem>
+                            }
+                        </MudTimeline>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
 
-    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" Href="/authentication/logout">
-        Logout por URL
-    </MudButton>
+        <!-- Claims del Usuario -->
+        @if (authenticationState?.User.Claims.Any() == true)
+        {
+            <MudItem xs="12">
+                <MudCard Class="mb-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Claims del Usuario</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudSimpleTable Dense="true">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var claim in authenticationState.User.Claims)
+                                {
+                                    <tr>
+                                        <td><MudText Typo="Typo.caption">@claim.Type</MudText></td>
+                                        <td>@claim.Value</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="LogoutJS">
-        Logout JavaScript
-    </MudButton>
+    <!-- Acciones de Navegación -->
+    <MudStack Direction="Row" Wrap="Wrap.Wrap" Spacing="2" Class="mt-4">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Primary" 
+                   Href="/"
+                   StartIcon="@Icons.Material.Filled.Home">
+            Volver al Inicio
+        </MudButton>
+        
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Secondary" 
+                   Href="/pwa-settings"
+                   StartIcon="@Icons.Material.Filled.Settings">
+            Configuración PWA
+        </MudButton>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RefreshState">
-        Refrescar Estado
-    </MudButton>
-
-    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/">
-        Volver al inicio
-    </MudButton>
-</MudStack>
-
-<MudPaper Class="pa-4 ma-2">
-    <MudText Typo="Typo.h6">URLs de prueba:</MudText>
-    <MudText>Current URL: @Navigation.Uri</MudText>
-    <MudText>Base URL: @Navigation.BaseUri</MudText>
-</MudPaper>
+        @if (authenticationState?.User.Identity?.IsAuthenticated == true)
+        {
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Warning" 
+                       OnClick="BeginLogout"
+                       StartIcon="@Icons.Material.Filled.Logout">
+                Cerrar Sesión
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Success" 
+                       Href="/authentication/login"
+                       StartIcon="@Icons.Material.Filled.Login">
+                Iniciar Sesión
+            </MudButton>
+        }
+    </MudStack>
+</MudContainer>
 
 @code {
     private AuthenticationState? authenticationState;
+    private List<TestResult> testResults = new();
+    private List<AuthLog> recentLogs = new();
+    private string displayMode = "browser";
+    private bool isPWA = false;
 
     protected override async Task OnInitializedAsync()
     {
         await RefreshState();
+        await GetEnvironmentInfo();
+        await LoadRecentLogs();
     }
 
     private async Task RefreshState()
@@ -65,15 +329,195 @@
         StateHasChanged();
     }
 
-    private void LogoutModern()
+    private async Task GetEnvironmentInfo()
     {
-        // Enfoque recomendado para .NET 9
+        try
+        {
+            displayMode = await JSRuntime.InvokeAsync<string>("eval", @"
+                window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
+            ");
+            
+            isPWA = displayMode == "standalone";
+        }
+        catch
+        {
+            displayMode = "unknown";
+            isPWA = false;
+        }
+    }
+
+    private async Task LoadRecentLogs()
+    {
+        try
+        {
+            var debuggerAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.AuthDebugger !== 'undefined'");
+            
+            if (debuggerAvailable)
+            {
+                var logsJson = await JSRuntime.InvokeAsync<string>("eval", "JSON.stringify(window.AuthDebugger.getStoredLogs())");
+                var logs = System.Text.Json.JsonSerializer.Deserialize<AuthLog[]>(logsJson);
+                recentLogs = logs?.ToList() ?? new List<AuthLog>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error cargando logs: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task TestConnectivity()
+    {
+        testResults.Clear();
+        
+        try
+        {
+            var debuggerAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.AuthDebugger !== 'undefined'");
+            
+            if (debuggerAvailable)
+            {
+                var resultsJson = await JSRuntime.InvokeAsync<string>("eval", @"
+                    (async () => {
+                        const results = await window.AuthDebugger.testConnectivity();
+                        return JSON.stringify(results);
+                    })()
+                ");
+                
+                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson);
+                testResults = results?.ToList() ?? new List<TestResult>();
+                
+                Snackbar.Add("Test de conectividad completado", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("AuthDebugger no disponible", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error en test de conectividad: {ex.Message}", Severity.Error);
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task TestPWARouting()
+    {
+        testResults.Clear();
+        
+        try
+        {
+            var debuggerAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.AuthDebugger !== 'undefined'");
+            
+            if (debuggerAvailable)
+            {
+                var resultsJson = await JSRuntime.InvokeAsync<string>("eval", @"
+                    (async () => {
+                        const results = await window.AuthDebugger.testPWARouting();
+                        return JSON.stringify(results.map(r => ({
+                            Test: r.route,
+                            Status: r.ok ? 'OK' : 'FAIL',
+                            Details: `${r.status} ${r.statusText}`
+                        })));
+                    })()
+                ");
+                
+                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson);
+                testResults = results?.ToList() ?? new List<TestResult>();
+                
+                Snackbar.Add("Test de rutas PWA completado", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("AuthDebugger no disponible", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error en test de rutas PWA: {ex.Message}", Severity.Error);
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task GenerateReport()
+    {
+        try
+        {
+            var debuggerAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.AuthDebugger !== 'undefined'");
+            
+            if (debuggerAvailable)
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    (async () => {
+                        const report = await window.AuthDebugger.generateReport();
+                        console.log('📊 Complete Auth Debug Report:', report);
+                        
+                        // También copiarlo al portapapeles si es posible
+                        if (navigator.clipboard) {
+                            try {
+                                await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
+                                console.log('📋 Report copied to clipboard');
+                            } catch (e) {
+                                console.log('Could not copy to clipboard:', e);
+                            }
+                        }
+                    })()
+                ");
+                
+                Snackbar.Add("Reporte generado - Ver consola del navegador", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("AuthDebugger no disponible", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error generando reporte: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ClearLogs()
+    {
+        try
+        {
+            var debuggerAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.AuthDebugger !== 'undefined'");
+            
+            if (debuggerAvailable)
+            {
+                await JSRuntime.InvokeVoidAsync("eval", "window.AuthDebugger.clearLogs()");
+                recentLogs.Clear();
+                Snackbar.Add("Logs limpiados", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("AuthDebugger no disponible", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error limpiando logs: {ex.Message}", Severity.Error);
+        }
+        
+        StateHasChanged();
+    }
+
+    private void BeginLogout()
+    {
         Navigation.NavigateToLogout("/authentication/logout");
     }
 
-    private async Task LogoutJS()
+    public class TestResult
     {
-        await JSRuntime.InvokeVoidAsync("console.log", "Iniciando logout JavaScript");
-        await JSRuntime.InvokeVoidAsync("eval", "window.location.href = '/authentication/logout'");
+        public string Test { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Details { get; set; } = "";
+    }
+
+    public class AuthLog
+    {
+        public string Timestamp { get; set; } = "";
+        public string Event { get; set; } = "";
+        public object? Details { get; set; }
     }
 }

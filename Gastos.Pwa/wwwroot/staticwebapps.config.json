@@ -1,7 +1,31 @@
 {
   "routes": [
     {
+      "route": "/authentication/login-callback*",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/authentication/logout-callback*",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/authentication/login-failed*",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/authentication/logout-failed*",
+      "rewrite": "/index.html"
+    },
+    {
       "route": "/authentication/*",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/debug-auth",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/pwa-settings",
       "rewrite": "/index.html"
     },
     {
@@ -25,9 +49,14 @@
   },
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/js/*", "/_framework/*", "/_content/*"]
+    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/js/*", "/_framework/*", "/_content/*", "/lib/*", "/*.{ico,png,jpg,gif,svg,webmanifest}"]
   },
   "mimeTypes": {
     ".webmanifest": "application/manifest+json"
+  },
+  "globalHeaders": {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
   }
 }

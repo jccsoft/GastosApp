@@ -16,7 +16,7 @@ const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
 const offlineAssetsExclude = [ /^service-worker\.js$/ ];
 
-// Rutas de autenticación que siempre deben ir a la red
+// Rutas de autenticación que NUNCA deben ser cacheadas
 const authRoutes = [
     '/authentication/login',
     '/authentication/logout',
@@ -25,6 +25,16 @@ const authRoutes = [
     '/authentication/login-failed',
     '/authentication/logout-failed'
 ];
+
+// Función para verificar si una URL es de autenticación
+function isAuthenticationRoute(url) {
+    return authRoutes.some(route => url.includes(route));
+}
+
+// Función para verificar si una URL es de Auth0
+function isAuth0Request(url) {
+    return url.includes('auth0.com') || url.includes('/.well-known/openid_configuration');
+}
 
 async function onInstall(event) {
     console.info('Service worker: Install');
@@ -43,25 +53,45 @@ async function onActivate(event) {
     // Delete unused caches
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames
-        .filter(cacheName => cacheName.startsWith(cacheNamePrefix))
-        .filter(cacheName => cacheName !== cacheName)
-        .map(cacheName => caches.delete(cacheName)));
+        .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
+        .filter(oldCacheName => oldCacheName !== cacheName)
+        .map(oldCacheName => caches.delete(oldCacheName)));
 }
 
 async function onFetch(event) {
-    // Para rutas de autenticación, siempre ir a la red
-    if (authRoutes.some(route => event.request.url.includes(route))) {
-        console.log('Service worker: Authentication route detected, going to network:', event.request.url);
-        return fetch(event.request).catch(() => {
-            // Si falla la red, servir index.html para que Blazor maneje el routing
-            return caches.open(cacheName).then(cache => cache.match('index.html'));
+    const requestUrl = event.request.url;
+    
+    // Para requests de Auth0 o autenticación, SIEMPRE ir a la red
+    if (isAuth0Request(requestUrl) || isAuthenticationRoute(requestUrl)) {
+        console.log('Service worker: Auth route detected, bypassing cache:', requestUrl);
+        
+        // Forzar request fresco sin cache
+        const freshRequest = new Request(event.request.url, {
+            method: event.request.method,
+            headers: event.request.headers,
+            body: event.request.body,
+            cache: 'no-cache',
+            credentials: event.request.credentials,
+            mode: event.request.mode,
+            redirect: event.request.redirect,
+            referrer: event.request.referrer
+        });
+        
+        return fetch(freshRequest).catch(error => {
+            console.log('Service worker: Network request failed for auth route:', error);
+            // Para rutas de autenticación que fallan, servir index.html para que Blazor maneje el routing
+            return caches.open(cacheName).then(cache => 
+                cache.match('index.html').then(response => 
+                    response || new Response('Network error', { status: 503 })
+                )
+            );
         });
     }
 
+    // Para otros requests, usar la estrategia de cache normal
     let cachedResponse = null;
     if (event.request.method === 'GET') {
         // For all navigation requests, try to serve index.html from cache
-        // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
         const shouldServeIndexHtml = event.request.mode === 'navigate';
 
         const request = shouldServeIndexHtml ? 'index.html' : event.request;
@@ -69,5 +99,16 @@ async function onFetch(event) {
         cachedResponse = await cache.match(request);
     }
 
-    return cachedResponse || fetch(event.request);
+    return cachedResponse || fetch(event.request).catch(error => {
+        console.log('Service worker: Network request failed:', error);
+        // Si es una request de navegación que falló, servir index.html
+        if (event.request.mode === 'navigate') {
+            return caches.open(cacheName).then(cache => 
+                cache.match('index.html').then(response => 
+                    response || new Response('Offline', { status: 503 })
+                )
+            );
+        }
+        throw error;
+    });
 }

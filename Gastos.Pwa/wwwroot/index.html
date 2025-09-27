@@ -34,6 +34,9 @@
         <span class="dismiss">🗙</span>
     </div>
 
+    <!-- PWA Routing Check - Load First -->
+    <script src="js/pwa-routing-check.js"></script>
+
     <!-- PWA Scripts -->
     <script src="js/pwa-installer.js"></script>
     <script src="js/pwa-helper.js"></script>
@@ -47,8 +50,9 @@
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             const script = document.createElement('script');
             script.src = 'js/auth-debug.js';
+            script.onload = () => console.log('🔧 Auth debug script loaded');
             document.head.appendChild(script);
-            console.log('🔧 Development mode detected - Auth debug script loaded');
+            console.log('🔧 Development mode detected - Loading auth debug script');
         }
     </script>
     
@@ -63,31 +67,78 @@
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
 
-    <!-- PWA Service Worker -->
+    <!-- PWA Service Worker with Enhanced Error Handling -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js', { 
                 updateViaCache: 'none' 
             })
             .then(registration => {
-                console.log('ServiceWorker registration successful:', registration);
+                console.log('✅ ServiceWorker registration successful:', registration);
                 
                 // Escuchar actualizaciones del service worker
                 registration.addEventListener('updatefound', () => {
-                    console.log('ServiceWorker update found');
+                    console.log('🔄 ServiceWorker update found');
+                    const newWorker = registration.installing;
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'activated') {
+                            console.log('🔄 New ServiceWorker activated');
+                            // Opcional: mostrar notificación de actualización
+                        }
+                    });
                 });
             })
             .catch(error => {
-                console.log('ServiceWorker registration failed:', error);
+                console.error('❌ ServiceWorker registration failed:', error);
             });
 
             // Escuchar cambios en el service worker
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                console.log('ServiceWorker controller changed');
+                console.log('🔄 ServiceWorker controller changed');
                 // Opcional: recargar la página cuando hay un nuevo service worker
                 // window.location.reload();
             });
+
+            // Verificar si hay un service worker esperando
+            navigator.serviceWorker.ready.then(registration => {
+                if (registration.waiting) {
+                    console.log('⏳ ServiceWorker waiting to activate');
+                }
+            });
+        } else {
+            console.log('❌ ServiceWorker not supported');
         }
+    </script>
+
+    <!-- Error Handling for Authentication -->
+    <script>
+        // Manejo global de errores relacionados con autenticación
+        window.addEventListener('error', function(event) {
+            if (event.filename && event.filename.includes('authentication')) {
+                console.error('🔐 Authentication error:', {
+                    message: event.message,
+                    filename: event.filename,
+                    line: event.lineno,
+                    column: event.colno
+                });
+            }
+        });
+
+        // Manejo de promesas rechazadas relacionadas con autenticación
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.toString().toLowerCase().includes('auth')) {
+                console.error('🔐 Authentication promise rejection:', event.reason);
+            }
+        });
+
+        // Log del estado inicial de la aplicación
+        console.log('🚀 Application loading...', {
+            url: window.location.href,
+            isPWA: window.matchMedia('(display-mode: standalone)').matches,
+            hasServiceWorker: 'serviceWorker' in navigator,
+            userAgent: navigator.userAgent
+        });
     </script>
 </body>
 
