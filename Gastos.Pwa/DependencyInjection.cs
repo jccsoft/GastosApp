@@ -14,6 +14,7 @@ public static class DependencyInjection
             .AddScoped<BlazorService>()
             .AddScoped<ThemeService>()
             .AddScoped<PwaService>()
+            .AddScoped<PwaUpdateService>()
             .AddScoped<INetworkStatusService, NetworkStatusService>();
 
         builder.AddAuthServices();

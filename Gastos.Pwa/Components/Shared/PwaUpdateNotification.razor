@@ -1,0 +1,178 @@
+@using Gastos.Pwa.Shared.Services
+@inject PwaUpdateService PwaUpdateService
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+@if (showUpdateNotification)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <MudIcon Icon="@Icons.Material.Filled.SystemUpdate" Class="me-2" />
+                <div>
+                    <MudText Typo="Typo.body1"><strong>Nueva versión disponible</strong></MudText>
+                    <MudText Typo="Typo.body2">Se ha descargado una nueva versión de la aplicación</MudText>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Text" 
+                          Color="Color.Inherit" 
+                          Size="Size.Small"
+                          OnClick="DismissUpdate">
+                    Más tarde
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          Size="Size.Small"
+                          StartIcon="@Icons.Material.Filled.Refresh"
+                          OnClick="ApplyUpdate"
+                          Disabled="isUpdating">
+                    @if (isUpdating)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-1" />
+                        <span>Actualizando...</span>
+                    }
+                    else
+                    {
+                        <span>Actualizar ahora</span>
+                    }
+                </MudButton>
+            </div>
+        </div>
+    </MudAlert>
+}
+
+@code {
+    private bool showUpdateNotification = false;
+    private bool isUpdating = false;
+    private Timer? checkTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            PwaUpdateService.UpdateAvailable += OnUpdateAvailable;
+            PwaUpdateService.UpdateInstalled += OnUpdateInstalled;
+            PwaUpdateService.UpdateReady += OnUpdateReady;
+            
+            await PwaUpdateService.InitializeAsync();
+            
+            // Verificar actualizaciones al inicializar
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(2000); // Esperar 2 segundos antes de la primera verificación
+                await PwaUpdateService.CheckForUpdatesAsync();
+            });
+
+            // Configurar timer para verificaciones periódicas
+            checkTimer = new Timer(async _ =>
+            {
+                await PwaUpdateService.CheckForUpdatesAsync();
+            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing PWA update component: {ex.Message}");
+        }
+    }
+
+    private async Task OnUpdateAvailable()
+    {
+        await InvokeAsync(() =>
+        {
+            showUpdateNotification = true;
+            StateHasChanged();
+            
+            // Mostrar snackbar de notificación
+            Snackbar.Add("Nueva versión disponible para descargar", Severity.Info, config =>
+            {
+                config.Icon = Icons.Material.Filled.SystemUpdate;
+                config.VisibleStateDuration = 5000;
+            });
+        });
+    }
+
+    private async Task OnUpdateInstalled()
+    {
+        await InvokeAsync(() =>
+        {
+            Snackbar.Add("Nueva versión instalada correctamente", Severity.Success, config =>
+            {
+                config.Icon = Icons.Material.Filled.CheckCircle;
+                config.VisibleStateDuration = 3000;
+            });
+        });
+    }
+
+    private async Task OnUpdateReady()
+    {
+        await InvokeAsync(() =>
+        {
+            Snackbar.Add("Aplicación actualizada y lista", Severity.Success, config =>
+            {
+                config.Icon = Icons.Material.Filled.CheckCircle;
+                config.VisibleStateDuration = 3000;
+            });
+        });
+    }
+
+    private async Task ApplyUpdate()
+    {
+        try
+        {
+            isUpdating = true;
+            StateHasChanged();
+            
+            Snackbar.Add("Aplicando actualización...", Severity.Info, config =>
+            {
+                config.Icon = Icons.Material.Filled.HourglassEmpty;
+                config.VisibleStateDuration = 2000;
+            });
+
+            await PwaUpdateService.SkipWaitingAsync();
+            
+            // Esperar un poco antes de recargar para que se complete la activación
+            await Task.Delay(1000);
+            
+            await PwaUpdateService.ReloadAppAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error applying update: {ex.Message}");
+            
+            isUpdating = false;
+            StateHasChanged();
+            
+            Snackbar.Add("Error al aplicar la actualización", Severity.Error, config =>
+            {
+                config.Icon = Icons.Material.Filled.Error;
+                config.VisibleStateDuration = 5000;
+            });
+        }
+    }
+
+    private void DismissUpdate()
+    {
+        showUpdateNotification = false;
+        StateHasChanged();
+        
+        Snackbar.Add("Recordatorio: Actualización disponible", Severity.Info, config =>
+        {
+            config.Icon = Icons.Material.Filled.Schedule;
+            config.VisibleStateDuration = 3000;
+        });
+    }
+
+    public void Dispose()
+    {
+        if (PwaUpdateService != null)
+        {
+            PwaUpdateService.UpdateAvailable -= OnUpdateAvailable;
+            PwaUpdateService.UpdateInstalled -= OnUpdateInstalled;
+            PwaUpdateService.UpdateReady -= OnUpdateReady;
+        }
+        
+        checkTimer?.Dispose();
+    }
+}

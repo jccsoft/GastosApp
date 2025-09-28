@@ -40,6 +40,7 @@
     <!-- PWA Scripts -->
     <script src="js/pwa-installer.js"></script>
     <script src="js/pwa-helper.js"></script>
+    <script src="js/pwa-updater.js"></script>
     
     <!-- Authentication Script -->
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
@@ -69,36 +70,9 @@
             })
             .then(registration => {
                 console.log('✅ ServiceWorker registration successful:', registration);
-                
-                // Escuchar actualizaciones del service worker
-                registration.addEventListener('updatefound', () => {
-                    console.log('🔄 ServiceWorker update found');
-                    const newWorker = registration.installing;
-                    
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'activated') {
-                            console.log('🔄 New ServiceWorker activated');
-                            // Opcional: mostrar notificación de actualización
-                        }
-                    });
-                });
             })
             .catch(error => {
                 console.error('❌ ServiceWorker registration failed:', error);
-            });
-
-            // Escuchar cambios en el service worker
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                console.log('🔄 ServiceWorker controller changed');
-                // Opcional: recargar la página cuando hay un nuevo service worker
-                // window.location.reload();
-            });
-
-            // Verificar si hay un service worker esperando
-            navigator.serviceWorker.ready.then(registration => {
-                if (registration.waiting) {
-                    console.log('⏳ ServiceWorker waiting to activate');
-                }
             });
         } else {
             console.log('❌ ServiceWorker not supported');

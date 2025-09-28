@@ -6,7 +6,8 @@ self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 self.addEventListener('message', event => {
-    if (event.data && event.data.command === 'update') {
+    if (event.data && event.data.command === 'skipWaiting') {
+        console.log('Service Worker: skipWaiting command received');
         self.skipWaiting();
     }
 });
@@ -45,6 +46,9 @@ async function onInstall(event) {
         .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
         .map(asset => new Request(asset.url, { integrity: asset.hash, cache: 'no-cache' }));
     await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+
+    // Saltar la espera para activar inmediatamente (útil para actualizaciones)
+    console.info('Service worker: Install complete, skipping waiting');
 }
 
 async function onActivate(event) {
@@ -56,6 +60,10 @@ async function onActivate(event) {
         .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
         .filter(oldCacheName => oldCacheName !== cacheName)
         .map(oldCacheName => caches.delete(oldCacheName)));
+
+    // Tomar control inmediato de todos los clientes
+    await self.clients.claim();
+    console.info('Service worker: Activated and claimed all clients');
 }
 
 async function onFetch(event) {
