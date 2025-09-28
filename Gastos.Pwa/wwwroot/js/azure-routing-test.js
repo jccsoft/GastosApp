@@ -4,7 +4,7 @@
     
     // 1. Verificar que staticwebapps.config.json existe y es válido
     try {
-        const configResponse = await fetch('/staticwebapps.config.json', { cache: 'no-cache' });
+        const configResponse = await fetch('/staticwebapp.config.json', { cache: 'no-cache' });
         if (configResponse.ok) {
             const config = await configResponse.json();
             console.log('✅ staticwebapps.config.json loaded:', config);

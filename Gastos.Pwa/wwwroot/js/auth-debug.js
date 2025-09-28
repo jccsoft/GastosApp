@@ -67,7 +67,7 @@
             
             // 1. Verificar el archivo de configuración exacto
             try {
-                const configResponse = await fetch('/staticwebapps.config.json', { cache: 'no-cache' });
+                const configResponse = await fetch('/staticwebapp.config.json', { cache: 'no-cache' });
                 const configText = await configResponse.text();
                 const configJson = JSON.parse(configText);
                 
@@ -303,7 +303,7 @@
 
             // Test staticwebapps.config.json
             try {
-                const configUrl = `${window.location.origin}/staticwebapps.config.json`;
+                const configUrl = `${window.location.origin}/staticwebapp.config.json`;
                 const response = await fetch(configUrl, { 
                     method: 'GET',
                     cache: 'no-cache'
@@ -440,7 +440,7 @@
             
             // Test del archivo de configuración
             try {
-                const configUrl = `${window.location.origin}/staticwebapps.config.json`;
+                const configUrl = `${window.location.origin}/staticwebapp.config.json`;
                 const response = await fetch(configUrl);
                 
                 if (response.ok) {
