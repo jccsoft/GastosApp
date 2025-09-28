@@ -149,7 +149,7 @@ public class BlazorService(
     #region COPY TEXT
     public async Task CopyText(string textToCopy)
     {
-        await js.InvokeVoidAsync("clipboardCopy.copyText",
+        await js.InvokeVoidAsync("clipboardHelper.copyText",
                                  DotNetObjectReference.Create(this),
                                  nameof(CopyTextFinished),
                                  textToCopy);

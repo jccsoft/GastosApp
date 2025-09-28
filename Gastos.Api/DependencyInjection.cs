@@ -29,7 +29,8 @@ public static class DependencyInjection
                     // Production: only allow specific origins
                     policy.WithOrigins(
                         "https://thankful-desert-0e532df03.1.azurestaticapps.net",
-                        "https://jcdcgastosapi.azurewebsites.net"
+                        "https://jcdcgastosapi.azurewebsites.net",
+                        "https://localhost:7142"
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()

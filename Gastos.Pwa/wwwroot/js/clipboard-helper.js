@@ -15,4 +15,4 @@
         }
     }
 
-})((window.clipboardCopy = window.clipboardCopy || {}));
+})((window.clipboardHelper = window.clipboardHelper || {}));
