@@ -7,6 +7,9 @@
     console.log('📝 SW Registrator loading...');
 
     window.updateAvailable = new Promise((resolve, reject) => {
+
+        console.group('Check update available');
+
         if (!('serviceWorker' in navigator)) {
             const errorMessage = `This browser doesn't support service workers`;
             console.error('❌ ' + errorMessage);
@@ -117,10 +120,12 @@
                 console.error('❌ Service worker registration failed:', error);
                 reject(error);
             });
+
+        console.groupEnd();
     });
 
     window.registerForUpdateAvailableNotification = (caller, methodName) => {
-        console.log('📋 Registering for update available notification');
+        console.group('📋 Registering for update available notification');
         
         window.updateAvailable.then(isUpdateAvailable => {
             console.log('📊 Update available check result:', isUpdateAvailable);
@@ -144,6 +149,8 @@
         }).catch(err => {
             console.error('❌ Error in registerForUpdateAvailableNotification:', err);
         });
+
+        console.groupEnd();
     };
 
     // Exponer función para obtener estado del registro
