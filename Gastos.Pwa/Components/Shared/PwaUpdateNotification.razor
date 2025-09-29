@@ -12,7 +12,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.SystemUpdate" Class="me-2" />
                 <div>
                     <MudText Typo="Typo.body1"><strong>Nueva versión disponible</strong></MudText>
-                    <MudText Typo="Typo.body2">Se ha descargado una nueva versión de la aplicación</MudText>
+                    <MudText Typo="Typo.body2">Se ha descargado una nueva versión de la aplicación. Actualizar ahora para obtener las últimas mejoras.</MudText>
                 </div>
             </div>
             <div class="d-flex gap-2">
@@ -43,10 +43,34 @@
     </MudAlert>
 }
 
+@if (showForceUpdateButton && !showUpdateNotification)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Text" Class="mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Class="me-2" />
+                <div>
+                    <MudText Typo="Typo.body2">¿La aplicación no se está actualizando correctamente?</MudText>
+                </div>
+            </div>
+            <MudButton Variant="Variant.Text" 
+                      Color="Color.Warning" 
+                      Size="Size.Small"
+                      StartIcon="@Icons.Material.Filled.Cached"
+                      OnClick="ForceRefresh">
+                Forzar actualización
+            </MudButton>
+        </div>
+    </MudAlert>
+}
+
 @code {
     private bool showUpdateNotification = false;
+    private bool showForceUpdateButton = false;
     private bool isUpdating = false;
     private Timer? checkTimer;
+    private Timer? forceButtonTimer;
+    private int updateCheckCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -62,14 +86,27 @@
             _ = Task.Run(async () =>
             {
                 await Task.Delay(2000); // Esperar 2 segundos antes de la primera verificación
-                await PwaUpdateService.CheckForUpdatesAsync();
+                await CheckForUpdatesInternal();
             });
 
             // Configurar timer para verificaciones periódicas
             checkTimer = new Timer(async _ =>
             {
-                await PwaUpdateService.CheckForUpdatesAsync();
-            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+                await CheckForUpdatesInternal();
+            }, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
+
+            // Mostrar botón de fuerza actualización después de un tiempo si no hay actualizaciones
+            forceButtonTimer = new Timer(_ =>
+            {
+                if (!showUpdateNotification && updateCheckCount > 2)
+                {
+                    InvokeAsync(() =>
+                    {
+                        showForceUpdateButton = true;
+                        StateHasChanged();
+                    });
+                }
+            }, null, TimeSpan.FromMinutes(15), TimeSpan.FromMinutes(15));
         }
         catch (Exception ex)
         {
@@ -77,11 +114,18 @@
         }
     }
 
+    private async Task CheckForUpdatesInternal()
+    {
+        updateCheckCount++;
+        await PwaUpdateService.CheckForUpdatesAsync();
+    }
+
     private async Task OnUpdateAvailable()
     {
         await InvokeAsync(() =>
         {
             showUpdateNotification = true;
+            showForceUpdateButton = false;
             StateHasChanged();
             
             // Mostrar snackbar de notificación
@@ -109,6 +153,9 @@
     {
         await InvokeAsync(() =>
         {
+            showUpdateNotification = false;
+            StateHasChanged();
+            
             Snackbar.Add("Aplicación actualizada y lista", Severity.Success, config =>
             {
                 config.Icon = Icons.Material.Filled.CheckCircle;
@@ -133,7 +180,7 @@
             await PwaUpdateService.SkipWaitingAsync();
             
             // Esperar un poco antes de recargar para que se complete la activación
-            await Task.Delay(1000);
+            await Task.Delay(1500);
             
             await PwaUpdateService.ReloadAppAsync();
         }
@@ -162,6 +209,61 @@
             config.Icon = Icons.Material.Filled.Schedule;
             config.VisibleStateDuration = 3000;
         });
+        
+        // Volver a mostrar la notificación después de 10 minutos
+        _ = Task.Delay(TimeSpan.FromMinutes(10)).ContinueWith(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                showUpdateNotification = true;
+                StateHasChanged();
+            });
+        });
+    }
+
+    private async Task ForceRefresh()
+    {
+        try
+        {
+            showForceUpdateButton = false;
+            StateHasChanged();
+
+            Snackbar.Add("Limpiando cache y actualizando...", Severity.Warning, config =>
+            {
+                config.Icon = Icons.Material.Filled.CleaningServices;
+                config.VisibleStateDuration = 3000;
+            });
+
+            // Limpiar todos los caches y recargar
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                if (window.pwaUpdater && window.pwaUpdater.clearAllCaches) {
+                    window.pwaUpdater.clearAllCaches();
+                } else {
+                    // Fallback manual
+                    if ('caches' in window) {
+                        caches.keys().then(function(names) {
+                            names.forEach(function(name) {
+                                caches.delete(name);
+                            });
+                        }).then(function() {
+                            window.location.reload(true);
+                        });
+                    } else {
+                        window.location.reload(true);
+                    }
+                }
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error forcing refresh: {ex.Message}");
+            
+            Snackbar.Add("Error al forzar actualización", Severity.Error, config =>
+            {
+                config.Icon = Icons.Material.Filled.Error;
+                config.VisibleStateDuration = 5000;
+            });
+        }
     }
 
     public void Dispose()
@@ -174,5 +276,6 @@
         }
         
         checkTimer?.Dispose();
+        forceButtonTimer?.Dispose();
     }
 }

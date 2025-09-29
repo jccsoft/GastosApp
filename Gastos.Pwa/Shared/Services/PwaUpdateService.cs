@@ -2,6 +2,7 @@ namespace Gastos.Pwa.Shared.Services;
 
 public class PwaUpdateService(IJSRuntime jsRuntime) : IDisposable
 {
+    private bool _disposed;
     private DotNetObjectReference<PwaUpdateService>? _dotNetRef;
 
     public event Func<Task>? UpdateAvailable;
@@ -84,9 +85,21 @@ public class PwaUpdateService(IJSRuntime jsRuntime) : IDisposable
         }
     }
 
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _dotNetRef?.Dispose();
+            }
+            _disposed = true;
+        }
+    }
+
     public void Dispose()
     {
-        _dotNetRef?.Dispose();
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
 }

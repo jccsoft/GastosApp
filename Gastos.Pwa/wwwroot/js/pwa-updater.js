@@ -18,26 +18,30 @@ window.pwaUpdater = {
 
         navigator.serviceWorker.ready.then((registration) => {
             this.registration = registration;
+            console.log('Service Worker ready, current version:', registration.active?.scriptURL);
             
             // Verificar si ya hay un service worker esperando
             if (registration.waiting) {
-                console.log('Service Worker waiting found');
+                console.log('Service Worker waiting found on initialization');
+                this.newServiceWorker = registration.waiting;
                 this.showUpdateAvailable();
             }
 
             // Escuchar nuevas instalaciones
             registration.addEventListener('updatefound', () => {
-                console.log('New Service Worker found');
+                console.log('New Service Worker installation detected');
                 const newWorker = registration.installing;
                 this.newServiceWorker = newWorker;
 
+                if (!newWorker) return;
+
                 newWorker.addEventListener('statechange', () => {
-                    console.log('Service Worker state changed to:', newWorker.state);
+                    console.log('New Service Worker state changed to:', newWorker.state);
                     
                     if (newWorker.state === 'installed') {
                         if (navigator.serviceWorker.controller) {
                             // Nueva versión disponible
-                            console.log('New version available');
+                            console.log('New version available and ready to activate');
                             this.showUpdateAvailable();
                         } else {
                             // Primera instalación
@@ -52,33 +56,49 @@ window.pwaUpdater = {
                     }
                 });
             });
+        }).catch(error => {
+            console.error('Error getting service worker ready:', error);
         });
 
         // Escuchar cambios en el controlador
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (this.refreshing) return;
             console.log('Service Worker controller changed');
-            this.refreshing = true;
-            this.reloadApp();
+            this.handleControllerChange();
         });
 
         // Escuchar mensajes del service worker
         navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'SKIP_WAITING') {
-                console.log('Service Worker skip waiting message received');
+            if (event.data) {
+                switch (event.data.type) {
+                    case 'SKIP_WAITING':
+                        console.log('Service Worker skip waiting message received');
+                        break;
+                    case 'SW_UPDATED':
+                        console.log('Service Worker updated message received');
+                        this.onSwUpdated(event.data.version);
+                        break;
+                }
             }
         });
 
-        // Verificar actualizaciones periódicamente (cada 5 minutos)
+        // Verificar actualizaciones periódicamente (cada 2 minutos)
         setInterval(() => {
             this.checkForUpdates();
-        }, 5 * 60 * 1000);
+        }, 2 * 60 * 1000);
 
         // Verificar al recuperar el foco de la ventana
         window.addEventListener('focus', () => {
             setTimeout(() => {
                 this.checkForUpdates();
             }, 1000);
+        });
+
+        // Verificar cuando la conexión vuelve a estar disponible
+        window.addEventListener('online', () => {
+            setTimeout(() => {
+                this.checkForUpdates();
+            }, 2000);
         });
     },
 
@@ -101,17 +121,39 @@ window.pwaUpdater = {
 
     skipWaiting: function () {
         if (this.newServiceWorker) {
-            console.log('Telling service worker to skip waiting');
+            console.log('Telling new service worker to skip waiting');
             this.newServiceWorker.postMessage({ command: 'skipWaiting' });
         } else if (this.registration && this.registration.waiting) {
             console.log('Telling waiting service worker to skip waiting');
             this.registration.waiting.postMessage({ command: 'skipWaiting' });
+        } else {
+            console.warn('No service worker available to skip waiting');
+            // Como fallback, intentar recargar la página
+            setTimeout(() => {
+                this.reloadApp();
+            }, 1000);
         }
     },
 
     reloadApp: function () {
         console.log('Reloading application...');
-        window.location.reload();
+        this.refreshing = true;
+        // Usar location.replace para evitar problemas con el historial
+        window.location.replace(window.location.href);
+    },
+
+    handleControllerChange: function () {
+        if (this.refreshing) return;
+        console.log('Handling controller change - reloading app');
+        this.refreshing = true;
+        this.reloadApp();
+    },
+
+    onSwUpdated: function (version) {
+        console.log('Service Worker updated to version:', version);
+        if (this.dotNetRef) {
+            this.dotNetRef.invokeMethodAsync('OnUpdateReady').catch(console.error);
+        }
     },
 
     showUpdateAvailable: function () {
@@ -133,10 +175,50 @@ window.pwaUpdater = {
         if (this.dotNetRef) {
             this.dotNetRef.invokeMethodAsync('OnUpdateReady').catch(console.error);
         }
+    },
+
+    // Función de utilidad para limpiar todos los caches manualmente
+    clearAllCaches: function () {
+        return caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    console.log('Deleting cache:', cacheName);
+                    return caches.delete(cacheName);
+                })
+            );
+        }).then(() => {
+            console.log('All caches cleared');
+            this.reloadApp();
+        });
+    },
+
+    // Función de diagnóstico
+    getServiceWorkerInfo: function () {
+        if (!navigator.serviceWorker) {
+            return Promise.resolve({ supported: false });
+        }
+
+        return navigator.serviceWorker.ready.then(registration => {
+            return {
+                supported: true,
+                active: !!registration.active,
+                waiting: !!registration.waiting,
+                installing: !!registration.installing,
+                scope: registration.scope,
+                updateViaCache: registration.updateViaCache,
+                activeScriptURL: registration.active?.scriptURL,
+                waitingScriptURL: registration.waiting?.scriptURL
+            };
+        });
     }
 };
 
 // Auto-inicializar el updater
 document.addEventListener('DOMContentLoaded', () => {
     console.log('PWA Updater script loaded');
+    
+    // Exponer funciones globales para debugging
+    window.clearPWACache = () => window.pwaUpdater.clearAllCaches();
+    window.checkPWAUpdates = () => window.pwaUpdater.checkForUpdates();
+    window.getPWAInfo = () => window.pwaUpdater.getServiceWorkerInfo();
 });

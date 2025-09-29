@@ -38,32 +38,44 @@ function isAuth0Request(url) {
 }
 
 async function onInstall(event) {
-    console.info('Service worker: Install');
+    console.info('Service worker: Install - Version:', self.assetsManifest.version);
 
     // Fetch and cache all matching items from the assets manifest
     const assetsRequests = self.assetsManifest.assets
         .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
         .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
         .map(asset => new Request(asset.url, { integrity: asset.hash, cache: 'no-cache' }));
-    await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+    
+    const cache = await caches.open(cacheName);
+    await cache.addAll(assetsRequests);
 
-    // Saltar la espera para activar inmediatamente (útil para actualizaciones)
-    console.info('Service worker: Install complete, skipping waiting');
+    // IMPORTANTE: No hacer skipWaiting automáticamente aquí
+    // Esto permite que el usuario control cuándo aplicar la actualización
+    console.info('Service worker: Install complete, waiting for activation command');
 }
 
 async function onActivate(event) {
-    console.info('Service worker: Activate');
+    console.info('Service worker: Activate - Version:', self.assetsManifest.version);
 
     // Delete unused caches
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames
         .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
         .filter(oldCacheName => oldCacheName !== cacheName)
-        .map(oldCacheName => caches.delete(oldCacheName)));
+        .map(oldCacheName => {
+            console.log('Service worker: Deleting old cache:', oldCacheName);
+            return caches.delete(oldCacheName);
+        }));
 
     // Tomar control inmediato de todos los clientes
     await self.clients.claim();
     console.info('Service worker: Activated and claimed all clients');
+    
+    // Notificar a todos los clientes que el service worker se ha actualizado
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+        client.postMessage({ type: 'SW_UPDATED', version: self.assetsManifest.version });
+    });
 }
 
 async function onFetch(event) {
@@ -96,27 +108,35 @@ async function onFetch(event) {
         });
     }
 
-    // Para otros requests, usar la estrategia de cache normal
+    // Para requests de navegación (HTML), aplicar estrategia de "network first" para evitar contenido obsoleto
+    if (event.request.mode === 'navigate') {
+        try {
+            const networkResponse = await fetch(event.request);
+            // Si la red responde, usar la respuesta de red y actualizar el cache
+            if (networkResponse && networkResponse.status === 200) {
+                const cache = await caches.open(cacheName);
+                cache.put('index.html', networkResponse.clone());
+                return networkResponse;
+            }
+        } catch (error) {
+            console.log('Service worker: Network failed for navigation, falling back to cache');
+        }
+        
+        // Si la red falla, usar el cache como respaldo
+        const cache = await caches.open(cacheName);
+        const cachedResponse = await cache.match('index.html');
+        return cachedResponse || new Response('Offline', { status: 503 });
+    }
+
+    // Para otros requests, usar estrategia de cache first
     let cachedResponse = null;
     if (event.request.method === 'GET') {
-        // For all navigation requests, try to serve index.html from cache
-        const shouldServeIndexHtml = event.request.mode === 'navigate';
-
-        const request = shouldServeIndexHtml ? 'index.html' : event.request;
         const cache = await caches.open(cacheName);
-        cachedResponse = await cache.match(request);
+        cachedResponse = await cache.match(event.request);
     }
 
     return cachedResponse || fetch(event.request).catch(error => {
         console.log('Service worker: Network request failed:', error);
-        // Si es una request de navegación que falló, servir index.html
-        if (event.request.mode === 'navigate') {
-            return caches.open(cacheName).then(cache => 
-                cache.match('index.html').then(response => 
-                    response || new Response('Offline', { status: 503 })
-                )
-            );
-        }
         throw error;
     });
 }

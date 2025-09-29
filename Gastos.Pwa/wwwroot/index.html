@@ -17,6 +17,11 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <link href="_content/MudBlazor/MudBlazor.min.css?v=1" rel="stylesheet" />
+    
+    <!-- Cache prevention for main HTML -->
+    <meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="0">
 </head>
 
 <body>
@@ -61,50 +66,8 @@
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
 
+    <!-- Enhanced Service Worker Registration -->
     <script src="sw-registrator.js"></script>
-    <!-- PWA Service Worker with Enhanced Error Handling -->
-    <!--<script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js', {
-                updateViaCache: 'none'
-            })
-                .then(registration => {
-                    console.log('✅ ServiceWorker registration successful:', registration);
-
-                    // Escuchar actualizaciones del service worker
-                    registration.addEventListener('updatefound', () => {
-                        console.log('🔄 ServiceWorker update found');
-                        const newWorker = registration.installing;
-
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'activated') {
-                                console.log('🔄 New ServiceWorker activated');
-                                // Opcional: mostrar notificación de actualización
-                            }
-                        });
-                    });
-                })
-                .catch(error => {
-                    console.error('❌ ServiceWorker registration failed:', error);
-                });
-
-            // Escuchar cambios en el service worker
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                console.log('🔄 ServiceWorker controller changed');
-                // Opcional: recargar la página cuando hay un nuevo service worker
-                // window.location.reload();
-            });
-
-            // Verificar si hay un service worker esperando
-            navigator.serviceWorker.ready.then(registration => {
-                if (registration.waiting) {
-                    console.log('⏳ ServiceWorker waiting to activate');
-                }
-            });
-        } else {
-            console.log('❌ ServiceWorker not supported');
-        }
-    </script>-->
 
     <!-- Error Handling for Authentication -->
     <script>
@@ -141,7 +104,8 @@
             isPWA: window.matchMedia('(display-mode: standalone)').matches,
             hasServiceWorker: 'serviceWorker' in navigator,
             isDevelopment: isDevelopment,
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
         });
 
         // Verificar que todos los debuggers se hayan cargado
@@ -151,13 +115,58 @@
             if (typeof window.PWAInstaller !== 'undefined') debuggers.push('PWAInstaller');
             if (typeof window.PWARoutingDebug !== 'undefined') debuggers.push('PWARoutingDebug');
             if (typeof window.testAzureRouting !== 'undefined') debuggers.push('AzureRoutingTest');
+            if (typeof window.pwaUpdater !== 'undefined') debuggers.push('PWAUpdater');
 
             console.log(`✅ Debug tools loaded: ${debuggers.join(', ')}`);
 
             if (debuggers.length === 0) {
                 console.warn('⚠️ No debug tools loaded - Troubleshooting may be limited');
             }
+
+            // Exponer funciones de diagnóstico globales solo en desarrollo
+            if (isDevelopment) {
+                window.diagnoseApp = function() {
+                    console.group('🔍 Application Diagnostics');
+                    console.log('Service Worker:', 'serviceWorker' in navigator ? 'Supported' : 'Not supported');
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.getRegistrations().then(registrations => {
+                            console.log('SW Registrations:', registrations.length);
+                            registrations.forEach((reg, index) => {
+                                console.log(`SW ${index + 1}:`, {
+                                    scope: reg.scope,
+                                    active: !!reg.active,
+                                    waiting: !!reg.waiting,
+                                    installing: !!reg.installing
+                                });
+                            });
+                        });
+                    }
+                    console.log('PWA Display Mode:', window.matchMedia('(display-mode: standalone)').matches ? 'Standalone' : 'Browser');
+                    console.log('Cache API:', 'caches' in window ? 'Available' : 'Not available');
+                    console.groupEnd();
+                };
+                
+                console.log('💡 Tip: Run window.diagnoseApp() to get diagnostic information');
+                console.log('💡 Tip: Run window.clearPWACache() to clear PWA cache manually');
+                console.log('💡 Tip: Run window.checkPWAUpdates() to check for updates manually');
+            }
         }, 3000);
+
+        // Detectar cuando la aplicación se está ejecutando desde cache obsoleto
+        window.addEventListener('load', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(registration => {
+                    if (registration.waiting) {
+                        console.warn('⚠️ Service Worker is waiting - app might be showing old content');
+                        
+                        // En desarrollo, mostrar advertencia en consola
+                        if (isDevelopment) {
+                            console.log('🔧 Development Mode: Consider refreshing to get latest version');
+                        }
+                    }
+                });
+            }
+        });
     </script>
 </body>
 
