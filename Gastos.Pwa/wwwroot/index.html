@@ -39,20 +39,24 @@
         <span class="dismiss">🗙</span>
     </div>
 
-    <!-- PWA Routing Check - Load First -->
+    <!-- PWA Diagnostics - Load First -->
+    <script src="js/pwa-diagnostics.js"></script>
+
+    <!-- PWA Routing Check -->
     <script src="js/pwa-routing-check.js"></script>
 
     <!-- PWA Scripts -->
     <script src="js/pwa-installer.js"></script>
     <script src="js/pwa-helper.js"></script>
+    <script src="js/pwa-updater.js"></script>
 
     <!-- Authentication Script -->
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
 
-    <!-- Auth Debug Script - Always load for troubleshooting -->
+    <!-- Auth Debug Script -->
     <script src="js/auth-debug.js"></script>
 
-    <!-- Azure Routing Test - Load after auth-debug -->
+    <!-- Azure Routing Test -->
     <script src="js/azure-routing-test.js"></script>
 
     <!-- Utility Scripts -->
@@ -63,13 +67,12 @@
     <script src="_framework/blazor.webassembly.js"></script>
 
     <!-- MudBlazor JS -->
-    <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
 
-    <!-- Enhanced Service Worker Registration -->
+    <!-- Enhanced Service Worker Registration - Load after PWA scripts -->
     <script src="sw-registrator.js"></script>
 
-    <!-- Error Handling for Authentication -->
+    <!-- Application Initialization Script -->
     <script>
         // Detectar modo de desarrollo vs producción
         const isDevelopment = window.location.hostname === 'localhost' ||
@@ -108,64 +111,49 @@
             timestamp: new Date().toISOString()
         });
 
-        // Verificar que todos los debuggers se hayan cargado
-        setTimeout(() => {
-            const debuggers = [];
-            if (typeof window.AuthDebugger !== 'undefined') debuggers.push('AuthDebugger');
-            if (typeof window.PWAInstaller !== 'undefined') debuggers.push('PWAInstaller');
-            if (typeof window.PWARoutingDebug !== 'undefined') debuggers.push('PWARoutingDebug');
-            if (typeof window.testAzureRouting !== 'undefined') debuggers.push('AzureRoutingTest');
-            if (typeof window.pwaUpdater !== 'undefined') debuggers.push('PWAUpdater');
-
-            console.log(`✅ Debug tools loaded: ${debuggers.join(', ')}`);
-
-            if (debuggers.length === 0) {
-                console.warn('⚠️ No debug tools loaded - Troubleshooting may be limited');
-            }
-
-            // Exponer funciones de diagnóstico globales solo en desarrollo
-            if (isDevelopment) {
-                window.diagnoseApp = function() {
-                    console.group('🔍 Application Diagnostics');
-                    console.log('Service Worker:', 'serviceWorker' in navigator ? 'Supported' : 'Not supported');
-                    if ('serviceWorker' in navigator) {
-                        navigator.serviceWorker.getRegistrations().then(registrations => {
-                            console.log('SW Registrations:', registrations.length);
-                            registrations.forEach((reg, index) => {
-                                console.log(`SW ${index + 1}:`, {
-                                    scope: reg.scope,
-                                    active: !!reg.active,
-                                    waiting: !!reg.waiting,
-                                    installing: !!reg.installing
-                                });
-                            });
-                        });
-                    }
-                    console.log('PWA Display Mode:', window.matchMedia('(display-mode: standalone)').matches ? 'Standalone' : 'Browser');
-                    console.log('Cache API:', 'caches' in window ? 'Available' : 'Not available');
-                    console.groupEnd();
-                };
-                
-                console.log('💡 Tip: Run window.diagnoseApp() to get diagnostic information');
-                console.log('💡 Tip: Run window.clearPWACache() to clear PWA cache manually');
-                console.log('💡 Tip: Run window.checkPWAUpdates() to check for updates manually');
-            }
-        }, 3000);
-
-        // Detectar cuando la aplicación se está ejecutando desde cache obsoleto
+        // Verificar que todos los scripts se hayan cargado
         window.addEventListener('load', () => {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(registration => {
-                    if (registration.waiting) {
-                        console.warn('⚠️ Service Worker is waiting - app might be showing old content');
-                        
-                        // En desarrollo, mostrar advertencia en consola
-                        if (isDevelopment) {
-                            console.log('🔧 Development Mode: Consider refreshing to get latest version');
+            setTimeout(() => {
+                const loadedTools = [];
+                if (typeof window.AuthDebugger !== 'undefined') loadedTools.push('AuthDebugger');
+                if (typeof window.PWAInstaller !== 'undefined') loadedTools.push('PWAInstaller');
+                if (typeof window.PWARoutingDebug !== 'undefined') loadedTools.push('PWARoutingDebug');
+                if (typeof window.testAzureRouting !== 'undefined') loadedTools.push('AzureRoutingTest');
+                if (typeof window.pwaUpdater !== 'undefined') loadedTools.push('PWAUpdater');
+                if (typeof window.diagnoseApp !== 'undefined') loadedTools.push('PWADiagnostics');
+
+                console.log(`✅ Tools loaded: ${loadedTools.join(', ')}`);
+
+                if (loadedTools.length === 0) {
+                    console.warn('⚠️ No tools loaded - Check for script errors');
+                }
+
+                // Verificar estado del service worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        if (registration.waiting) {
+                            console.warn('⚠️ Service Worker is waiting - app might be showing old content');
+                            console.log('💡 Run window.forceSWUpdate() to apply the update');
                         }
-                    }
-                });
-            }
+                    });
+                }
+            }, 1000);
+        });
+
+        // Global error handler for debugging
+        window.addEventListener('error', function(event) {
+            console.error('🚨 Global Error:', {
+                message: event.message,
+                source: event.filename,
+                line: event.lineno,
+                column: event.colno,
+                error: event.error
+            });
+        });
+
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('🚨 Unhandled Promise Rejection:', event.reason);
         });
     </script>
 </body>

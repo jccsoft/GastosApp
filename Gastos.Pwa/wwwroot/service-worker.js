@@ -1,3 +1,4 @@
+// Enhanced Service Worker with better update handling and caching strategies
 // Caution! Be sure you understand the caveats before publishing an application with
 // offline support. See https://aka.ms/blazor-offline-considerations
 
@@ -7,14 +8,18 @@ self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 self.addEventListener('message', event => {
     if (event.data && event.data.command === 'skipWaiting') {
-        console.log('Service Worker: skipWaiting command received');
+        console.log('🚀 Service Worker: skipWaiting command received');
         self.skipWaiting();
     }
 });
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
-const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
+const offlineAssetsInclude = [ 
+    /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, 
+    /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, 
+    /\.blat$/, /\.dat$/, /\.svg$/, /\.woff2$/, /\.ttf$/, /\.eot$/
+];
 const offlineAssetsExclude = [ /^service-worker\.js$/ ];
 
 // Rutas de autenticación que NUNCA deben ser cacheadas
@@ -27,6 +32,13 @@ const authRoutes = [
     '/authentication/logout-failed'
 ];
 
+// URLs que siempre deben ir a la red
+const networkOnlyRoutes = [
+    '/api/',
+    '/.auth/',
+    '/.well-known/'
+];
+
 // Función para verificar si una URL es de autenticación
 function isAuthenticationRoute(url) {
     return authRoutes.some(route => url.includes(route));
@@ -37,106 +49,185 @@ function isAuth0Request(url) {
     return url.includes('auth0.com') || url.includes('/.well-known/openid_configuration');
 }
 
+// Función para verificar si debe ir solo a la red
+function isNetworkOnlyRoute(url) {
+    return networkOnlyRoutes.some(route => url.includes(route));
+}
+
 async function onInstall(event) {
-    console.info('Service worker: Install - Version:', self.assetsManifest.version);
+    console.info('🔧 Service worker: Install - Version:', self.assetsManifest.version);
 
-    // Fetch and cache all matching items from the assets manifest
-    const assetsRequests = self.assetsManifest.assets
-        .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
-        .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
-        .map(asset => new Request(asset.url, { integrity: asset.hash, cache: 'no-cache' }));
-    
-    const cache = await caches.open(cacheName);
-    await cache.addAll(assetsRequests);
-
-    // IMPORTANTE: No hacer skipWaiting automáticamente aquí
-    // Esto permite que el usuario control cuándo aplicar la actualización
-    console.info('Service worker: Install complete, waiting for activation command');
+    try {
+        // Fetch and cache all matching items from the assets manifest
+        const assetsRequests = self.assetsManifest.assets
+            .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
+            .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
+            .map(asset => {
+                // Crear request con integrity check y sin cache
+                return new Request(asset.url, { 
+                    integrity: asset.hash, 
+                    cache: 'no-cache' 
+                });
+            });
+        
+        console.log(`📦 Caching ${assetsRequests.length} assets...`);
+        
+        const cache = await caches.open(cacheName);
+        await cache.addAll(assetsRequests);
+        
+        console.info('✅ Service worker: Install complete - assets cached');
+        
+        // NO hacer skipWaiting automáticamente - esperar comando del usuario
+        console.info('⏳ Service worker: Waiting for activation command from user');
+        
+    } catch (error) {
+        console.error('❌ Service worker: Install failed:', error);
+        throw error;
+    }
 }
 
 async function onActivate(event) {
-    console.info('Service worker: Activate - Version:', self.assetsManifest.version);
+    console.info('🎉 Service worker: Activate - Version:', self.assetsManifest.version);
 
-    // Delete unused caches
-    const cacheNames = await caches.keys();
-    await Promise.all(cacheNames
-        .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
-        .filter(oldCacheName => oldCacheName !== cacheName)
-        .map(oldCacheName => {
-            console.log('Service worker: Deleting old cache:', oldCacheName);
-            return caches.delete(oldCacheName);
-        }));
+    try {
+        // Delete unused caches
+        const cacheNames = await caches.keys();
+        const oldCaches = cacheNames
+            .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
+            .filter(oldCacheName => oldCacheName !== cacheName);
 
-    // Tomar control inmediato de todos los clientes
-    await self.clients.claim();
-    console.info('Service worker: Activated and claimed all clients');
-    
-    // Notificar a todos los clientes que el service worker se ha actualizado
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-        client.postMessage({ type: 'SW_UPDATED', version: self.assetsManifest.version });
-    });
+        if (oldCaches.length > 0) {
+            console.log(`🗑️ Deleting ${oldCaches.length} old caches:`, oldCaches);
+            await Promise.all(oldCaches.map(oldCacheName => {
+                console.log(`Deleting cache: ${oldCacheName}`);
+                return caches.delete(oldCacheName);
+            }));
+        } else {
+            console.log('ℹ️ No old caches to delete');
+        }
+
+        // Tomar control inmediato de todos los clientes
+        await self.clients.claim();
+        console.info('✅ Service worker: Activated and claimed all clients');
+        
+        // Notificar a todos los clientes que el service worker se ha actualizado
+        const clients = await self.clients.matchAll();
+        console.log(`📨 Notifying ${clients.length} clients of update`);
+        
+        clients.forEach(client => {
+            client.postMessage({ 
+                type: 'SW_UPDATED', 
+                version: self.assetsManifest.version,
+                timestamp: new Date().toISOString()
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ Service worker: Activate failed:', error);
+        throw error;
+    }
 }
 
 async function onFetch(event) {
     const requestUrl = event.request.url;
+    const url = new URL(requestUrl);
     
-    // Para requests de Auth0 o autenticación, SIEMPRE ir a la red
-    if (isAuth0Request(requestUrl) || isAuthenticationRoute(requestUrl)) {
-        console.log('Service worker: Auth route detected, bypassing cache:', requestUrl);
+    // Para requests de Auth0, autenticación, o APIs, SIEMPRE ir a la red
+    if (isAuth0Request(requestUrl) || isAuthenticationRoute(requestUrl) || isNetworkOnlyRoute(requestUrl)) {
+        console.log('🌐 SW: Network-only route:', url.pathname);
         
-        // Forzar request fresco sin cache
-        const freshRequest = new Request(event.request.url, {
-            method: event.request.method,
-            headers: event.request.headers,
-            body: event.request.body,
-            cache: 'no-cache',
-            credentials: event.request.credentials,
-            mode: event.request.mode,
-            redirect: event.request.redirect,
-            referrer: event.request.referrer
-        });
-        
-        return fetch(freshRequest).catch(error => {
-            console.log('Service worker: Network request failed for auth route:', error);
-            // Para rutas de autenticación que fallan, servir index.html para que Blazor maneje el routing
-            return caches.open(cacheName).then(cache => 
-                cache.match('index.html').then(response => 
-                    response || new Response('Network error', { status: 503 })
-                )
-            );
-        });
-    }
-
-    // Para requests de navegación (HTML), aplicar estrategia de "network first" para evitar contenido obsoleto
-    if (event.request.mode === 'navigate') {
-        try {
-            const networkResponse = await fetch(event.request);
-            // Si la red responde, usar la respuesta de red y actualizar el cache
-            if (networkResponse && networkResponse.status === 200) {
-                const cache = await caches.open(cacheName);
-                cache.put('index.html', networkResponse.clone());
-                return networkResponse;
+        return fetch(event.request).catch(error => {
+            console.warn('⚠️ SW: Network request failed for network-only route:', error);
+            
+            // Para rutas de navegación que fallan, servir index.html como fallback
+            if (event.request.mode === 'navigate') {
+                return caches.open(cacheName).then(cache => 
+                    cache.match('index.html').then(response => 
+                        response || new Response('Network error', { 
+                            status: 503,
+                            statusText: 'Service Unavailable'
+                        })
+                    )
+                );
             }
-        } catch (error) {
-            console.log('Service worker: Network failed for navigation, falling back to cache');
-        }
-        
-        // Si la red falla, usar el cache como respaldo
-        const cache = await caches.open(cacheName);
-        const cachedResponse = await cache.match('index.html');
-        return cachedResponse || new Response('Offline', { status: 503 });
+            
+            throw error;
+        });
     }
 
-    // Para otros requests, usar estrategia de cache first
-    let cachedResponse = null;
+    // Para navegación (HTML), usar estrategia "stale-while-revalidate"
+    if (event.request.mode === 'navigate') {
+        console.log('📄 SW: Navigation request for:', url.pathname);
+        
+        const cache = await caches.open(cacheName);
+        
+        // Intentar obtener de cache primero
+        const cachedResponse = await cache.match('index.html');
+        
+        // Intentar actualizar en background
+        const networkPromise = fetch(event.request)
+            .then(response => {
+                if (response && response.status === 200) {
+                    // Actualizar cache con nueva versión
+                    cache.put('index.html', response.clone());
+                    console.log('🔄 SW: Updated index.html in cache');
+                }
+                return response;
+            })
+            .catch(error => {
+                console.warn('⚠️ SW: Network failed for navigation:', error);
+                return null;
+            });
+
+        // Devolver cache si existe, sino esperar a la red
+        if (cachedResponse) {
+            console.log('⚡ SW: Serving navigation from cache');
+            // Actualizar en background
+            networkPromise;
+            return cachedResponse;
+        } else {
+            console.log('🌐 SW: No cache for navigation, waiting for network');
+            return networkPromise.then(response => 
+                response || new Response('Offline', { 
+                    status: 503,
+                    statusText: 'Service Unavailable'
+                })
+            );
+        }
+    }
+
+    // Para otros recursos (CSS, JS, etc), usar cache-first
     if (event.request.method === 'GET') {
         const cache = await caches.open(cacheName);
-        cachedResponse = await cache.match(event.request);
+        const cachedResponse = await cache.match(event.request);
+        
+        if (cachedResponse) {
+            console.log('⚡ SW: Serving from cache:', url.pathname);
+            return cachedResponse;
+        } else {
+            console.log('🌐 SW: Cache miss, fetching:', url.pathname);
+            
+            return fetch(event.request)
+                .then(response => {
+                    // Cachear la respuesta si es exitosa
+                    if (response && response.status === 200 && 
+                        offlineAssetsInclude.some(pattern => pattern.test(url.pathname))) {
+                        cache.put(event.request, response.clone());
+                        console.log('📦 SW: Cached new resource:', url.pathname);
+                    }
+                    return response;
+                })
+                .catch(error => {
+                    console.warn('⚠️ SW: Network request failed:', error);
+                    throw error;
+                });
+        }
     }
 
-    return cachedResponse || fetch(event.request).catch(error => {
-        console.log('Service worker: Network request failed:', error);
-        throw error;
-    });
+    // Para otros métodos (POST, PUT, etc), pasar directamente
+    console.log('🔄 SW: Passing through non-GET request:', event.request.method, url.pathname);
+    return fetch(event.request);
 }
+
+// Log de inicialización
+console.log('🚀 Service Worker script loaded, version:', self.assetsManifest?.version || 'unknown');
