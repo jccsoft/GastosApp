@@ -1,16 +1,19 @@
 ﻿@inject IJSRuntime _jsRuntime
 @inject ISnackbar Snackbar
+@inject BlazorService BlazorService
 
 @code {
     // Based on: https://whuysentruit.medium.com/blazor-wasm-pwa-adding-a-new-update-available-notification-d9f65c4ad13
 
     protected override async Task OnInitializedAsync()
     {
+        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnInitializedAsync");
         await RegisterForUpdateAvailableNotification();
     }
 
     private async Task RegisterForUpdateAvailableNotification()
     {
+        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: RegisterForUpdateAvailableNotification");
         await _jsRuntime.InvokeAsync<object>(
             identifier: "registerForUpdateAvailableNotification",
             DotNetObjectReference.Create(this),
@@ -18,8 +21,9 @@
     }
 
     [JSInvokable(nameof(OnUpdateAvailable))]
-    public void OnUpdateAvailable()
+    public async Task OnUpdateAvailable()
     {
+        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateAvailable");
         Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
 
         Snackbar.Add(new MarkupString("<center><p class='p-0 m-0'>NUEVA VERSIÓN DISPONIBLE.</p><p class='p-0 m-0'>HAGA CLIC AQUÍ PARA ACTUALIZAR.</p></center>"),
