@@ -40,17 +40,16 @@
     <!-- PWA Scripts -->
     <script src="js/pwa-installer.js"></script>
     <script src="js/pwa-helper.js"></script>
-    <script src="js/pwa-updater.js"></script>
-    
+
     <!-- Authentication Script -->
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
-    
+
     <!-- Auth Debug Script - Always load for troubleshooting -->
     <script src="js/auth-debug.js"></script>
-    
+
     <!-- Azure Routing Test - Load after auth-debug -->
     <script src="js/azure-routing-test.js"></script>
-    
+
     <!-- Utility Scripts -->
     <script src="js/clipboard-helper.js"></script>
     <script src="js/culture-helper.js"></script>
@@ -62,34 +61,62 @@
     <!-- Important: Increment the version parameter whenever you update MudBlazor to prevent caching issues -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
 
+    <script src="sw-registrator.js"></script>
     <!-- PWA Service Worker with Enhanced Error Handling -->
-    <script>
+    <!--<script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js', { 
-                updateViaCache: 'none' 
+            navigator.serviceWorker.register('service-worker.js', {
+                updateViaCache: 'none'
             })
-            .then(registration => {
-                console.log('✅ ServiceWorker registration successful:', registration);
-            })
-            .catch(error => {
-                console.error('❌ ServiceWorker registration failed:', error);
+                .then(registration => {
+                    console.log('✅ ServiceWorker registration successful:', registration);
+
+                    // Escuchar actualizaciones del service worker
+                    registration.addEventListener('updatefound', () => {
+                        console.log('🔄 ServiceWorker update found');
+                        const newWorker = registration.installing;
+
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                console.log('🔄 New ServiceWorker activated');
+                                // Opcional: mostrar notificación de actualización
+                            }
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('❌ ServiceWorker registration failed:', error);
+                });
+
+            // Escuchar cambios en el service worker
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('🔄 ServiceWorker controller changed');
+                // Opcional: recargar la página cuando hay un nuevo service worker
+                // window.location.reload();
+            });
+
+            // Verificar si hay un service worker esperando
+            navigator.serviceWorker.ready.then(registration => {
+                if (registration.waiting) {
+                    console.log('⏳ ServiceWorker waiting to activate');
+                }
             });
         } else {
             console.log('❌ ServiceWorker not supported');
         }
-    </script>
+    </script>-->
 
     <!-- Error Handling for Authentication -->
     <script>
         // Detectar modo de desarrollo vs producción
-        const isDevelopment = window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1' ||
-                            window.location.hostname.includes('localhost');
+        const isDevelopment = window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname.includes('localhost');
 
         console.log(`🔧 Environment: ${isDevelopment ? 'Development' : 'Production'}`);
 
         // Manejo global de errores relacionados con autenticación
-        window.addEventListener('error', function(event) {
+        window.addEventListener('error', function (event) {
             if (event.filename && event.filename.includes('authentication')) {
                 console.error('🔐 Authentication error:', {
                     message: event.message,
@@ -101,7 +128,7 @@
         });
 
         // Manejo de promesas rechazadas relacionadas con autenticación
-        window.addEventListener('unhandledrejection', function(event) {
+        window.addEventListener('unhandledrejection', function (event) {
             if (event.reason && event.reason.toString().toLowerCase().includes('auth')) {
                 console.error('🔐 Authentication promise rejection:', event.reason);
             }
@@ -124,9 +151,9 @@
             if (typeof window.PWAInstaller !== 'undefined') debuggers.push('PWAInstaller');
             if (typeof window.PWARoutingDebug !== 'undefined') debuggers.push('PWARoutingDebug');
             if (typeof window.testAzureRouting !== 'undefined') debuggers.push('AzureRoutingTest');
-            
+
             console.log(`✅ Debug tools loaded: ${debuggers.join(', ')}`);
-            
+
             if (debuggers.length === 0) {
                 console.warn('⚠️ No debug tools loaded - Troubleshooting may be limited');
             }
