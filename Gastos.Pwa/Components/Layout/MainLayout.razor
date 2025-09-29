@@ -5,6 +5,7 @@
 @inject ThemeService ThemeService
 
 <BreakpointMonitor />
+<UpdateAvailableDetector />
 
 <MudLayout>
     <AppBar />
@@ -17,13 +18,12 @@
         }
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="pt-6">
-            <PwaUpdateNotification />
+            @* <PwaUpdateNotification /> *@
             @Body
         </MudContainer>
     </MudMainContent>
 </MudLayout>
 
-<UpdateAvailableDetector />
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
