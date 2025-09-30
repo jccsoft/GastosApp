@@ -1,53 +1,9 @@
 // Test específico para Azure Static Web Apps routing
 (async function testAzureRouting() {
-    console.log('🔧 === TESTING AZURE STATIC WEB APPS ROUTING ===');
-    
-    // 1. Verificar que staticwebapps.config.json existe y es válido
-    //try {
-    //    const configResponse = await fetch('/staticwebapp.config.json', { 
-    //        cache: 'no-cache',
-    //        headers: {
-    //            'Accept': 'application/json'
-    //        }
-    //    });
-        
-    //    if (configResponse.ok) {
-    //        const contentType = configResponse.headers.get('content-type');
-    //        console.log(`📄 Response content-type: ${contentType}`);
-            
-    //        // Verificar si la respuesta es realmente JSON
-    //        if (contentType && contentType.includes('application/json')) {
-    //            const config = await configResponse.json();
-    //            console.log('✅ staticwebapps.config.json loaded:', config);
-                
-    //            // Verificar rutas de autenticación
-    //            const authRoutes = config.routes?.filter(r => r.route.includes('authentication')) || [];
-    //            console.log(`📋 Found ${authRoutes.length} authentication routes:`, authRoutes);
-    //        } else {
-    //            const responseText = await configResponse.text();
-    //            if (responseText.includes('<!DOCTYPE')) {
-    //                console.error('❌ staticwebapps.config.json is returning HTML instead of JSON');
-    //                console.error('🔧 This indicates a routing configuration problem in Azure Static Web Apps');
-    //                console.error('💡 The navigationFallback rule is catching the JSON file and serving index.html');
-    //                console.log('📄 Response preview:', responseText.substring(0, 200) + '...');
-    //            } else {
-    //                console.error('❌ staticwebapps.config.json returned unexpected content:', responseText.substring(0, 200));
-    //            }
-    //        }
-    //    } else {
-    //        console.error('❌ staticwebapps.config.json not found or invalid:', configResponse.status);
-    //    }
-    //} catch (error) {
-    //    if (error.message.includes('Unexpected token')) {
-    //        console.error('❌ staticwebapps.config.json is being served as HTML instead of JSON');
-    //        console.error('🔧 SOLUTION: Add "/staticwebapp.config.json" to the navigationFallback exclude list');
-    //        console.error('💡 Or add a specific route for the config file');
-    //    } else {
-    //        console.error('❌ Error loading staticwebapps.config.json:', error);
-    //    }
-    //}
-    
-    // 2. Test directo de rutas de autenticación
+    //console.log('🔧 === TESTING AZURE STATIC WEB APPS ROUTING ===');
+    console.group('🔧 Testing Azure Static Web Apps Routing');
+
+    // 1. Test directo de rutas de autenticación
     const testRoutes = [
         '/authentication/login-callback',
         '/authentication/logout-callback',
@@ -69,21 +25,31 @@
             
             const contentType = response.headers.get('content-type');
             const isHTML = contentType && contentType.includes('text/html');
-            
-            console.log(`${response.ok ? '✅' : '❌'} ${route}:`, {
-                status: response.status,
-                statusText: response.statusText,
-                contentType: contentType,
-                isHTML: isHTML,
-                url: response.url,
-                redirected: response.redirected
-            });
+
+            if (!response.ok) {
+                console.warn(`❌ ${route} not served correctly.`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    contentType: contentType,
+                    isHTML: isHTML,
+                    url: response.url,
+                    redirected: response.redirected
+                });
+            }
+            //console.log(`${response.ok ? '✅' : '❌'} ${route}:`, {
+            //    status: response.status,
+            //    statusText: response.statusText,
+            //    contentType: contentType,
+            //    isHTML: isHTML,
+            //    url: response.url,
+            //    redirected: response.redirected
+            //});
             
             // Si es HTML, verificar que sea index.html (comportamiento esperado)
             if (isHTML && response.ok) {
                 const text = await response.text();
                 const isIndexHtml = text.includes('<div id="app">') && text.includes('blazor.webassembly.js');
-                console.log(`  📄 Content is index.html: ${isIndexHtml ? '✅' : '❌'}`);
+                //console.log(`  📄 Content is index.html: ${isIndexHtml ? '✅' : '❌'}`);
                 
                 if (!isIndexHtml) {
                     console.log(`  📄 Content preview:`, text.substring(0, 100) + '...');
@@ -95,14 +61,24 @@
         }
     }
     
-    // 3. Test específico con query parameters (como lo haría Auth0)
+    // 2. Test específico con query parameters (como lo haría Auth0)
     const callbackWithParams = '/authentication/login-callback?code=test&state=test';
     try {
         const response = await fetch(callbackWithParams, { 
             method: 'GET',
             cache: 'no-cache' 
         });
-        
+
+        if (!response.ok) {
+            //console.warn(`❌ Callback with params not served correctly. Status: ${response.status} ${response.statusText}`);
+            console.warn(`❌ Callback with params not served correctly:`, {
+                url: callbackWithParams,
+                status: response.status,
+                finalUrl: response.url,
+                redirected: response.redirected
+            });
+        }
+
         console.log(`${response.ok ? '✅' : '❌'} Callback with params:`, {
             url: callbackWithParams,
             status: response.status,
@@ -113,8 +89,8 @@
         console.error('❌ Callback with params error:', error);
     }
     
-    // 4. Test de archivos que SÍ deberían servirse correctamente
-    console.log('🔍 Testing static assets...');
+    // 3. Test de archivos que SÍ deberían servirse correctamente
+    //console.log('🔍 Testing static assets...');
     const staticAssets = [
         '/favicon.ico',
         '/manifest.json',
@@ -124,20 +100,24 @@
     for (const asset of staticAssets) {
         try {
             const response = await fetch(asset, { method: 'HEAD', cache: 'no-cache' });
-            console.log(`${response.ok ? '✅' : '❌'} ${asset}: ${response.status} ${response.statusText}`);
+            if (!response.ok) {
+                console.warn(`❌ ${asset} not served correctly. Status: ${response.status} ${response.statusText}`);
+            }
+            //console.log(`${response.ok ? '✅' : '❌'} ${asset}: ${response.status} ${response.statusText}`);
         } catch (error) {
             console.error(`❌ ${asset} error:`, error.message);
         }
     }
     
-    console.log('🔧 === AZURE ROUTING TEST COMPLETE ===');
-    
+    //console.log('🔧 === AZURE ROUTING TEST COMPLETE ===');
+    console.groupEnd();
+
     // Resumen de soluciones
-    console.log('\n💡 === SUGGESTED SOLUTIONS ===');
-    console.log('1. Add "/staticwebapp.config.json" to navigationFallback.exclude');
-    console.log('2. Add "*.json" to navigationFallback.exclude');
-    console.log('3. Add specific routes for JSON files');
-    console.log('4. Verify mimeTypes configuration includes ".json": "application/json"');
+    //console.log('\n💡 === SUGGESTED SOLUTIONS ===');
+    //console.log('1. Add "/staticwebapp.config.json" to navigationFallback.exclude');
+    //console.log('2. Add "*.json" to navigationFallback.exclude');
+    //console.log('3. Add specific routes for JSON files');
+    //console.log('4. Verify mimeTypes configuration includes ".json": "application/json"');
 })();
 
 // Export para uso manual

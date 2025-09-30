@@ -656,15 +656,15 @@
         console.warn('AuthDebugger: Could not set rejection listener:', error);
     }
 
-    console.log('🔐 Auth Debugger loaded successfully');
-    console.log('🔧 Available methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport()');
-    console.log('🔧 New methods: testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
+    console.group('🔐 Auth Debugger loaded successfully');
+    console.log('🔧 Methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport(),testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
+    console.groupEnd();
 
     // Log inicial
-    window.AuthDebugger.logAuthEvent('AuthDebugger Initialized', {
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-        isPWA: window.matchMedia('(display-mode: standalone)').matches
-    });
+    //window.AuthDebugger.logAuthEvent('AuthDebugger Initialized', {
+    //    timestamp: new Date().toISOString(),
+    //    url: window.location.href,
+    //    isPWA: window.matchMedia('(display-mode: standalone)').matches
+    //});
 
 })();
