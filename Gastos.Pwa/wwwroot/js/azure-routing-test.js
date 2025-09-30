@@ -3,49 +3,49 @@
     console.log('🔧 === TESTING AZURE STATIC WEB APPS ROUTING ===');
     
     // 1. Verificar que staticwebapps.config.json existe y es válido
-    try {
-        const configResponse = await fetch('/staticwebapp.config.json', { 
-            cache: 'no-cache',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
+    //try {
+    //    const configResponse = await fetch('/staticwebapp.config.json', { 
+    //        cache: 'no-cache',
+    //        headers: {
+    //            'Accept': 'application/json'
+    //        }
+    //    });
         
-        if (configResponse.ok) {
-            const contentType = configResponse.headers.get('content-type');
-            console.log(`📄 Response content-type: ${contentType}`);
+    //    if (configResponse.ok) {
+    //        const contentType = configResponse.headers.get('content-type');
+    //        console.log(`📄 Response content-type: ${contentType}`);
             
-            // Verificar si la respuesta es realmente JSON
-            if (contentType && contentType.includes('application/json')) {
-                const config = await configResponse.json();
-                console.log('✅ staticwebapps.config.json loaded:', config);
+    //        // Verificar si la respuesta es realmente JSON
+    //        if (contentType && contentType.includes('application/json')) {
+    //            const config = await configResponse.json();
+    //            console.log('✅ staticwebapps.config.json loaded:', config);
                 
-                // Verificar rutas de autenticación
-                const authRoutes = config.routes?.filter(r => r.route.includes('authentication')) || [];
-                console.log(`📋 Found ${authRoutes.length} authentication routes:`, authRoutes);
-            } else {
-                const responseText = await configResponse.text();
-                if (responseText.includes('<!DOCTYPE')) {
-                    console.error('❌ staticwebapps.config.json is returning HTML instead of JSON');
-                    console.error('🔧 This indicates a routing configuration problem in Azure Static Web Apps');
-                    console.error('💡 The navigationFallback rule is catching the JSON file and serving index.html');
-                    console.log('📄 Response preview:', responseText.substring(0, 200) + '...');
-                } else {
-                    console.error('❌ staticwebapps.config.json returned unexpected content:', responseText.substring(0, 200));
-                }
-            }
-        } else {
-            console.error('❌ staticwebapps.config.json not found or invalid:', configResponse.status);
-        }
-    } catch (error) {
-        if (error.message.includes('Unexpected token')) {
-            console.error('❌ staticwebapps.config.json is being served as HTML instead of JSON');
-            console.error('🔧 SOLUTION: Add "/staticwebapp.config.json" to the navigationFallback exclude list');
-            console.error('💡 Or add a specific route for the config file');
-        } else {
-            console.error('❌ Error loading staticwebapps.config.json:', error);
-        }
-    }
+    //            // Verificar rutas de autenticación
+    //            const authRoutes = config.routes?.filter(r => r.route.includes('authentication')) || [];
+    //            console.log(`📋 Found ${authRoutes.length} authentication routes:`, authRoutes);
+    //        } else {
+    //            const responseText = await configResponse.text();
+    //            if (responseText.includes('<!DOCTYPE')) {
+    //                console.error('❌ staticwebapps.config.json is returning HTML instead of JSON');
+    //                console.error('🔧 This indicates a routing configuration problem in Azure Static Web Apps');
+    //                console.error('💡 The navigationFallback rule is catching the JSON file and serving index.html');
+    //                console.log('📄 Response preview:', responseText.substring(0, 200) + '...');
+    //            } else {
+    //                console.error('❌ staticwebapps.config.json returned unexpected content:', responseText.substring(0, 200));
+    //            }
+    //        }
+    //    } else {
+    //        console.error('❌ staticwebapps.config.json not found or invalid:', configResponse.status);
+    //    }
+    //} catch (error) {
+    //    if (error.message.includes('Unexpected token')) {
+    //        console.error('❌ staticwebapps.config.json is being served as HTML instead of JSON');
+    //        console.error('🔧 SOLUTION: Add "/staticwebapp.config.json" to the navigationFallback exclude list');
+    //        console.error('💡 Or add a specific route for the config file');
+    //    } else {
+    //        console.error('❌ Error loading staticwebapps.config.json:', error);
+    //    }
+    //}
     
     // 2. Test directo de rutas de autenticación
     const testRoutes = [

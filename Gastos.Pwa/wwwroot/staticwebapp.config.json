@@ -1,16 +1,6 @@
 {
   "routes": [
     {
-      "route": "/staticwebapp.config.json",
-      "serve": "/staticwebapp.config.json",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/appsettings*.json",
-      "serve": "/appsettings.json",
-      "allowedRoles": ["anonymous"]
-    },
-    {
       "route": "/authentication/login-callback",
       "allowedRoles": ["anonymous"]
     },
