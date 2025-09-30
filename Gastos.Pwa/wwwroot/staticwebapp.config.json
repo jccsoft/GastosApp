@@ -1,6 +1,16 @@
 {
   "routes": [
     {
+      "route": "/staticwebapp.config.json",
+      "serve": "/staticwebapp.config.json",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/appsettings*.json",
+      "serve": "/appsettings.json",
+      "allowedRoles": ["anonymous"]
+    },
+    {
       "route": "/authentication/login-callback",
       "allowedRoles": ["anonymous"]
     },
@@ -28,12 +38,10 @@
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
-      "/images/*.{png,jpg,gif,ico}",
-      "/css/*",
-      "/js/*",
-      "/*.{js,css,woff,woff2,ttf,svg,ico,png,jpg,gif}",
-      "/staticwebapp.config.json",
-      "/appsettings*.json",
+      "/images/*.{png,jpg,gif,ico}", 
+      "/css/*", 
+      "/js/*", 
+      "/*.{js,css,woff,woff2,ttf,svg,ico,png,jpg,gif,json}",
       "/_framework/*",
       "/api/*"
     ]
