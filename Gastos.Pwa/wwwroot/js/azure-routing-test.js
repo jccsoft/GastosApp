@@ -1,7 +1,5 @@
 // Test específico para Azure Static Web Apps routing
 (async function testAzureRouting() {
-    //console.log('🔧 === TESTING AZURE STATIC WEB APPS ROUTING ===');
-    console.group('🔧 Testing Azure Static Web Apps Routing');
 
     // 1. Test directo de rutas de autenticación
     const testRoutes = [
@@ -10,9 +8,7 @@
         '/authentication/login-failed',
         '/authentication/logout-failed'
     ];
-    
-    console.log('🔍 Testing authentication routes...');
-    
+
     for (const route of testRoutes) {
         try {
             const response = await fetch(route, { 
@@ -36,14 +32,6 @@
                     redirected: response.redirected
                 });
             }
-            //console.log(`${response.ok ? '✅' : '❌'} ${route}:`, {
-            //    status: response.status,
-            //    statusText: response.statusText,
-            //    contentType: contentType,
-            //    isHTML: isHTML,
-            //    url: response.url,
-            //    redirected: response.redirected
-            //});
             
             // Si es HTML, verificar que sea index.html (comportamiento esperado)
             if (isHTML && response.ok) {
@@ -70,7 +58,6 @@
         });
 
         if (!response.ok) {
-            //console.warn(`❌ Callback with params not served correctly. Status: ${response.status} ${response.statusText}`);
             console.warn(`❌ Callback with params not served correctly:`, {
                 url: callbackWithParams,
                 status: response.status,
@@ -78,19 +65,11 @@
                 redirected: response.redirected
             });
         }
-
-        console.log(`${response.ok ? '✅' : '❌'} Callback with params:`, {
-            url: callbackWithParams,
-            status: response.status,
-            finalUrl: response.url,
-            redirected: response.redirected
-        });
     } catch (error) {
         console.error('❌ Callback with params error:', error);
     }
     
     // 3. Test de archivos que SÍ deberían servirse correctamente
-    //console.log('🔍 Testing static assets...');
     const staticAssets = [
         '/favicon.ico',
         '/manifest.json',
@@ -103,21 +82,10 @@
             if (!response.ok) {
                 console.warn(`❌ ${asset} not served correctly. Status: ${response.status} ${response.statusText}`);
             }
-            //console.log(`${response.ok ? '✅' : '❌'} ${asset}: ${response.status} ${response.statusText}`);
         } catch (error) {
             console.error(`❌ ${asset} error:`, error.message);
         }
     }
-    
-    //console.log('🔧 === AZURE ROUTING TEST COMPLETE ===');
-    console.groupEnd();
-
-    // Resumen de soluciones
-    //console.log('\n💡 === SUGGESTED SOLUTIONS ===');
-    //console.log('1. Add "/staticwebapp.config.json" to navigationFallback.exclude');
-    //console.log('2. Add "*.json" to navigationFallback.exclude');
-    //console.log('3. Add specific routes for JSON files');
-    //console.log('4. Verify mimeTypes configuration includes ".json": "application/json"');
 })();
 
 // Export para uso manual
