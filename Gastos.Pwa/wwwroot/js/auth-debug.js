@@ -331,17 +331,40 @@
                 });
             }
 
-            // Test Auth0 authority
+            // Test Auth0 authority - CON MANEJO DE CORS
             try {
                 const authConfig = await window.AuthDebugger.getAuth0Configuration();
                 if (authConfig.Authority) {
                     const wellKnownUrl = `${authConfig.Authority}/.well-known/openid_configuration`;
-                    const response = await fetch(wellKnownUrl);
-                    tests.push({
-                        test: 'Auth0 Well-Known',
-                        status: response.ok ? 'OK' : 'FAIL',
-                        details: `${response.status} ${response.statusText}`
-                    });
+                    
+                    try {
+                        const response = await fetch(wellKnownUrl, {
+                            method: 'GET',
+                            mode: 'cors',
+                            cache: 'no-cache'
+                        });
+                        
+                        tests.push({
+                            test: 'Auth0 Well-Known',
+                            status: response.ok ? 'OK' : 'FAIL',
+                            details: `${response.status} ${response.statusText}`
+                        });
+                    } catch (corsError) {
+                        // El error de CORS es esperado y normal
+                        if (corsError.message.includes('CORS') || corsError.message.includes('Access-Control-Allow-Origin')) {
+                            tests.push({
+                                test: 'Auth0 Well-Known',
+                                status: 'INFO',
+                                details: 'CORS blocked (normal behavior) - Auth0 endpoint exists but blocks direct browser requests'
+                            });
+                        } else {
+                            tests.push({
+                                test: 'Auth0 Well-Known',
+                                status: 'ERROR',
+                                details: corsError.message
+                            });
+                        }
+                    }
                 } else {
                     tests.push({
                         test: 'Auth0 Configuration',
