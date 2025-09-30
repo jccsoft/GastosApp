@@ -20,7 +20,13 @@ const offlineAssetsInclude = [
     /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, 
     /\.blat$/, /\.dat$/, /\.svg$/, /\.woff2$/, /\.ttf$/, /\.eot$/
 ];
-const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+
+// SOLUCIÓN: Excluir archivos que causan problemas de integridad
+const offlineAssetsExclude = [ 
+    /^service-worker\.js$/, 
+    /^staticwebapp\.config\.json$/,  // ← AGREGADO: Excluir archivo de configuración
+    /^appsettings.*\.json$/          // ← AGREGADO: Excluir archivos de configuración
+];
 
 // Rutas de autenticación que NUNCA deben ser cacheadas
 const authRoutes = [
@@ -36,7 +42,8 @@ const authRoutes = [
 const networkOnlyRoutes = [
     '/api/',
     '/.auth/',
-    '/.well-known/'
+    '/.well-known/',
+    '/staticwebapp.config.json'  // ← AGREGADO: Siempre obtener de la red
 ];
 
 // Función para verificar si una URL es de autenticación
@@ -54,6 +61,13 @@ function isNetworkOnlyRoute(url) {
     return networkOnlyRoutes.some(route => url.includes(route));
 }
 
+// Función para verificar si un asset debe omitir verificación de integridad
+function shouldSkipIntegrityCheck(assetUrl) {
+    return assetUrl.includes('staticwebapp.config.json') || 
+           assetUrl.includes('appsettings') || 
+           assetUrl.endsWith('.config.json');
+}
+
 async function onInstall(event) {
     console.info('🔧 Service worker: Install - Version:', self.assetsManifest.version);
 
@@ -63,17 +77,42 @@ async function onInstall(event) {
             .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
             .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
             .map(asset => {
-                // Crear request con integrity check y sin cache
-                return new Request(asset.url, { 
-                    integrity: asset.hash, 
-                    cache: 'no-cache' 
-                });
+                // SOLUCIÓN: Crear request SIN integrity check para archivos problemáticos
+                if (shouldSkipIntegrityCheck(asset.url)) {
+                    console.log(`⚠️ SW: Skipping integrity check for: ${asset.url}`);
+                    return new Request(asset.url, { cache: 'no-cache' });
+                } else {
+                    // Crear request con integrity check normal
+                    return new Request(asset.url, { 
+                        integrity: asset.hash, 
+                        cache: 'no-cache' 
+                    });
+                }
             });
         
         console.log(`📦 Caching ${assetsRequests.length} assets...`);
         
         const cache = await caches.open(cacheName);
-        await cache.addAll(assetsRequests);
+        
+        // SOLUCIÓN: Usar addAll con manejo de errores mejorado
+        try {
+            await cache.addAll(assetsRequests);
+        } catch (error) {
+            console.warn('⚠️ SW: addAll failed, trying individual adds:', error);
+            
+            // Si addAll falla, intentar agregar archivos individualmente
+            const results = await Promise.allSettled(
+                assetsRequests.map(request => cache.add(request))
+            );
+            
+            const failed = results.filter(r => r.status === 'rejected');
+            if (failed.length > 0) {
+                console.warn(`⚠️ SW: ${failed.length} assets failed to cache:`, failed);
+            }
+            
+            const succeeded = results.filter(r => r.status === 'fulfilled');
+            console.log(`✅ SW: ${succeeded.length} assets cached successfully`);
+        }
         
         console.info('✅ Service worker: Install complete - assets cached');
         
@@ -131,6 +170,15 @@ async function onActivate(event) {
 async function onFetch(event) {
     const requestUrl = event.request.url;
     const url = new URL(requestUrl);
+    
+    // SOLUCIÓN: Manejar específicamente staticwebapp.config.json
+    if (url.pathname === '/staticwebapp.config.json') {
+        console.log('🔧 SW: Fetching staticwebapp.config.json from network');
+        return fetch(event.request, { cache: 'no-cache' }).catch(error => {
+            console.warn('⚠️ SW: Failed to fetch staticwebapp.config.json:', error);
+            throw error;
+        });
+    }
     
     // Para requests de Auth0, autenticación, o APIs, SIEMPRE ir a la red
     if (isAuth0Request(requestUrl) || isAuthenticationRoute(requestUrl) || isNetworkOnlyRoute(requestUrl)) {
