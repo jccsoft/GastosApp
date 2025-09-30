@@ -27,7 +27,16 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif,ico}", "/css/*", "/js/*", "/*.{js,css,woff,woff2,ttf,svg,ico,png,jpg,gif}"]
+    "exclude": [
+      "/images/*.{png,jpg,gif,ico}",
+      "/css/*",
+      "/js/*",
+      "/*.{js,css,woff,woff2,ttf,svg,ico,png,jpg,gif}",
+      "/staticwebapp.config.json",
+      "/appsettings*.json",
+      "/_framework/*",
+      "/api/*"
+    ]
   },
   "responseOverrides": {
     "401": {
