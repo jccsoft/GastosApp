@@ -34,6 +34,60 @@
             }
         },
 
+        // Función helper para parsear JSON de forma segura
+        parseJsonSafely: async (response) => {
+            try {
+                const text = await response.text();
+                
+                // Verificar si el contenido parece ser JSON
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    return JSON.parse(text);
+                } else {
+                    console.warn('Response is not JSON:', text.substring(0, 100));
+                    return null;
+                }
+            } catch (error) {
+                console.warn('Error parsing JSON:', error.message);
+                return null;
+            }
+        },
+
+        // Función helper para parsear JSON de forma segura
+        parseJsonSafely: async (response) => {
+            try {
+                const text = await response.text();
+                
+                // Verificar si el contenido parece ser JSON
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    return JSON.parse(text);
+                } else {
+                    console.warn('Response is not JSON:', text.substring(0, 100));
+                    return null;
+                }
+            } catch (error) {
+                console.warn('Error parsing JSON:', error.message);
+                return null;
+            }
+        },
+
+        // Función helper para parsear JSON de forma segura
+        parseJsonSafely: async (response) => {
+            try {
+                const text = await response.text();
+                
+                // Verificar si el contenido parece ser JSON
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    return JSON.parse(text);
+                } else {
+                    console.warn('Response is not JSON:', text.substring(0, 100));
+                    return null;
+                }
+            } catch (error) {
+                console.warn('Error parsing JSON:', error.message);
+                return null;
+            }
+        },
+
         // Obtener configuración de Auth0 desde múltiples fuentes posibles
         getAuth0Configuration: async () => {
             const config = {};
