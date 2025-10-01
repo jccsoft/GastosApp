@@ -131,7 +131,7 @@ async function onFetch(event) {
     
     // SOLUCIÓN: Manejar específicamente staticwebapp.config.json
     if (url.pathname === '/staticwebapp.config.json') {
-        console.log('🔧 SW: Fetching staticwebapp.config.json from network');
+        //console.log('🔧 SW: Fetching staticwebapp.config.json from network');
         return fetch(event.request, { cache: 'no-cache' }).catch(error => {
             console.warn('⚠️ SW: Failed to fetch staticwebapp.config.json:', error);
             throw error;
@@ -140,7 +140,7 @@ async function onFetch(event) {
     
     // Para requests de Auth0, autenticación, o APIs, SIEMPRE ir a la red
     if (isAuth0Request(requestUrl) || isAuthenticationRoute(requestUrl) || isNetworkOnlyRoute(requestUrl)) {
-        console.log('🌐 SW: Network-only route:', url.pathname);
+        //console.log('🌐 SW: Network-only route:', url.pathname);
         
         return fetch(event.request).catch(error => {
             console.warn('⚠️ SW: Network request failed for network-only route:', error);
