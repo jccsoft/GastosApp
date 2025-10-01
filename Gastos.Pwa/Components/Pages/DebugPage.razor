@@ -16,8 +16,8 @@
         Debug Info
     </MudText>
 
-    <!-- Estado del Usuario -->
     <MudGrid>
+        <!-- Estado del Usuario -->
         <MudItem xs="12" md="6">
             <MudCard Class="mb-4">
                 <MudCardHeader>
@@ -154,22 +154,31 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudGrid>
-                        <MudItem xs="12" sm="6" md="3">
+                        <MudItem xs="12" sm="6" md="2">
                             <MudButton Variant="Variant.Filled" 
                                      Color="Color.Primary" 
                                      FullWidth="true"
                                      OnClick="TestConnectivity"
                                      StartIcon="@Icons.Material.Filled.NetworkCheck">
-                                Test Conectividad
+                                Conectividad
                             </MudButton>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       FullWidth="true"
+                                       OnClick="TestAzureDeepDiagnosis"
+                                       StartIcon="@Icons.Material.Filled.NetworkCheck">
+                                Azure Deep Diagnosis
+                            </MudButton>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="2">
                             <MudButton Variant="Variant.Filled" 
                                      Color="Color.Secondary" 
                                      FullWidth="true"
                                      OnClick="TestPWARouting"
                                      StartIcon="@Icons.Material.Filled.Route">
-                                Test Rutas PWA
+                                Rutas PWA
                             </MudButton>
                         </MudItem>
                         <MudItem xs="12" sm="6" md="3">
@@ -181,7 +190,7 @@
                                 Generar Reporte
                             </MudButton>
                         </MudItem>
-                        <MudItem xs="12" sm="6" md="3">
+                        <MudItem xs="12" sm="6" md="2">
                             <MudButton Variant="Variant.Outlined" 
                                      Color="Color.Warning" 
                                      FullWidth="true"
@@ -378,6 +387,94 @@
         StateHasChanged();
     }
 
+    private async Task TestAzureDeepDiagnosis()
+    {
+        testResults.Clear();
+
+        try
+        {
+            var debuggerAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.AuthDebugger !== 'undefined'");
+
+            if (debuggerAvailable)
+            {
+                var resultsJson = await JSRuntime.InvokeAsync<string>("eval", @"
+                    (async () => {
+                        const diagnosis = await window.AuthDebugger.testAzureDeepDiagnosis();
+                        const results = [];
+                        
+                        // Procesar archivo de configuración
+                        if (diagnosis.configFile) {
+                            results.push({
+                                Test: 'Config File',
+                                Status: diagnosis.configFile.exists ? 'OK' : 'FAIL',
+                                Details: diagnosis.configFile.exists 
+                                    ? `Found ${diagnosis.configFile.routes?.length || 0} routes` 
+                                    : diagnosis.configFile.error || 'Not found'
+                            });
+                        }
+                        
+                        // Procesar tests de rutas
+                        if (diagnosis.routeTests && Array.isArray(diagnosis.routeTests)) {
+                            diagnosis.routeTests.forEach(routeTest => {
+                                results.push({
+                                    Test: `Route: ${routeTest.route}`,
+                                    Status: routeTest.ok ? 'OK' : 'FAIL',
+                                    Details: `${routeTest.status} ${routeTest.statusText} - ${routeTest.isIndexHtml ? 'Returns index.html' : 'Wrong content'}`
+                                });
+                            });
+                        }
+                        
+                        // Procesar test de parámetros
+                        if (diagnosis.parameterTest) {
+                            results.push({
+                                Test: 'Parameter Test',
+                                Status: diagnosis.parameterTest.ok ? 'OK' : 'FAIL',
+                                Details: diagnosis.parameterTest.error || `${diagnosis.parameterTest.status} - ${diagnosis.parameterTest.finalUrl}`
+                            });
+                        }
+                        
+                        // Procesar test de fallback
+                        if (diagnosis.fallbackTest) {
+                            results.push({
+                                Test: 'Fallback Test',
+                                Status: diagnosis.fallbackTest.shouldBe200 ? 'OK' : 'FAIL',
+                                Details: `Status: ${diagnosis.fallbackTest.status} for random route`
+                            });
+                        }
+                        
+                        // Procesar headers de Azure
+                        if (diagnosis.azureHeaders) {
+                            const headerCount = Object.keys(diagnosis.azureHeaders).length;
+                            results.push({
+                                Test: 'Azure Headers',
+                                Status: headerCount > 0 ? 'OK' : 'WARNING',
+                                Details: headerCount > 0 
+                                    ? `Found ${headerCount} Azure-related headers` 
+                                    : 'No Azure headers found'
+                            });
+                        }
+                        
+                        return JSON.stringify(results);
+                    })()
+                ");
+
+                var results = System.Text.Json.JsonSerializer.Deserialize<TestResult[]>(resultsJson, _jsonOptions);
+                testResults = results?.ToList() ?? new List<TestResult>();
+
+                Snackbar.Add("Azure Deep Diagnosis completado", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("AuthDebugger no disponible", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error en Azure Deep Diagnosis: {ex.Message}", Severity.Error);
+        }
+
+        StateHasChanged();
+    }
     private async Task TestPWARouting()
     {
         testResults.Clear();

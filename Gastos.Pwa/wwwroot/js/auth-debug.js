@@ -52,42 +52,6 @@
             }
         },
 
-        // Función helper para parsear JSON de forma segura
-        parseJsonSafely: async (response) => {
-            try {
-                const text = await response.text();
-                
-                // Verificar si el contenido parece ser JSON
-                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
-                    return JSON.parse(text);
-                } else {
-                    console.warn('Response is not JSON:', text.substring(0, 100));
-                    return null;
-                }
-            } catch (error) {
-                console.warn('Error parsing JSON:', error.message);
-                return null;
-            }
-        },
-
-        // Función helper para parsear JSON de forma segura
-        parseJsonSafely: async (response) => {
-            try {
-                const text = await response.text();
-                
-                // Verificar si el contenido parece ser JSON
-                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
-                    return JSON.parse(text);
-                } else {
-                    console.warn('Response is not JSON:', text.substring(0, 100));
-                    return null;
-                }
-            } catch (error) {
-                console.warn('Error parsing JSON:', error.message);
-                return null;
-            }
-        },
-
         // Obtener configuración de Auth0 desde múltiples fuentes posibles
         getAuth0Configuration: async () => {
             const config = {};
@@ -96,10 +60,12 @@
                 // Intentar obtener desde appsettings.json
                 const response = await fetch('/appsettings.json', { cache: 'no-cache' });
                 if (response.ok) {
-                    const appSettings = await response.json();
-                    if (appSettings.Auth0) {
+                    const appSettings = await window.AuthDebugger.parseJsonSafely(response);
+                    if (appSettings && appSettings.Auth0) {
                         Object.assign(config, appSettings.Auth0);
                     }
+                } else {
+                    console.warn(`appsettings.json returned ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
                 console.warn('Could not load appsettings.json:', error);
@@ -122,18 +88,34 @@
             // 1. Verificar el archivo de configuración exacto
             try {
                 const configResponse = await fetch('/staticwebapp.config.json', { cache: 'no-cache' });
-                const configText = await configResponse.text();
-                const configJson = JSON.parse(configText);
                 
-                diagnosis.configFile = {
-                    exists: true,
-                    size: configText.length,
-                    routes: configJson.routes,
-                    navigationFallback: configJson.navigationFallback,
-                    responseOverrides: configJson.responseOverrides
-                };
-                
-                console.log('📄 Config file content:', configJson);
+                if (configResponse.ok) {
+                    const configJson = await window.AuthDebugger.parseJsonSafely(configResponse);
+                    
+                    if (configJson) {
+                        diagnosis.configFile = {
+                            exists: true,
+                            size: JSON.stringify(configJson).length,
+                            routes: configJson.routes,
+                            navigationFallback: configJson.navigationFallback,
+                            responseOverrides: configJson.responseOverrides
+                        };
+                        
+                        console.log('📄 Config file content:', configJson);
+                    } else {
+                        const responseText = await configResponse.text();
+                        diagnosis.configFile = {
+                            exists: false,
+                            error: 'Invalid JSON format',
+                            content: responseText.substring(0, 200)
+                        };
+                    }
+                } else {
+                    diagnosis.configFile = {
+                        exists: false,
+                        error: `HTTP ${configResponse.status}: ${configResponse.statusText}`
+                    };
+                }
             } catch (error) {
                 diagnosis.configFile = { exists: false, error: error.message };
             }
@@ -364,12 +346,20 @@
                 });
                 
                 if (response.ok) {
-                    const configContent = await response.json();
-                    tests.push({
-                        test: 'StaticWebApps Config',
-                        status: 'OK',
-                        details: `Found ${configContent.routes?.length || 0} routes configured`
-                    });
+                    const configContent = await window.AuthDebugger.parseJsonSafely(response);
+                    if (configContent) {
+                        tests.push({
+                            test: 'StaticWebApps Config',
+                            status: 'OK',
+                            details: `Found ${configContent.routes?.length || 0} routes configured`
+                        });
+                    } else {
+                        tests.push({
+                            test: 'StaticWebApps Config',
+                            status: 'FAIL',
+                            details: 'File exists but contains invalid JSON'
+                        });
+                    }
                 } else {
                     tests.push({
                         test: 'StaticWebApps Config',
@@ -472,28 +462,35 @@
                 const response = await fetch(configUrl);
                 
                 if (response.ok) {
-                    const config = await response.json();
-                    tests.push({
-                        test: 'Config File Exists',
-                        status: 'OK',
-                        details: 'File found and parsed'
-                    });
-                    
-                    // Verificar rutas configuradas
-                    const authRoutes = config.routes?.filter(r => r.route.includes('authentication')) || [];
-                    tests.push({
-                        test: 'Auth Routes Configured',
-                        status: authRoutes.length > 0 ? 'OK' : 'FAIL',
-                        details: `${authRoutes.length} auth routes found`
-                    });
-                    
-                    // Verificar navigationFallback
-                    tests.push({
-                        test: 'Navigation Fallback',
-                        status: config.navigationFallback ? 'OK' : 'WARNING',
-                        details: config.navigationFallback ? 'Configured' : 'Not configured'
-                    });
-                    
+                    const config = await window.AuthDebugger.parseJsonSafely(response);
+                    if (config) {
+                        tests.push({
+                            test: 'Config File Exists',
+                            status: 'OK',
+                            details: 'File found and parsed'
+                        });
+                        
+                        // Verificar rutas configuradas
+                        const authRoutes = config.routes?.filter(r => r.route.includes('authentication')) || [];
+                        tests.push({
+                            test: 'Auth Routes Configured',
+                            status: authRoutes.length > 0 ? 'OK' : 'FAIL',
+                            details: `${authRoutes.length} auth routes found`
+                        });
+                        
+                        // Verificar navigationFallback
+                        tests.push({
+                            test: 'Navigation Fallback',
+                            status: config.navigationFallback ? 'OK' : 'WARNING',
+                            details: config.navigationFallback ? 'Configured' : 'Not configured'
+                        });
+                    } else {
+                        tests.push({
+                            test: 'Config File Exists',
+                            status: 'FAIL',
+                            details: 'File exists but contains invalid JSON'
+                        });
+                    }
                 } else {
                     tests.push({
                         test: 'Config File Exists',
@@ -664,12 +661,5 @@
     console.group('🔐 Auth Debugger loaded successfully');
     console.log('🔧 Methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport(),testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
     console.groupEnd();
-
-    // Log inicial
-    //window.AuthDebugger.logAuthEvent('AuthDebugger Initialized', {
-    //    timestamp: new Date().toISOString(),
-    //    url: window.location.href,
-    //    isPWA: window.matchMedia('(display-mode: standalone)').matches
-    //});
 
 })();
