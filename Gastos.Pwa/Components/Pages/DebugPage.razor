@@ -1,4 +1,4 @@
-@page "/debug-auth"
+@page "/debug"
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using System.Text.Json
@@ -8,12 +8,12 @@
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 
-<PageTitle>Debug de Autenticación</PageTitle>
+<PageTitle>Debug</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large">
-    <MudText Typo="Typo.h3" Class="mb-4">
+    <MudText Typo="Typo.h6" Class="mb-4">
         <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
-        Debug de Autenticación PWA
+        Debug Info
     </MudText>
 
     <!-- Estado del Usuario -->
@@ -53,7 +53,43 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Claims:</strong></td>
-                                    <td>@authenticationState.User.Claims.Count()</td>
+                                    <td>
+                                        <MudStack Spacing="1" Class="mt-1">
+                                            <MudButton OnClick="OnExpandClaimsClick">
+                                                <MudText Typo="Typo.subtitle2">
+                                                    @($"{authenticationState.User.Claims.Count()} {(expandedClaims? "": " - Ver detalle")}")
+                                                </MudText>
+                                            </MudButton>
+                                            <MudDivider />
+                                            <MudCollapse Expanded="expandedClaims">
+                                                @if (authenticationState?.User.Claims.Any() == true)
+                                                {
+                                                    <MudSimpleTable Dense="true">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Tipo</th>
+                                                                <th>Valor</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var claim in authenticationState.User.Claims)
+                                                            {
+                                                                <tr>
+                                                                    <td>@claim.Type</td>
+                                                                    <td>@claim.Value</td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </MudSimpleTable>
+                                                }
+                                                else
+                                                {
+                                                    <MudText>No hay claims</MudText>
+                                                }
+
+                                            </MudCollapse>
+                                        </MudStack>
+                                    </td>
                                 </tr>
                             </tbody>
                         </MudSimpleTable>
@@ -240,75 +276,8 @@
             </MudItem>
         }
 
-        <!-- Claims del Usuario -->
-        @if (authenticationState?.User.Claims.Any() == true)
-        {
-            <MudItem xs="12">
-                <MudCard Class="mb-4">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudText Typo="Typo.h6">Claims del Usuario</MudText>
-                        </CardHeaderContent>
-                    </MudCardHeader>
-                    <MudCardContent>
-                        <MudSimpleTable Dense="true">
-                            <thead>
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var claim in authenticationState.User.Claims)
-                                {
-                                    <tr>
-                                        <td><MudText Typo="Typo.caption">@claim.Type</MudText></td>
-                                        <td>@claim.Value</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </MudSimpleTable>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        }
     </MudGrid>
 
-    <!-- Acciones de Navegación -->
-    <MudStack Direction="Row" Wrap="Wrap.Wrap" Spacing="2" Class="mt-4">
-        <MudButton Variant="Variant.Outlined" 
-                   Color="Color.Primary" 
-                   Href="/"
-                   StartIcon="@Icons.Material.Filled.Home">
-            Volver al Inicio
-        </MudButton>
-        
-        <MudButton Variant="Variant.Outlined" 
-                   Color="Color.Secondary" 
-                   Href="/pwa-settings"
-                   StartIcon="@Icons.Material.Filled.Settings">
-            Configuración PWA
-        </MudButton>
-
-        @if (authenticationState?.User.Identity?.IsAuthenticated == true)
-        {
-            <MudButton Variant="Variant.Outlined" 
-                       Color="Color.Warning" 
-                       OnClick="BeginLogout"
-                       StartIcon="@Icons.Material.Filled.Logout">
-                Cerrar Sesión
-            </MudButton>
-        }
-        else
-        {
-            <MudButton Variant="Variant.Outlined" 
-                       Color="Color.Success" 
-                       Href="/authentication/login"
-                       StartIcon="@Icons.Material.Filled.Login">
-                Iniciar Sesión
-            </MudButton>
-        }
-    </MudStack>
 </MudContainer>
 
 @code {
@@ -317,6 +286,7 @@
     private List<AuthLog> recentLogs = new();
     private string displayMode = "browser";
     private bool isPWA = false;
+    private bool expandedClaims = false;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -515,6 +485,10 @@
         Navigation.NavigateToLogout("/authentication/logout");
     }
 
+    private void OnExpandClaimsClick()
+    {
+        expandedClaims = !expandedClaims;
+    }
     public class TestResult
     {
         public string Test { get; set; } = "";

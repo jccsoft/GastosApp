@@ -5,7 +5,7 @@
 @inject ThemeService ThemeService
 
 <BreakpointMonitor />
-<UpdateAvailableDetector />
+<PwaUpdateAvailableMonitor />
 
 <MudLayout>
     <AppBar />
@@ -18,7 +18,6 @@
         }
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="pt-6">
-            @* <PwaUpdateNotification /> *@
             @Body
         </MudContainer>
     </MudMainContent>

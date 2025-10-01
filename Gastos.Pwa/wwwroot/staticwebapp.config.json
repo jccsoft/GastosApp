@@ -17,11 +17,7 @@
       "allowedRoles": ["anonymous"]
     },
     {
-      "route": "/debug-auth",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/auth-test",
+      "route": "/debug",
       "allowedRoles": ["anonymous"]
     }
   ],
