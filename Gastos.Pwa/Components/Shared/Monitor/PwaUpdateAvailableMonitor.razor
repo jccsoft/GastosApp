@@ -36,6 +36,7 @@
                 config.OnClick = snackbar =>
                 {
                     _jsRuntime.InvokeVoidAsync("window.location.reload", true);
+                    StateHasChanged();
                     return Task.CompletedTask;
                 };
             });
