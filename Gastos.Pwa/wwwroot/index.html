@@ -113,33 +113,33 @@
         });
 
         // Verificar que todos los scripts se hayan cargado
-        //window.addEventListener('load', () => {
-        //    setTimeout(() => {
-        //        const loadedTools = [];
-        //        if (typeof window.AuthDebugger !== 'undefined') loadedTools.push('AuthDebugger');
-        //        if (typeof window.PWAInstaller !== 'undefined') loadedTools.push('PWAInstaller');
-        //        if (typeof window.PWARoutingDebug !== 'undefined') loadedTools.push('PWARoutingDebug');
-        //        if (typeof window.testAzureRouting !== 'undefined') loadedTools.push('AzureRoutingTest');
-        //        if (typeof window.pwaUpdater !== 'undefined') loadedTools.push('PWAUpdater');
-        //        if (typeof window.diagnoseApp !== 'undefined') loadedTools.push('PWADiagnostics');
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loadedTools = [];
+                if (typeof window.AuthDebugger !== 'undefined') loadedTools.push('AuthDebugger');
+                if (typeof window.PWAInstaller !== 'undefined') loadedTools.push('PWAInstaller');
+                if (typeof window.PWARoutingDebug !== 'undefined') loadedTools.push('PWARoutingDebug');
+                if (typeof window.testAzureRouting !== 'undefined') loadedTools.push('AzureRoutingTest');
+                if (typeof window.pwaUpdater !== 'undefined') loadedTools.push('PWAUpdater');
+                if (typeof window.diagnoseApp !== 'undefined') loadedTools.push('PWADiagnostics');
 
-        //        console.log(`✅ Tools loaded: ${loadedTools.join(', ')}`);
+                console.log(`✅ Tools loaded: ${loadedTools.join(', ')}`);
 
-        //        if (loadedTools.length === 0) {
-        //            console.warn('⚠️ No tools loaded - Check for script errors');
-        //        }
+                if (loadedTools.length === 0) {
+                    console.warn('⚠️ No tools loaded - Check for script errors');
+                }
 
-        //        // Verificar estado del service worker
-        //        if ('serviceWorker' in navigator) {
-        //            navigator.serviceWorker.ready.then(registration => {
-        //                if (registration.waiting) {
-        //                    console.warn('⚠️ Service Worker is waiting - app might be showing old content');
-        //                    console.log('💡 Run window.forceSWUpdate() to apply the update');
-        //                }
-        //            });
-        //        }
-        //    }, 1000);
-        //});
+                // Verificar estado del service worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(registration => {
+                        if (registration.waiting) {
+                            console.warn('⚠️ Service Worker is waiting - app might be showing old content');
+                            console.log('💡 Run window.forceSWUpdate() to apply the update');
+                        }
+                    });
+                }
+            }, 1000);
+        });
 
         // Global error handler for debugging
         window.addEventListener('error', function (event) {
