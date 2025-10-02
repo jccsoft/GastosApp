@@ -14,7 +14,7 @@ window.updateAvailable = new Promise((resolve, reject) => {
 
             setInterval(() => {
                 registration.update();
-            }, 60 * 1000); // 60000ms -> check each minute
+            }, 10 * 1000); // 60000ms -> check each minute
 
             registration.onupdatefound = () => {
                 console.log('⏳ Update found in sw-registrator');

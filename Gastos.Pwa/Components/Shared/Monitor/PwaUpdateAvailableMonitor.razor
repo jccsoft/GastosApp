@@ -35,7 +35,8 @@
                 config.HideIcon = true;
                 config.OnClick = snackbar =>
                 {
-                    _jsRuntime.InvokeVoidAsync("window.location.reload", true);
+                    _jsRuntime.InvokeVoidAsync("window.forceSWUpdate");
+                    // _jsRuntime.InvokeVoidAsync("window.location.reload", true);
                     StateHasChanged();
                     return Task.CompletedTask;
                 };
