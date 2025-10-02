@@ -16,6 +16,8 @@ window.pwaUpdater = {
             // Si no, registrar nosotros mismos
             this.registerServiceWorker().then(() => {
                 this.setupUpdateHandlers();
+            }).catch(error => {
+                console.error('Failed to register service worker:', error);
             });
         }
     },
@@ -26,14 +28,12 @@ window.pwaUpdater = {
             return Promise.resolve(null);
         }
 
-        // Detectar entorno
-        const isDevelopment = window.location.hostname === 'localhost' ||
-            window.location.hostname === '127.0.0.1' ||
-            window.location.hostname.includes('localhost');
-
+        // Detectar entorno mejorado - considerando PWA instalada y diferentes contextos
+        const isDevelopment = this.isDevelopmentEnvironment();
         const swPath = isDevelopment ? '/service-worker.js' : '/service-worker.published.js';
         
-        console.log(`Registering service worker: ${swPath}`);
+        console.log(`🔧 Environment detected: ${isDevelopment ? 'Development' : 'Production'}`);
+        console.log(`📦 Registering service worker: ${swPath}`);
 
         return navigator.serviceWorker.register(swPath, { 
             updateViaCache: 'none',
@@ -50,6 +50,45 @@ window.pwaUpdater = {
         });
     },
 
+    // Función mejorada para detectar entorno de desarrollo
+    isDevelopmentEnvironment: function() {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const port = window.location.port;
+        
+        // Detectar localhost en diferentes formas
+        const isLocalhost = hostname === 'localhost' || 
+                          hostname === '127.0.0.1' || 
+                          hostname === '0.0.0.0' ||
+                          hostname.includes('localhost');
+
+        // Detectar puertos de desarrollo comunes
+        const isDevelopmentPort = port && (
+            port === '5000' || 
+            port === '5001' || 
+            port === '7000' || 
+            port === '7001' ||
+            port.startsWith('44') // HTTPS development ports
+        );
+
+        // Detectar URLs de Azure Static Web Apps preview
+        const isAzurePreview = hostname.includes('--') && hostname.includes('.azurestaticapps.net');
+
+        const isDev = isLocalhost || isDevelopmentPort || isAzurePreview;
+        
+        console.log(`🔍 Environment detection:`, {
+            hostname,
+            protocol,
+            port,
+            isLocalhost,
+            isDevelopmentPort,
+            isAzurePreview,
+            final: isDev
+        });
+
+        return isDev;
+    },
+
     setupUpdateHandlers: function () {
         if (!this.registration) {
             console.error('No service worker registration available');
@@ -63,7 +102,11 @@ window.pwaUpdater = {
         if (this.registration.waiting) {
             console.log('Service Worker waiting found on initialization');
             this.newServiceWorker = this.registration.waiting;
-            this.showUpdateAvailable();
+            
+            // Solo mostrar notificación en producción o si no hay controlador activo
+            if (!this.isDevelopmentEnvironment() || !navigator.serviceWorker.controller) {
+                this.showUpdateAvailable();
+            }
         }
 
         // Escuchar nuevas instalaciones
@@ -84,7 +127,17 @@ window.pwaUpdater = {
                     if (navigator.serviceWorker.controller) {
                         // Nueva versión disponible
                         console.log('✅ New version available and ready to activate');
-                        this.showUpdateAvailable();
+                        
+                        // En desarrollo, solo notificar si está explícitamente habilitado
+                        // En producción, siempre notificar
+                        const shouldNotify = !this.isDevelopmentEnvironment() || 
+                                           this.isUpdateNotificationEnabledInDev();
+                                           
+                        if (shouldNotify) {
+                            this.showUpdateAvailable();
+                        } else {
+                            console.log('🚫 Update notification suppressed in development environment');
+                        }
                     } else {
                         // Primera instalación
                         console.log('✅ Service Worker installed for the first time');
@@ -121,22 +174,29 @@ window.pwaUpdater = {
             }
         });
 
-        // Verificar actualizaciones periódicamente (cada 2 minutos)
-        const updateInterval = setInterval(() => {
+        // Configurar intervalos de verificación basados en el entorno
+        const updateInterval = this.isDevelopmentEnvironment() ? 
+                             30 * 1000 :      // 30 segundos en desarrollo
+                             2 * 60 * 1000;   // 2 minutos en producción
+
+        const intervalId = setInterval(() => {
             this.checkForUpdates();
-        }, 2 * 60 * 1000);
+        }, updateInterval);
+
+        console.log(`⏰ Update check interval set to ${updateInterval/1000} seconds`);
 
         // Limpiar interval si la página se descarga
         window.addEventListener('beforeunload', () => {
-            clearInterval(updateInterval);
+            clearInterval(intervalId);
         });
 
-        // Verificar al recuperar el foco de la ventana
+        // Verificar al recuperar el foco de la ventana (más agresivo en producción)
         window.addEventListener('focus', () => {
+            const delay = this.isDevelopmentEnvironment() ? 2000 : 1000;
             setTimeout(() => {
                 console.log('🎯 Window focused, checking for updates...');
                 this.checkForUpdates();
-            }, 1000);
+            }, delay);
         });
 
         // Verificar cuando la conexión vuelve a estar disponible
@@ -147,12 +207,22 @@ window.pwaUpdater = {
             }, 2000);
         });
 
-        // Verificación inicial
+        // Verificación inicial (más rápida en producción)
+        const initialDelay = this.isDevelopmentEnvironment() ? 10000 : 5000;
         setTimeout(() => {
+            console.log('🚀 Initial update check...');
             this.checkForUpdates();
-        }, 5000);
+        }, initialDelay);
 
         console.log('✅ Update handlers configured successfully');
+    },
+
+    // Verificar si las notificaciones de actualización están habilitadas en desarrollo
+    isUpdateNotificationEnabledInDev: function() {
+        // Permitir habilitar notificaciones en desarrollo mediante localStorage
+        return localStorage.getItem('pwa-dev-notifications') === 'true' ||
+               sessionStorage.getItem('pwa-dev-notifications') === 'true' ||
+               window.location.search.includes('pwa-notifications=true');
     },
 
     checkForUpdates: function () {
@@ -161,13 +231,14 @@ window.pwaUpdater = {
             return Promise.resolve(false);
         }
 
-        console.log('🔍 Checking for service worker updates...');
+        const env = this.isDevelopmentEnvironment() ? 'DEV' : 'PROD';
+        console.log(`🔍 [${env}] Checking for service worker updates...`);
         
         return this.registration.update().then(() => {
-            console.log('✅ Update check completed');
+            console.log(`✅ [${env}] Update check completed`);
             return true;
         }).catch((error) => {
-            console.error('❌ Error checking for updates:', error);
+            console.error(`❌ [${env}] Error checking for updates:`, error);
             return false;
         });
     },
@@ -211,7 +282,9 @@ window.pwaUpdater = {
     },
 
     showUpdateAvailable: function () {
-        console.log('📢 Notifying .NET about update available');
+        const env = this.isDevelopmentEnvironment() ? 'DEV' : 'PROD';
+        console.log(`📢 [${env}] Notifying .NET about update available`);
+        
         if (this.dotNetRef) {
             this.dotNetRef.invokeMethodAsync('OnUpdateAvailable').catch(error => {
                 console.error('❌ Failed to notify .NET about update available:', error);
@@ -266,6 +339,7 @@ window.pwaUpdater = {
 
         return navigator.serviceWorker.ready.then(registration => {
             const info = {
+                environment: this.isDevelopmentEnvironment() ? 'Development' : 'Production',
                 supported: true,
                 active: !!registration.active,
                 waiting: !!registration.waiting,
@@ -276,7 +350,15 @@ window.pwaUpdater = {
                 waitingScriptURL: registration.waiting?.scriptURL,
                 installingScriptURL: registration.installing?.scriptURL,
                 hasController: !!navigator.serviceWorker.controller,
-                controllerURL: navigator.serviceWorker.controller?.scriptURL
+                controllerURL: navigator.serviceWorker.controller?.scriptURL,
+                location: {
+                    hostname: window.location.hostname,
+                    protocol: window.location.protocol,
+                    port: window.location.port,
+                    origin: window.location.origin
+                },
+                pwaMode: window.matchMedia('(display-mode: standalone)').matches ? 'Standalone' : 'Browser',
+                devNotificationsEnabled: this.isUpdateNotificationEnabledInDev()
             };
             
             console.table(info);
@@ -289,16 +371,33 @@ window.pwaUpdater = {
 
     // Función para forzar una verificación de actualización
     forceUpdateCheck: function() {
-        console.log('🔄 Forcing update check...');
+        const env = this.isDevelopmentEnvironment() ? 'DEV' : 'PROD';
+        console.log(`🔄 [${env}] Forcing update check...`);
+        
         return this.checkForUpdates().then(() => {
             if (this.registration && this.registration.waiting) {
-                console.log('✅ Update available after force check');
+                console.log(`✅ [${env}] Update available after force check`);
+                
+                // Forzar notificación incluso en desarrollo
                 this.showUpdateAvailable();
                 return true;
             }
-            console.log('ℹ️ No updates found after force check');
+            console.log(`ℹ️ [${env}] No updates found after force check`);
             return false;
         });
+    },
+
+    // Habilitar notificaciones en desarrollo
+    enableDevNotifications: function() {
+        localStorage.setItem('pwa-dev-notifications', 'true');
+        console.log('✅ Development notifications enabled');
+    },
+
+    // Deshabilitar notificaciones en desarrollo
+    disableDevNotifications: function() {
+        localStorage.removeItem('pwa-dev-notifications');
+        sessionStorage.removeItem('pwa-dev-notifications');
+        console.log('❌ Development notifications disabled');
     }
 };
 
@@ -312,5 +411,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.getPWAInfo = () => window.pwaUpdater.getServiceWorkerInfo();
     window.forceSWUpdate = () => window.pwaUpdater.skipWaiting();
     
+    // Funciones adicionales para desarrollo
+    window.enablePWADevNotifications = () => window.pwaUpdater.enableDevNotifications();
+    window.disablePWADevNotifications = () => window.pwaUpdater.disableDevNotifications();
+    
     console.log('🛠️ PWA Debug functions available: clearPWACache(), checkPWAUpdates(), getPWAInfo(), forceSWUpdate()');
+    
+    if (window.pwaUpdater.isDevelopmentEnvironment()) {
+        console.log('🔧 Development functions: enablePWADevNotifications(), disablePWADevNotifications()');
+    }
 });
