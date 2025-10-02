@@ -64,7 +64,7 @@ function shouldSkipIntegrityCheck(assetUrl) {
 
 // Install event - cache resources
 async function onInstall(event) {
-    console.info('Service worker: Install');
+    console.info('🔧 Service worker: Install - Version:', self.assetsManifest.version);
 
     try {
         // Fetch and cache all matching items from the assets manifest
@@ -90,6 +90,7 @@ async function onInstall(event) {
         // SOLUCIÓN: Usar addAll con manejo de errores mejorado
         try {
             await cache.addAll(assetsRequests);
+            console.log(`✅ SW: ${assetsRequests.length} assets cached successfully`);
         } catch (error) {
             console.warn('⚠️ SW: addAll failed, trying individual adds:', error);
             
@@ -106,6 +107,10 @@ async function onInstall(event) {
             const succeeded = results.filter(r => r.status === 'fulfilled');
             console.log(`✅ SW: ${succeeded.length} assets cached successfully`);
         }
+
+        // No llamar skipWaiting automáticamente - esperar a que el usuario lo solicite
+        console.log('🔧 SW: Installation complete, waiting for activation signal');
+        
     } catch (error) {
         console.error('❌ Service worker: Install failed:', error);
         throw error;
@@ -114,14 +119,36 @@ async function onInstall(event) {
 
 // Activate event - clean up old caches
 async function onActivate(event) {
-    console.info('Service worker: Activate');
+    console.info('🔧 Service worker: Activate - Version:', self.assetsManifest.version);
 
-    // Delete unused caches
-    const cacheNames = await caches.keys();
-    await Promise.all(cacheNames
-        .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
-        .filter(oldCacheName => oldCacheName !== cacheName)
-        .map(oldCacheName => caches.delete(oldCacheName)));
+    try {
+        // Delete unused caches
+        const cacheNames = await caches.keys();
+        const oldCaches = cacheNames
+            .filter(oldCacheName => oldCacheName.startsWith(cacheNamePrefix))
+            .filter(oldCacheName => oldCacheName !== cacheName);
+            
+        if (oldCaches.length > 0) {
+            console.log(`🧹 SW: Cleaning up ${oldCaches.length} old caches:`, oldCaches);
+            await Promise.all(oldCaches.map(oldCacheName => caches.delete(oldCacheName)));
+        }
+
+        // Tomar control de todas las páginas inmediatamente
+        await self.clients.claim();
+        console.log('✅ SW: Activated and claimed all clients');
+
+        // Notificar a los clientes sobre la activación
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+            client.postMessage({
+                type: 'SW_UPDATED',
+                version: self.assetsManifest.version
+            });
+        });
+
+    } catch (error) {
+        console.error('❌ Service worker: Activate failed:', error);
+    }
 }
 
 // Fetch event - serve from cache or network
@@ -186,7 +213,7 @@ async function onFetch(event) {
                 return networkResponse;
             } catch (error) {
                 // Fall back to cache if network fails
-                console.log('Network failed, serving from cache:', event.request.url);
+                console.log('🌐 Network failed, serving from cache:', event.request.url);
                 return cachedResponse || new Response('{"error": "Offline"}', {
                     status: 503,
                     statusText: 'Service Unavailable',
@@ -201,19 +228,38 @@ async function onFetch(event) {
 
 // Message event - handle messages from the main thread
 function onMessage(event) {
+    console.log('📨 SW: Message received:', event.data);
+    
     if (event.data && event.data.command) {
         switch (event.data.command) {
-            case 'update':
             case 'skipWaiting':
-                // Force update the cache
+                console.log('🚀 SW: Skip waiting requested');
                 self.skipWaiting();
-                break;
-            case 'clear':
-                // Clear all caches
-                caches.keys().then(names => {
-                    names.forEach(name => caches.delete(name));
+                
+                // Notificar al cliente que hemos saltado la espera
+                event.ports[0]?.postMessage({ 
+                    type: 'SKIP_WAITING_RESPONSE',
+                    success: true 
                 });
                 break;
+                
+            case 'update':
+                console.log('🔄 SW: Update requested');
+                self.skipWaiting();
+                break;
+                
+            case 'clear':
+                console.log('🧹 SW: Clear caches requested');
+                // Clear all caches
+                caches.keys().then(names => {
+                    return Promise.all(names.map(name => caches.delete(name)));
+                }).then(() => {
+                    console.log('✅ SW: All caches cleared');
+                });
+                break;
+                
+            default:
+                console.log('❓ SW: Unknown command:', event.data.command);
         }
     }
 }

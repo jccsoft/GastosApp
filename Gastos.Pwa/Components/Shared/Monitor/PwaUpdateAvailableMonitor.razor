@@ -3,8 +3,6 @@
 @inject BlazorService BlazorService
 
 @code {
-    // Based on: https://whuysentruit.medium.com/blazor-wasm-pwa-adding-a-new-update-available-notification-d9f65c4ad13
-
     protected override async Task OnInitializedAsync()
     {
         await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnInitializedAsync");
@@ -14,16 +12,34 @@
     private async Task RegisterForUpdateAvailableNotification()
     {
         await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: RegisterForUpdateAvailableNotification");
-        await _jsRuntime.InvokeAsync<object>(
-            identifier: "registerForUpdateAvailableNotification",
-            DotNetObjectReference.Create(this),
-            nameof(OnUpdateAvailable));
+        
+        // Usar el sistema pwa-updater más robusto
+        await _jsRuntime.InvokeVoidAsync("pwaUpdater.initialize", DotNetObjectReference.Create(this));
     }
 
-    [JSInvokable(nameof(OnUpdateAvailable))]
+    [JSInvokable]
     public async Task OnUpdateAvailable()
     {
         await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateAvailable");
+        ShowUpdateNotification();
+    }
+
+    [JSInvokable]
+    public async Task OnUpdateReady()
+    {
+        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateReady");
+        ShowUpdateNotification();
+    }
+
+    [JSInvokable]
+    public async Task OnUpdateInstalled()
+    {
+        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateInstalled");
+        // Opcional: mostrar notificación de instalación exitosa
+    }
+
+    private void ShowUpdateNotification()
+    {
         Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
 
         Snackbar.Add(new MarkupString("<center><p class='p-0 m-0'>NUEVA VERSIÓN DISPONIBLE.</p><p class='p-0 m-0'>HAGA CLIC AQUÍ PARA ACTUALIZAR.</p></center>"),
@@ -35,8 +51,8 @@
                 config.HideIcon = true;
                 config.OnClick = snackbar =>
                 {
-                    _jsRuntime.InvokeVoidAsync("window.forceSWUpdate");
-                    // _jsRuntime.InvokeVoidAsync("window.location.reload", true);
+                    // Usar el método más robusto del pwa-updater
+                    _jsRuntime.InvokeVoidAsync("pwaUpdater.skipWaiting");
                     StateHasChanged();
                     return Task.CompletedTask;
                 };

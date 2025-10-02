@@ -49,6 +49,7 @@
     <script src="js/pwa-installer.js"></script>
     <script src="js/pwa-helper.js"></script>
     <script src="js/pwa-updater.js"></script>
+    <script src="js/pwa-update-tester.js"></script>
 
     <!-- Authentication Script -->
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
@@ -66,12 +67,8 @@
     <!-- Blazor WebAssembly -->
     <script src="_framework/blazor.webassembly.js"></script>
 
-    <!-- Enhanced Service Worker Registration - Load after PWA scripts -->
-    <script src="sw-registrator.js"></script>
-
     <!-- MudBlazor JS -->
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
-
 
     <!-- Application Initialization Script -->
     <script>
@@ -122,6 +119,7 @@
                 if (typeof window.testAzureRouting !== 'undefined') loadedTools.push('AzureRoutingTest');
                 if (typeof window.pwaUpdater !== 'undefined') loadedTools.push('PWAUpdater');
                 if (typeof window.diagnoseApp !== 'undefined') loadedTools.push('PWADiagnostics');
+                if (typeof window.PWAUpdateTester !== 'undefined') loadedTools.push('PWAUpdateTester');
 
                 console.log(`✅ Tools loaded: ${loadedTools.join(', ')}`);
 
@@ -129,14 +127,26 @@
                     console.warn('⚠️ No tools loaded - Check for script errors');
                 }
 
-                // Verificar estado del service worker
-                if ('serviceWorker' in navigator) {
+                // Verificar estado del service worker después de que pwa-updater se haya inicializado
+                if ('serviceWorker' in navigator && window.pwaUpdater) {
                     navigator.serviceWorker.ready.then(registration => {
                         if (registration.waiting) {
                             console.warn('⚠️ Service Worker is waiting - app might be showing old content');
-                            console.log('💡 Run window.forceSWUpdate() to apply the update');
+                            console.log('💡 Run window.pwaUpdater.skipWaiting() to apply the update');
                         }
+                    }).catch(error => {
+                        console.error('❌ Error checking service worker ready state:', error);
                     });
+                }
+
+                // Mostrar comandos disponibles para testing
+                if (isDevelopment && window.PWAUpdateTester) {
+                    console.log('%c🧪 PWA TESTING COMMANDS AVAILABLE:', 'color: #00ff00; font-weight: bold;');
+                    console.log('   testPWAUpdate() - Test update notification');
+                    console.log('   getPWAState() - Get detailed SW state');
+                    console.log('   checkPWACache() - Check cache info');
+                    console.log('   testPWAConnectivity() - Test connectivity');
+                    console.log('   resetPWA() - Reset PWA completely');
                 }
             }, 1000);
         });
@@ -156,6 +166,25 @@
         window.addEventListener('unhandledrejection', function (event) {
             console.error('🚨 Unhandled Promise Rejection:', event.reason);
         });
+
+        // Funciones globales para debugging - definidas aquí para estar disponibles inmediatamente
+        window.forceSWUpdate = () => {
+            if (window.pwaUpdater) {
+                window.pwaUpdater.skipWaiting();
+            } else {
+                console.warn('PWA Updater not available yet, reloading page...');
+                window.location.reload();
+            }
+        };
+
+        window.manualUpdateCheck = () => {
+            if (window.pwaUpdater) {
+                return window.pwaUpdater.forceUpdateCheck();
+            } else {
+                console.warn('PWA Updater not available yet');
+                return Promise.resolve(false);
+            }
+        };
     </script>
 </body>
 

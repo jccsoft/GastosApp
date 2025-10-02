@@ -19,6 +19,42 @@
     {
       "route": "/debug",
       "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/service-worker.js",
+      "headers": {
+        "cache-control": "no-cache, no-store, must-revalidate",
+        "pragma": "no-cache",
+        "expires": "0"
+      },
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/service-worker.published.js",
+      "headers": {
+        "cache-control": "no-cache, no-store, must-revalidate",
+        "pragma": "no-cache",
+        "expires": "0"
+      },
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/service-worker-assets.js",
+      "headers": {
+        "cache-control": "no-cache, no-store, must-revalidate",
+        "pragma": "no-cache",
+        "expires": "0"
+      },
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/manifest.webmanifest",
+      "headers": {
+        "cache-control": "no-cache, no-store, must-revalidate",
+        "pragma": "no-cache",
+        "expires": "0"
+      },
+      "allowedRoles": ["anonymous"]
     }
   ],
   "navigationFallback": {
@@ -29,7 +65,8 @@
       "/js/*", 
       "/*.{js,css,woff,woff2,ttf,svg,ico,png,jpg,gif,json}",
       "/_framework/*",
-      "/api/*"
+      "/api/*",
+      "/service-worker*.js"
     ]
   },
   "responseOverrides": {
