@@ -10,13 +10,14 @@ window.updateAvailable = new Promise((resolve, reject) => {
 
     navigator.serviceWorker.register('/service-worker.js')
         .then(registration => {
-            console.info(`Service worker registration successful (scope: ${registration.scope})`);
+            console.info(`✅ Service worker registration successful (scope: ${registration.scope})`);
 
             setInterval(() => {
                 registration.update();
             }, 60 * 1000); // 60000ms -> check each minute
 
             registration.onupdatefound = () => {
+                console.log('✅ Update found in sw-registrator');
                 const installingServiceWorker = registration.installing;
                 installingServiceWorker.onstatechange = () => {
                     if (installingServiceWorker.state === 'installed') {
@@ -32,6 +33,7 @@ window.updateAvailable = new Promise((resolve, reject) => {
 });
 
 window.registerForUpdateAvailableNotification = (caller, methodName) => {
+    console.info(`✅ Pwa registered for update available notification`);
     window.updateAvailable.then(isUpdateAvailable => {
         if (isUpdateAvailable && !window.location.origin.includes('localhost')) {
             caller.invokeMethodAsync(methodName).then();
