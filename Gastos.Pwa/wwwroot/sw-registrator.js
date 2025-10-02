@@ -17,7 +17,7 @@ window.updateAvailable = new Promise((resolve, reject) => {
             }, 60 * 1000); // 60000ms -> check each minute
 
             registration.onupdatefound = () => {
-                console.log('✅ Update found in sw-registrator');
+                console.log('⏳ Update found in sw-registrator');
                 const installingServiceWorker = registration.installing;
                 installingServiceWorker.onstatechange = () => {
                     if (installingServiceWorker.state === 'installed') {
@@ -36,6 +36,7 @@ window.registerForUpdateAvailableNotification = (caller, methodName) => {
     console.info(`✅ Pwa registered for update available notification`);
     window.updateAvailable.then(isUpdateAvailable => {
         if (isUpdateAvailable && !window.location.origin.includes('localhost')) {
+            console.log(`⏳ Invoke update notification to method ${methodName}`);
             caller.invokeMethodAsync(methodName).then();
         }
     });
