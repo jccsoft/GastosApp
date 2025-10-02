@@ -35,7 +35,7 @@
                 config.HideIcon = true;
                 config.OnClick = snackbar =>
                 {
-                    _jsRuntime.InvokeVoidAsync("window.location.reload");
+                    _jsRuntime.InvokeVoidAsync("window.location.reload", true);
                     return Task.CompletedTask;
                 };
             });
