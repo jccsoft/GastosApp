@@ -3,6 +3,7 @@
   <PropertyGroup>
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+    <BlazorEnableCompression>false</BlazorEnableCompression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +28,13 @@
 
   <ItemGroup>
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+  <!-- Asegurar que los archivos de configuración se incluyan en el publish -->
+  <ItemGroup>
+    <None Include="wwwroot\staticwebapp.config.json" />
+    <None Include="wwwroot\web.config" />
+    <None Include="wwwroot\.htaccess" />
   </ItemGroup>
 
 </Project>

@@ -13,118 +13,248 @@ window.pwaUpdater = {
             console.log('Using existing registration from index.html');
             this.setupUpdateHandlers();
         } else {
-            // Si no, registrar nosotros mismos
-            this.registerServiceWorker().then(() => {
+            // Si no, registrar nosotros mismos con estrategia mejorada
+            this.registerServiceWorkerWithFallback().then(() => {
                 this.setupUpdateHandlers();
             }).catch(error => {
-                console.error('Failed to register service worker:', error);
-                // Intentar con fallback si falla el registro principal
-                this.tryFallbackRegistration();
+                console.error('All service worker registration attempts failed:', error);
+                // Crear un service worker mínimo como último recurso
+                this.createMinimalServiceWorker();
             });
         }
     },
 
-    registerServiceWorker: function() {
+    // Estrategia mejorada de registro con múltiples intentos
+    async registerServiceWorkerWithFallback() {
         if (!('serviceWorker' in navigator)) {
             console.log('Service Worker not supported');
             return Promise.resolve(null);
         }
 
-        // Detectar entorno mejorado - considerando PWA instalada y diferentes contextos
         const isDevelopment = this.isDevelopmentEnvironment();
-        const swPath = isDevelopment ? '/service-worker.js' : '/service-worker.published.js';
         
-        console.log(`🔧 Environment detected: ${isDevelopment ? 'Development' : 'Production'}`);
-        console.log(`📦 Registering service worker: ${swPath}`);
+        // Lista de intentos en orden de preferencia
+        const attempts = [
+            {
+                path: isDevelopment ? '/service-worker.js' : '/service-worker.published.js',
+                description: 'Primary service worker'
+            },
+            {
+                path: '/service-worker.js',
+                description: 'Fallback to development service worker'
+            }
+        ];
 
-        return navigator.serviceWorker.register(swPath, { 
-            updateViaCache: 'none',
-            scope: '/' 
-        })
-        .then(registration => {
-            console.log(`✅ Service Worker registered successfully (${swPath}):`, registration.scope);
-            this.registration = registration;
-            return registration;
-        })
-        .catch(error => {
-            console.error(`❌ Service Worker registration failed (${swPath}):`, error);
-            throw error;
-        });
+        console.log(`🔧 Environment detected: ${isDevelopment ? 'Development' : 'Production'}`);
+
+        for (let i = 0; i < attempts.length; i++) {
+            const attempt = attempts[i];
+            
+            try {
+                console.log(`📦 Attempt ${i + 1}: Registering ${attempt.description}: ${attempt.path}`);
+                
+                // Primero verificar si el archivo existe y tiene el MIME type correcto
+                const fileCheck = await this.verifyServiceWorkerFile(attempt.path);
+                
+                if (!fileCheck.exists) {
+                    console.warn(`⚠️ File ${attempt.path} does not exist, trying next...`);
+                    continue;
+                }
+                
+                if (fileCheck.wrongMimeType) {
+                    console.warn(`⚠️ File ${attempt.path} has wrong MIME type (${fileCheck.contentType}), trying workaround...`);
+                    
+                    // Intentar con query parameter para evitar cache
+                    const timestamp = Date.now();
+                    const pathWithTimestamp = `${attempt.path}?v=${timestamp}`;
+                    
+                    try {
+                        const registration = await this.registerServiceWorkerDirect(pathWithTimestamp);
+                        console.log(`✅ Service Worker registered with timestamp workaround: ${pathWithTimestamp}`);
+                        this.registration = registration;
+                        return registration;
+                    } catch (timestampError) {
+                        console.warn(`⚠️ Timestamp workaround failed for ${attempt.path}:`, timestampError);
+                        continue;
+                    }
+                }
+
+                // Intento normal
+                const registration = await this.registerServiceWorkerDirect(attempt.path);
+                console.log(`✅ Service Worker registered successfully: ${attempt.path}`);
+                this.registration = registration;
+                return registration;
+                
+            } catch (error) {
+                console.warn(`⚠️ Attempt ${i + 1} failed for ${attempt.path}:`, error);
+                
+                // Si es el último intento, propagar el error
+                if (i === attempts.length - 1) {
+                    throw error;
+                }
+            }
+        }
+        
+        throw new Error('All service worker registration attempts failed');
     },
 
-    // Intentar registro con fallback si el principal falla
-    tryFallbackRegistration: function() {
-        console.log('🔄 Attempting fallback service worker registration...');
-        
-        const isDevelopment = this.isDevelopmentEnvironment();
-        
-        // En producción, si falla service-worker.published.js, intentar con service-worker.js
-        if (!isDevelopment) {
-            console.log('📦 Trying fallback: /service-worker.js');
+    // Verificar archivo del service worker antes de intentar registrarlo
+    async verifyServiceWorkerFile(path) {
+        try {
+            const response = await fetch(path, { method: 'HEAD' });
+            const contentType = response.headers.get('content-type') || '';
             
-            return navigator.serviceWorker.register('/service-worker.js', { 
-                updateViaCache: 'none',
-                scope: '/' 
-            })
-            .then(registration => {
-                console.log('✅ Fallback Service Worker registered successfully:', registration.scope);
-                this.registration = registration;
-                this.setupUpdateHandlers();
-                return registration;
-            })
-            .catch(error => {
-                console.error('❌ Fallback service worker registration also failed:', error);
-                // Si ambos fallan, crear un service worker mínimo
-                this.createMinimalServiceWorker();
-            });
-        } else {
-            console.log('⚠️ Development environment - no fallback needed');
+            return {
+                exists: response.ok,
+                status: response.status,
+                contentType: contentType,
+                wrongMimeType: response.ok && !contentType.includes('javascript') && !contentType.includes('application/javascript')
+            };
+        } catch (error) {
+            return {
+                exists: false,
+                error: error.message
+            };
         }
     },
 
-    // Crear un service worker mínimo si no existe ninguno
-    createMinimalServiceWorker: function() {
-        console.log('🆘 Creating minimal service worker as last resort...');
-        
-        // Crear un service worker básico que al menos permita que la PWA funcione
-        const minimalSW = `
-            self.addEventListener('install', () => {
-                console.log('Minimal SW: Installed');
-                self.skipWaiting();
-            });
-            
-            self.addEventListener('activate', () => {
-                console.log('Minimal SW: Activated');
-                self.clients.claim();
-            });
-            
-            self.addEventListener('fetch', (event) => {
-                // Solo interceptar requests de navegación
-                if (event.request.mode === 'navigate') {
-                    event.respondWith(fetch(event.request).catch(() => {
-                        return caches.match('/index.html');
-                    }));
-                }
-            });
-        `;
-        
-        // Crear blob URL para el service worker
-        const blob = new Blob([minimalSW], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        
-        return navigator.serviceWorker.register(swUrl, { 
+    // Registro directo del service worker
+    async registerServiceWorkerDirect(swPath) {
+        return navigator.serviceWorker.register(swPath, { 
             updateViaCache: 'none',
             scope: '/' 
+        });
+    },
+
+    // Crear un service worker mínimo pero funcional usando Blob URL
+    async createMinimalServiceWorker() {
+        console.log('🆘 Creating minimal service worker as last resort...');
+        
+        // Service worker mínimo que al menos permite que la PWA funcione
+        const minimalSW = `
+// Minimal Service Worker for PWA functionality
+console.log('🔧 Minimal Service Worker starting...');
+
+const CACHE_NAME = 'minimal-pwa-cache-v1';
+const ESSENTIAL_ASSETS = [
+    '/',
+    '/index.html'
+];
+
+self.addEventListener('install', (event) => {
+    console.log('🔧 Minimal SW: Installing...');
+    
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('🔧 Minimal SW: Caching essential assets');
+                return cache.addAll(ESSENTIAL_ASSETS).catch(err => {
+                    console.warn('🔧 Minimal SW: Failed to cache some assets:', err);
+                });
+            })
+            .then(() => {
+                console.log('🔧 Minimal SW: Installed successfully');
+                self.skipWaiting();
+            })
+    );
+});
+
+self.addEventListener('activate', (event) => {
+    console.log('🔧 Minimal SW: Activating...');
+    
+    event.waitUntil(
+        Promise.all([
+            // Limpiar caches antiguos
+            caches.keys().then(cacheNames => {
+                return Promise.all(
+                    cacheNames
+                        .filter(cacheName => cacheName !== CACHE_NAME)
+                        .map(cacheName => caches.delete(cacheName))
+                );
+            }),
+            // Tomar control inmediatamente
+            self.clients.claim()
+        ]).then(() => {
+            console.log('🔧 Minimal SW: Activated successfully');
+            
+            // Notificar a los clientes
+            self.clients.matchAll().then(clients => {
+                clients.forEach(client => {
+                    client.postMessage({
+                        type: 'SW_UPDATED',
+                        version: 'minimal-v1'
+                    });
+                });
+            });
         })
-        .then(registration => {
+    );
+});
+
+self.addEventListener('fetch', (event) => {
+    // Solo interceptar requests de navegación para SPA
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request)
+                .catch(() => {
+                    // Si falla la red, servir desde cache
+                    return caches.match('/index.html')
+                        .then(response => {
+                            return response || new Response('Offline', {
+                                status: 503,
+                                statusText: 'Service Unavailable'
+                            });
+                        });
+                })
+        );
+    }
+    
+    // Para otros requests, ir directo a la red
+});
+
+self.addEventListener('message', (event) => {
+    console.log('🔧 Minimal SW: Message received:', event.data);
+    
+    if (event.data && event.data.command) {
+        switch (event.data.command) {
+            case 'skipWaiting':
+                console.log('🔧 Minimal SW: Skip waiting requested');
+                self.skipWaiting();
+                break;
+            case 'update':
+                console.log('🔧 Minimal SW: Update requested');
+                self.skipWaiting();
+                break;
+        }
+    }
+});
+
+console.log('🔧 Minimal Service Worker loaded successfully');
+        `;
+        
+        try {
+            // Crear blob URL para el service worker
+            const blob = new Blob([minimalSW], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            
+            const registration = await navigator.serviceWorker.register(swUrl, { 
+                updateViaCache: 'none',
+                scope: '/' 
+            });
+            
             console.log('✅ Minimal Service Worker registered successfully');
             this.registration = registration;
             this.setupUpdateHandlers();
             return registration;
-        })
-        .catch(error => {
+            
+        } catch (error) {
             console.error('❌ Even minimal service worker failed:', error);
-        });
+            throw error;
+        }
+    },
+
+    registerServiceWorker: function() {
+        // Esta función se mantiene por compatibilidad pero ahora usa la estrategia mejorada
+        return this.registerServiceWorkerWithFallback();
     },
 
     // Función mejorada para detectar entorno de desarrollo
@@ -179,10 +309,15 @@ window.pwaUpdater = {
         for (const file of files) {
             try {
                 const response = await fetch(file, { method: 'HEAD' });
+                const contentType = response.headers.get('content-type') || '';
+                
                 results[file] = {
                     exists: response.ok,
                     status: response.status,
-                    contentType: response.headers.get('content-type')
+                    contentType: contentType,
+                    cacheControl: response.headers.get('cache-control'),
+                    wrongMimeType: response.ok && !contentType.includes('javascript') && contentType !== 'application/javascript',
+                    isHTML: response.ok && contentType.includes('text/html')
                 };
             } catch (error) {
                 results[file] = {
