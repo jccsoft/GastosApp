@@ -45,6 +45,18 @@ window.PWAUpdateTester = {
         }
     },
 
+    // Verificar archivos del service worker
+    async checkServiceWorkerFiles() {
+        console.log('📁 Checking Service Worker files availability...');
+        
+        if (window.pwaUpdater && window.pwaUpdater.checkServiceWorkerFiles) {
+            return await window.pwaUpdater.checkServiceWorkerFiles();
+        } else {
+            console.error('❌ PWA Updater checkServiceWorkerFiles function not available');
+            return { error: 'Function not available' };
+        }
+    },
+
     // Obtener información detallada del estado del service worker
     async getDetailedSWInfo() {
         console.log('🔍 Gathering detailed Service Worker information...');
@@ -170,11 +182,40 @@ window.PWAUpdateTester = {
             },
             registration: null,
             updateCheck: null,
+            fileCheck: null,
             errors: []
         };
 
         try {
-            // Test 1: Verificar registro del service worker
+            // Test 1: Verificar archivos del service worker
+            try {
+                results.fileCheck = await this.checkServiceWorkerFiles();
+                
+                // Analizar resultados de archivos
+                const missingFiles = [];
+                const wrongMimeType = [];
+                
+                for (const [file, status] of Object.entries(results.fileCheck)) {
+                    if (!status.exists) {
+                        missingFiles.push(file);
+                    } else if (status.contentType && !status.contentType.includes('javascript')) {
+                        wrongMimeType.push({file, contentType: status.contentType});
+                    }
+                }
+                
+                if (missingFiles.length > 0) {
+                    results.errors.push(`Missing files: ${missingFiles.join(', ')}`);
+                }
+                
+                if (wrongMimeType.length > 0) {
+                    results.errors.push(`Wrong MIME type: ${wrongMimeType.map(w => `${w.file} (${w.contentType})`).join(', ')}`);
+                }
+                
+            } catch (fileError) {
+                results.errors.push(`File check failed: ${fileError.message}`);
+            }
+
+            // Test 2: Verificar registro del service worker
             if ('serviceWorker' in navigator) {
                 const registration = await navigator.serviceWorker.ready;
                 results.registration = {
@@ -187,7 +228,7 @@ window.PWAUpdateTester = {
                     waitingURL: registration.waiting?.scriptURL
                 };
 
-                // Test 2: Intentar verificación de actualización
+                // Test 3: Intentar verificación de actualización
                 try {
                     await registration.update();
                     results.updateCheck = { success: true, message: 'Update check completed' };
@@ -205,7 +246,7 @@ window.PWAUpdateTester = {
                 results.errors.push('Service Worker not supported');
             }
 
-            // Test 3: Verificar PWA Updater
+            // Test 4: Verificar PWA Updater
             if (window.pwaUpdater) {
                 results.pwaUpdater = {
                     available: true,
@@ -218,7 +259,7 @@ window.PWAUpdateTester = {
                 results.errors.push('PWA Updater not available');
             }
 
-            // Test 4: Verificar si las notificaciones funcionarían
+            // Test 5: Verificar si las notificaciones funcionarían
             if (window.pwaUpdater && window.pwaUpdater.dotNetRef) {
                 results.notificationTest = { canNotify: true };
             } else {
@@ -235,12 +276,16 @@ window.PWAUpdateTester = {
         console.group('🧪 Update System Test Results');
         console.log(`Environment: ${results.environment}`);
         console.table(results.connectivity);
+        if (results.fileCheck) {
+            console.log('📁 File Check Results:');
+            console.table(results.fileCheck);
+        }
         if (results.registration) console.table(results.registration);
         if (results.updateCheck) console.table(results.updateCheck);
         if (results.pwaUpdater) console.table(results.pwaUpdater);
         if (results.notificationTest) console.table(results.notificationTest);
         if (results.errors.length > 0) {
-            console.error('Errors found:', results.errors);
+            console.error('❌ Errors found:', results.errors);
         }
         console.groupEnd();
         
@@ -280,6 +325,71 @@ window.PWAUpdateTester = {
         }
 
         console.table(results);
+        return results;
+    },
+
+    // Diagnóstico completo del problema del MIME type
+    async diagnoseMimeTypeIssue() {
+        console.log('🔍 Diagnosing MIME type issues...');
+        
+        const results = {
+            timestamp: new Date().toISOString(),
+            files: {},
+            recommendations: []
+        };
+
+        const filesToCheck = [
+            '/service-worker.js',
+            '/service-worker.published.js',
+            '/service-worker-assets.js'
+        ];
+
+        for (const file of filesToCheck) {
+            try {
+                const response = await fetch(file, { method: 'HEAD' });
+                results.files[file] = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    contentType: response.headers.get('content-type'),
+                    cacheControl: response.headers.get('cache-control'),
+                    exists: response.ok
+                };
+
+                // Analizar problemas
+                if (!response.ok) {
+                    results.recommendations.push(`${file}: File not found (${response.status})`);
+                } else {
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('javascript')) {
+                        results.recommendations.push(`${file}: Wrong MIME type (${contentType || 'none'}), should be application/javascript`);
+                    }
+                }
+
+            } catch (error) {
+                results.files[file] = {
+                    error: error.message,
+                    exists: false
+                };
+                results.recommendations.push(`${file}: Fetch failed - ${error.message}`);
+            }
+        }
+
+        // Agregar recomendaciones generales
+        if (results.recommendations.length > 0) {
+            results.recommendations.push('');
+            results.recommendations.push('🔧 Solutions:');
+            results.recommendations.push('1. Check staticwebapp.config.json for correct MIME types');
+            results.recommendations.push('2. Ensure files are deployed correctly');
+            results.recommendations.push('3. Verify Azure Static Web Apps configuration');
+            results.recommendations.push('4. Try force refresh or clear cache');
+        }
+
+        console.group('🔍 MIME Type Diagnosis');
+        console.table(results.files);
+        console.log('📋 Recommendations:');
+        results.recommendations.forEach(rec => console.log(rec));
+        console.groupEnd();
+
         return results;
     },
 
@@ -324,21 +434,45 @@ window.PWAUpdateTester = {
         console.log('✅ Verbose PWA logging enabled');
     },
 
-    // Mostrar guía de troubleshooting
+    // Mostrar guía de troubleshooting específica para MIME type
+    showMimeTypeTroubleshooting: function() {
+        console.group('🛠️ MIME Type Issue Troubleshooting Guide');
+        console.log('The error "unsupported MIME type (\'text/html\')" usually means:');
+        console.log('');
+        console.log('🔍 Common causes:');
+        console.log('1. Service worker file doesn\'t exist and Azure serves 404 page');
+        console.log('2. Azure Static Web Apps misconfiguration');
+        console.log('3. Wrong file path or deployment issue');
+        console.log('4. Incorrect MIME type headers');
+        console.log('');
+        console.log('🔧 Solutions to try:');
+        console.log('1. Check file availability: checkSWFiles()');
+        console.log('2. Diagnose MIME issue: diagnoseMimeTypeIssue()');
+        console.log('3. Verify deployment and file paths');
+        console.log('4. Check staticwebapp.config.json configuration');
+        console.log('5. Force rebuild and redeploy');
+        console.log('6. Clear all caches: resetPWA()');
+        console.groupEnd();
+    },
+
+    // Mostrar guía de troubleshooting general
     showTroubleshootingGuide: function() {
         console.group('🛠️ PWA Update Troubleshooting Guide');
         console.log('1. Check environment detection: getPWAState()');
         console.log('2. Test if installed as PWA: testInstalledPWA()');
-        console.log('3. Force update check: checkPWAUpdates()');
-        console.log('4. Enable dev notifications: enablePWADevNotifications()');
-        console.log('5. Simulate update: testPWAUpdate()');
-        console.log('6. Reset everything: resetPWA()');
+        console.log('3. Check file availability: checkSWFiles()');
+        console.log('4. Diagnose MIME issues: diagnoseMimeTypeIssue()');
+        console.log('5. Force update check: checkPWAUpdates()');
+        console.log('6. Enable dev notifications: enablePWADevNotifications()');
+        console.log('7. Simulate update: testPWAUpdate()');
+        console.log('8. Reset everything: resetPWA()');
         console.log('');
         console.log('Common issues:');
         console.log('- Development environment suppresses notifications');
         console.log('- PWA needs to be installed to test properly');
         console.log('- Service worker may be cached by browser');
         console.log('- Azure Static Web Apps may cache service worker files');
+        console.log('- Wrong MIME types causing registration failures');
         console.groupEnd();
     }
 };
@@ -351,7 +485,9 @@ window.checkPWACache = () => window.PWAUpdateTester.checkCacheInfo();
 window.testPWAConnectivity = () => window.PWAUpdateTester.testConnectivityAndUpdates();
 window.testInstalledPWA = () => window.PWAUpdateTester.testInstalledPWA();
 window.resetPWA = () => window.PWAUpdateTester.resetPWA();
+window.diagnoseMimeTypeIssue = () => window.PWAUpdateTester.diagnoseMimeTypeIssue();
 window.pwaHelp = () => window.PWAUpdateTester.showTroubleshootingGuide();
+window.mimeTypeHelp = () => window.PWAUpdateTester.showMimeTypeTroubleshooting();
 
 console.log('🧪 PWA Update Tester loaded. Available commands:');
 console.log('   testPWAUpdate() - Simulate update notification');
@@ -360,5 +496,7 @@ console.log('   getPWAState() - Get detailed SW state');
 console.log('   checkPWACache() - Check cache information');
 console.log('   testPWAConnectivity() - Test connectivity and updates');
 console.log('   testInstalledPWA() - Test PWA installation status');
+console.log('   diagnoseMimeTypeIssue() - Diagnose MIME type problems');
 console.log('   resetPWA() - Reset PWA state completely');
 console.log('   pwaHelp() - Show troubleshooting guide');
+console.log('   mimeTypeHelp() - Show MIME type specific help');

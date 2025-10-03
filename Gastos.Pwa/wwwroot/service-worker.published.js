@@ -1,7 +1,18 @@
 // Caution! Be sure you understand the caveats before publishing an application with
 // offline support. See https://aka.ms/blazor-offline-considerations
 
-self.importScripts('./service-worker-assets.js');
+// Manejar el caso cuando service-worker-assets.js no existe
+try {
+    self.importScripts('./service-worker-assets.js');
+} catch (error) {
+    console.warn('service-worker-assets.js not found, using minimal configuration:', error);
+    // Crear un manifiesto mínimo si no existe el archivo
+    self.assetsManifest = {
+        version: 'minimal-' + Date.now(),
+        assets: []
+    };
+}
+
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
@@ -67,6 +78,28 @@ async function onInstall(event) {
     console.info('🔧 Service worker: Install - Version:', self.assetsManifest.version);
 
     try {
+        // Si no hay assets en el manifiesto, cachear solo recursos básicos
+        if (!self.assetsManifest.assets || self.assetsManifest.assets.length === 0) {
+            console.warn('⚠️ SW: No assets manifest found, caching basic resources only');
+            
+            const basicResources = [
+                '/',
+                '/index.html',
+                '/manifest.webmanifest'
+            ];
+            
+            const cache = await caches.open(cacheName);
+            
+            try {
+                await cache.addAll(basicResources);
+                console.log(`✅ SW: ${basicResources.length} basic resources cached successfully`);
+            } catch (error) {
+                console.warn('⚠️ SW: Failed to cache basic resources:', error);
+            }
+            
+            return;
+        }
+
         // Fetch and cache all matching items from the assets manifest
         const assetsRequests = self.assetsManifest.assets
             .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))

@@ -18,6 +18,8 @@ window.pwaUpdater = {
                 this.setupUpdateHandlers();
             }).catch(error => {
                 console.error('Failed to register service worker:', error);
+                // Intentar con fallback si falla el registro principal
+                this.tryFallbackRegistration();
             });
         }
     },
@@ -45,8 +47,83 @@ window.pwaUpdater = {
             return registration;
         })
         .catch(error => {
-            console.error('❌ Service Worker registration failed:', error);
+            console.error(`❌ Service Worker registration failed (${swPath}):`, error);
             throw error;
+        });
+    },
+
+    // Intentar registro con fallback si el principal falla
+    tryFallbackRegistration: function() {
+        console.log('🔄 Attempting fallback service worker registration...');
+        
+        const isDevelopment = this.isDevelopmentEnvironment();
+        
+        // En producción, si falla service-worker.published.js, intentar con service-worker.js
+        if (!isDevelopment) {
+            console.log('📦 Trying fallback: /service-worker.js');
+            
+            return navigator.serviceWorker.register('/service-worker.js', { 
+                updateViaCache: 'none',
+                scope: '/' 
+            })
+            .then(registration => {
+                console.log('✅ Fallback Service Worker registered successfully:', registration.scope);
+                this.registration = registration;
+                this.setupUpdateHandlers();
+                return registration;
+            })
+            .catch(error => {
+                console.error('❌ Fallback service worker registration also failed:', error);
+                // Si ambos fallan, crear un service worker mínimo
+                this.createMinimalServiceWorker();
+            });
+        } else {
+            console.log('⚠️ Development environment - no fallback needed');
+        }
+    },
+
+    // Crear un service worker mínimo si no existe ninguno
+    createMinimalServiceWorker: function() {
+        console.log('🆘 Creating minimal service worker as last resort...');
+        
+        // Crear un service worker básico que al menos permita que la PWA funcione
+        const minimalSW = `
+            self.addEventListener('install', () => {
+                console.log('Minimal SW: Installed');
+                self.skipWaiting();
+            });
+            
+            self.addEventListener('activate', () => {
+                console.log('Minimal SW: Activated');
+                self.clients.claim();
+            });
+            
+            self.addEventListener('fetch', (event) => {
+                // Solo interceptar requests de navegación
+                if (event.request.mode === 'navigate') {
+                    event.respondWith(fetch(event.request).catch(() => {
+                        return caches.match('/index.html');
+                    }));
+                }
+            });
+        `;
+        
+        // Crear blob URL para el service worker
+        const blob = new Blob([minimalSW], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        
+        return navigator.serviceWorker.register(swUrl, { 
+            updateViaCache: 'none',
+            scope: '/' 
+        })
+        .then(registration => {
+            console.log('✅ Minimal Service Worker registered successfully');
+            this.registration = registration;
+            this.setupUpdateHandlers();
+            return registration;
+        })
+        .catch(error => {
+            console.error('❌ Even minimal service worker failed:', error);
         });
     },
 
@@ -87,6 +164,36 @@ window.pwaUpdater = {
         });
 
         return isDev;
+    },
+
+    // Verificar si los archivos del service worker existen
+    async checkServiceWorkerFiles() {
+        const files = [
+            '/service-worker.js',
+            '/service-worker.published.js',
+            '/service-worker-assets.js'
+        ];
+        
+        const results = {};
+        
+        for (const file of files) {
+            try {
+                const response = await fetch(file, { method: 'HEAD' });
+                results[file] = {
+                    exists: response.ok,
+                    status: response.status,
+                    contentType: response.headers.get('content-type')
+                };
+            } catch (error) {
+                results[file] = {
+                    exists: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        console.log('📁 Service Worker files check:', results);
+        return results;
     },
 
     setupUpdateHandlers: function () {
@@ -410,12 +517,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.checkPWAUpdates = () => window.pwaUpdater.forceUpdateCheck();
     window.getPWAInfo = () => window.pwaUpdater.getServiceWorkerInfo();
     window.forceSWUpdate = () => window.pwaUpdater.skipWaiting();
+    window.checkSWFiles = () => window.pwaUpdater.checkServiceWorkerFiles();
     
     // Funciones adicionales para desarrollo
     window.enablePWADevNotifications = () => window.pwaUpdater.enableDevNotifications();
     window.disablePWADevNotifications = () => window.pwaUpdater.disableDevNotifications();
     
-    console.log('🛠️ PWA Debug functions available: clearPWACache(), checkPWAUpdates(), getPWAInfo(), forceSWUpdate()');
+    console.log('🛠️ PWA Debug functions available: clearPWACache(), checkPWAUpdates(), getPWAInfo(), forceSWUpdate(), checkSWFiles()');
     
     if (window.pwaUpdater.isDevelopmentEnvironment()) {
         console.log('🔧 Development functions: enablePWADevNotifications(), disablePWADevNotifications()');
