@@ -87,7 +87,7 @@ window.pwaUpdater = {
                         this.registration = registration;
                         return registration;
                     } catch (timestampError) {
-                        console.warn(`⚠️ Timestamp workaround failed for ${attempt.path}:`, timestampError);
+                        //console.warn(`⚠️ Timestamp workaround failed for ${attempt.path}:`, timestampError);
                         continue;
                     }
                 }
@@ -296,15 +296,15 @@ console.log('🔧 Minimal Service Worker loaded successfully - v48');
 
         const isDev = isLocalhost || isDevelopmentPort || isAzurePreview;
         
-        console.log(`🔍 Environment detection:`, {
-            hostname,
-            protocol,
-            port,
-            isLocalhost,
-            isDevelopmentPort,
-            isAzurePreview,
-            final: isDev
-        });
+        //console.log(`🔍 Environment detection:`, {
+        //    hostname,
+        //    protocol,
+        //    port,
+        //    isLocalhost,
+        //    isDevelopmentPort,
+        //    isAzurePreview,
+        //    final: isDev
+        //});
 
         return isDev;
     },
@@ -351,8 +351,8 @@ console.log('🔧 Minimal Service Worker loaded successfully - v48');
             return;
         }
 
-        console.log('Setting up update handlers...');
-        console.log('Service Worker ready, current version:', this.registration.active?.scriptURL);
+        //console.log('Setting up update handlers...');
+        //console.log('Service Worker ready, current version:', this.registration.active?.scriptURL);
         
         // Verificar si ya hay un service worker esperando
         if (this.registration.waiting) {
@@ -433,7 +433,7 @@ console.log('🔧 Minimal Service Worker loaded successfully - v48');
         // Configurar intervalos de verificación basados en el entorno
         const updateInterval = this.isDevelopmentEnvironment() ? 
                              30 * 1000 :      // 30 segundos en desarrollo
-                             2 * 60 * 1000;   // 2 minutos en producción
+                             5 * 60 * 1000;   // 5 minutos en producción
 
         const intervalId = setInterval(() => {
             this.checkForUpdates();
@@ -488,7 +488,7 @@ console.log('🔧 Minimal Service Worker loaded successfully - v48');
         }
 
         const env = this.isDevelopmentEnvironment() ? 'DEV' : 'PROD';
-        console.log(`🔍 [${env}] Checking for service worker updates...`);
+        //console.log(`🔍 [${env}] Checking for service worker updates...`);
         
         return this.registration.update().then(() => {
             console.log(`✅ [${env}] Update check completed`);
