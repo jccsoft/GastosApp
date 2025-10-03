@@ -91,6 +91,8 @@ public enum ResourceStrings
     NoUnit,
     NoNetworkMessage,
     PendingReceipts,
+    PwaUpdateNewVersionAvailable,
+    PwaUpdateClickToUpdate,
     Reading0,
     ReadReceipts,
     RowClickProduct,

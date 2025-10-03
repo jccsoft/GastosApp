@@ -1,28 +1,18 @@
 @page "/"
 @inject LocalizationService Loc
-@inject PwaService PwaService
 
 <PageHeading Title="@Loc.Get(RS.AppTitle)" IsHome="true" />
 
-<p>Versión 51</p>
+<p>Versión 52</p>
 <MudContainer MaxWidth="MaxWidth.Large">
     <AuthorizeView>
         <Authorized>
             <MudText Typo="Typo.h4" GutterBottom="true" Class="my-5">@Greeting(context.User.GetUserName())</MudText>
             <MudText>@_welcomeText</MudText>
-            <br />
-            @if (!_isInstalled)
-            {
-                <MudText>@Loc.Get(RS.HomeTextInstallPwa)</MudText>                
-            }
         </Authorized>
         <NotAuthorized>
             <MudText Typo="Typo.h4" GutterBottom="true" Class="my-5">@Greeting("")</MudText>
             <MudText>@_welcomeText</MudText>
-            @if (!_isInstalled)
-            {
-                <MudText>@Loc.Get(RS.HomeTextInstallPwa)</MudText>
-            }
             <MudText Class="mt-5">@_unauthorizedText</MudText>
         </NotAuthorized>
     </AuthorizeView>
@@ -61,21 +51,6 @@
 </MudContainer>
 
 @code {
-    private bool _isInstalled = false;
-    private bool _canInstall = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            _isInstalled = await PwaService.IsInstalledAsync();
-            _canInstall = await PwaService.CanInstallAsync();
-            StateHasChanged();
-        }
-
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
     private string Greeting(string username) => string.Format(Loc.Get(RS.Hello0), username);
     private MarkupString _welcomeText => (MarkupString)(string.Format(Loc.Get(RS.HomeTextWellcome0), $"<strong>{Loc.Get(RS.AppTitle)}</strong>"));
     private string _unauthorizedText => string.Format(Loc.Get(RS.HomeTextLoginToStart0), Loc.Get(RS.ActLogin));

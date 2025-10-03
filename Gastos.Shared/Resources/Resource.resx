@@ -498,4 +498,10 @@
   <data name="InfoReadingReceipts" xml:space="preserve">
     <value>Lee nuevos tíquets desde pdf, imágenes o fotos</value>
   </data>
+  <data name="PwaUpdateNewVersionAvailable" xml:space="preserve">
+    <value>Nueva versión disponible</value>
+  </data>
+  <data name="PwaUpdateClickToUpdate" xml:space="preserve">
+    <value>Pulse aquí para actualizar</value>
+  </data>
 </root>

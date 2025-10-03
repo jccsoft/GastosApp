@@ -498,4 +498,10 @@
   <data name="InfoReadingReceipts" xml:space="preserve">
     <value>Read new reeipts from PDF, images or photos</value>
   </data>
+  <data name="PwaUpdateNewVersionAvailable" xml:space="preserve">
+    <value>New version available</value>
+  </data>
+  <data name="PwaUpdateClickToUpdate" xml:space="preserve">
+    <value>Click here to update</value>
+  </data>
 </root>

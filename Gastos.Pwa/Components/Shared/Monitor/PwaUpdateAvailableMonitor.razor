@@ -1,40 +1,34 @@
 ﻿@inject IJSRuntime _jsRuntime
 @inject ISnackbar Snackbar
-@inject BlazorService BlazorService
+@inject LocalizationService Loc
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnInitializedAsync");
         await RegisterForUpdateAvailableNotification();
     }
 
     private async Task RegisterForUpdateAvailableNotification()
-    {
-        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: RegisterForUpdateAvailableNotification");
-        
+    {        
         // Usar el sistema pwa-updater más robusto
         await _jsRuntime.InvokeVoidAsync("pwaUpdater.initialize", DotNetObjectReference.Create(this));
     }
 
     [JSInvokable]
-    public async Task OnUpdateAvailable()
+    public void OnUpdateAvailable()
     {
-        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateAvailable");
         ShowUpdateNotification();
     }
 
     [JSInvokable]
-    public async Task OnUpdateReady()
+    public void OnUpdateReady()
     {
-        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateReady");
         ShowUpdateNotification();
     }
 
     [JSInvokable]
-    public async Task OnUpdateInstalled()
+    public void OnUpdateInstalled()
     {
-        await BlazorService.BrowserLogAsync($"UpdateAvailableDetector: OnUpdateInstalled");
         // Opcional: mostrar notificación de instalación exitosa
     }
 
@@ -42,7 +36,7 @@
     {
         Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
 
-        Snackbar.Add(new MarkupString("<center><p class='p-0 m-0'>NUEVA VERSIÓN DISPONIBLE.</p><p class='p-0 m-0'>HAGA CLIC AQUÍ PARA ACTUALIZAR.</p></center>"),
+        Snackbar.Add(new MarkupString($"<center><p class='p-0 m-0'>{Loc.Get(RS.PwaUpdateNewVersionAvailable)}.</p><p class='p-0 m-0'>{Loc.Get(RS.PwaUpdateClickToUpdate)}.</p></center>"),
             Severity.Warning,
             config =>
             {

@@ -658,8 +658,8 @@
         console.warn('AuthDebugger: Could not set rejection listener:', error);
     }
 
-    console.groupCollapsed('🔐 Auth Debugger loaded successfully');
-    console.log('🔧 Methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport(),testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
-    console.groupEnd();
+    //console.groupCollapsed('🔐 Auth Debugger loaded successfully');
+    //console.log('🔧 Methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport(),testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
+    //console.groupEnd();
 
 })();
