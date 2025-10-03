@@ -42,6 +42,10 @@ window.pwaUpdater = {
             {
                 path: '/service-worker.js',
                 description: 'Fallback to development service worker'
+            },
+            {
+                path: '/sw-alternative.js',
+                description: 'Alternative service worker'
             }
         ];
 
@@ -63,6 +67,15 @@ window.pwaUpdater = {
                 
                 if (fileCheck.wrongMimeType) {
                     console.warn(`⚠️ File ${attempt.path} has wrong MIME type (${fileCheck.contentType}), trying workaround...`);
+                    
+                    // Para sw-alternative.js, intentar directamente sin workaround
+                    if (attempt.path === '/sw-alternative.js') {
+                        console.log('⚡ Trying alternative service worker directly...');
+                        const registration = await this.registerServiceWorkerDirect(attempt.path);
+                        console.log(`✅ Alternative Service Worker registered successfully: ${attempt.path}`);
+                        this.registration = registration;
+                        return registration;
+                    }
                     
                     // Intentar con query parameter para evitar cache
                     const timestamp = Date.now();
@@ -132,10 +145,10 @@ window.pwaUpdater = {
         
         // Service worker mínimo que al menos permite que la PWA funcione
         const minimalSW = `
-// Minimal Service Worker for PWA functionality
+// Minimal Service Worker for PWA functionality - Version 48
 console.log('🔧 Minimal Service Worker starting...');
 
-const CACHE_NAME = 'minimal-pwa-cache-v1';
+const CACHE_NAME = 'minimal-pwa-cache-v48';
 const ESSENTIAL_ASSETS = [
     '/',
     '/index.html'
@@ -182,7 +195,7 @@ self.addEventListener('activate', (event) => {
                 clients.forEach(client => {
                     client.postMessage({
                         type: 'SW_UPDATED',
-                        version: 'minimal-v1'
+                        version: 'minimal-v48'
                     });
                 });
             });
@@ -228,7 +241,7 @@ self.addEventListener('message', (event) => {
     }
 });
 
-console.log('🔧 Minimal Service Worker loaded successfully');
+console.log('🔧 Minimal Service Worker loaded successfully - v48');
         `;
         
         try {
@@ -301,7 +314,8 @@ console.log('🔧 Minimal Service Worker loaded successfully');
         const files = [
             '/service-worker.js',
             '/service-worker.published.js',
-            '/service-worker-assets.js'
+            '/service-worker-assets.js',
+            '/sw-alternative.js'
         ];
         
         const results = {};
