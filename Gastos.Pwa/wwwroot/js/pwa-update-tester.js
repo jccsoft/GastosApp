@@ -126,7 +126,7 @@ window.PWAUpdateTester = {
                 }
             };
 
-            console.group('🔍 Service Worker Detailed Information');
+            console.groupCollapsed('🔍 Service Worker Detailed Information');
             console.table(info.environment);
             console.table(info.active);
             console.table(info.waiting);
@@ -273,7 +273,7 @@ window.PWAUpdateTester = {
             results.errors.push(`General error: ${error.message}`);
         }
 
-        console.group('🧪 Update System Test Results');
+        console.groupCollapsed('🧪 Update System Test Results');
         console.log(`Environment: ${results.environment}`);
         console.table(results.connectivity);
         if (results.fileCheck) {
@@ -384,7 +384,7 @@ window.PWAUpdateTester = {
             results.recommendations.push('4. Try force refresh or clear cache');
         }
 
-        console.group('🔍 MIME Type Diagnosis');
+        console.groupCollapsed('🔍 MIME Type Diagnosis');
         console.table(results.files);
         console.log('📋 Recommendations:');
         results.recommendations.forEach(rec => console.log(rec));
@@ -436,7 +436,7 @@ window.PWAUpdateTester = {
 
     // Mostrar guía de troubleshooting específica para MIME type
     showMimeTypeTroubleshooting: function() {
-        console.group('🛠️ MIME Type Issue Troubleshooting Guide');
+        console.groupCollapsed('🛠️ MIME Type Issue Troubleshooting Guide');
         console.log('The error "unsupported MIME type (\'text/html\')" usually means:');
         console.log('');
         console.log('🔍 Common causes:');
@@ -457,7 +457,7 @@ window.PWAUpdateTester = {
 
     // Mostrar guía de troubleshooting general
     showTroubleshootingGuide: function() {
-        console.group('🛠️ PWA Update Troubleshooting Guide');
+        console.groupCollapsed('🛠️ PWA Update Troubleshooting Guide');
         console.log('1. Check environment detection: getPWAState()');
         console.log('2. Test if installed as PWA: testInstalledPWA()');
         console.log('3. Check file availability: checkSWFiles()');
@@ -489,7 +489,7 @@ window.diagnoseMimeTypeIssue = () => window.PWAUpdateTester.diagnoseMimeTypeIssu
 window.pwaHelp = () => window.PWAUpdateTester.showTroubleshootingGuide();
 window.mimeTypeHelp = () => window.PWAUpdateTester.showMimeTypeTroubleshooting();
 
-console.log('🧪 PWA Update Tester loaded. Available commands:');
+console.groupCollapsed('🧪 PWA Update Tester loaded. Available commands:');
 console.log('   testPWAUpdate() - Simulate update notification');
 console.log('   simulateWaitingSW() - Simulate waiting service worker');
 console.log('   getPWAState() - Get detailed SW state');
@@ -500,3 +500,4 @@ console.log('   diagnoseMimeTypeIssue() - Diagnose MIME type problems');
 console.log('   resetPWA() - Reset PWA state completely');
 console.log('   pwaHelp() - Show troubleshooting guide');
 console.log('   mimeTypeHelp() - Show MIME type specific help');
+console.groupEnd();

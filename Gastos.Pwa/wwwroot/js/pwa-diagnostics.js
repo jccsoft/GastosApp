@@ -10,7 +10,7 @@
 
     // Diagnose application state
     window.diagnoseApp = async function() {
-        console.group('🔍 PWA Application Diagnostics');
+        console.groupCollapsed('🔍 PWA Application Diagnostics');
         
         // Basic browser support
         console.log('🌐 Browser Support:');

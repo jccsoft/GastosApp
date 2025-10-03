@@ -81,7 +81,7 @@
 
         // Test de diagnóstico completo de Azure Static Web Apps
         testAzureDeepDiagnosis: async () => {
-            console.group('🔧 === DEEP AZURE STATIC WEB APPS DIAGNOSIS ===');
+            console.groupCollapsed('🔧 === DEEP AZURE STATIC WEB APPS DIAGNOSIS ===');
             
             const diagnosis = {};
             
@@ -248,7 +248,7 @@
                     environment: window.AuthDebugger.getEnvironmentInfo()
                 };
                 
-                console.group(`🔐 Auth Event: ${event}`);
+                console.groupCollapsed(`🔐 Auth Event: ${event}`);
                 console.log('Details:', details);
                 console.log('Environment:', info.environment);
                 console.groupEnd();
@@ -551,7 +551,7 @@
                     serviceWorkerInfo: await window.AuthDebugger.getServiceWorkerInfo()
                 };
                 
-                console.group('🔐 Complete Auth Debug Report');
+                console.groupCollapsed('🔐 Complete Auth Debug Report');
                 console.log(JSON.stringify(report, null, 2));
                 console.groupEnd();
                 
@@ -658,7 +658,7 @@
         console.warn('AuthDebugger: Could not set rejection listener:', error);
     }
 
-    console.group('🔐 Auth Debugger loaded successfully');
+    console.groupCollapsed('🔐 Auth Debugger loaded successfully');
     console.log('🔧 Methods: getEnvironmentInfo(), testConnectivity(), testPWARouting(), generateReport(),testAzureStaticWebApps(), getAuth0Configuration(), testAzureDeepDiagnosis()');
     console.groupEnd();
 
