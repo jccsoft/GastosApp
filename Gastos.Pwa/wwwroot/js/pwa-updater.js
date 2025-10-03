@@ -6,7 +6,7 @@ window.pwaUpdater = {
 
     initialize: function (dotNetObjectReference) {
         this.dotNetRef = dotNetObjectReference;
-        console.log('PWA Updater initializing...');
+        //console.log('PWA Updater initializing...');
         
         // Si ya tenemos una registración del index.html, usarla
         if (this.registration) {
@@ -49,7 +49,7 @@ window.pwaUpdater = {
             }
         ];
 
-        console.log(`🔧 Environment detected: ${isDevelopment ? 'Development' : 'Production'}`);
+        //console.log(`🔧 Environment detected: ${isDevelopment ? 'Development' : 'Production'}`);
 
         for (let i = 0; i < attempts.length; i++) {
             const attempt = attempts[i];
@@ -659,7 +659,6 @@ console.log('🔧 Minimal Service Worker loaded successfully - v48');
 
 // Auto-inicializar el updater cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📦 PWA Updater script loaded');
     
     // Exponer funciones globales para debugging
     window.clearPWACache = () => window.pwaUpdater.clearAllCaches();
@@ -671,10 +670,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones adicionales para desarrollo
     window.enablePWADevNotifications = () => window.pwaUpdater.enableDevNotifications();
     window.disablePWADevNotifications = () => window.pwaUpdater.disableDevNotifications();
-    
-    console.log('🛠️ PWA Debug functions available: clearPWACache(), checkPWAUpdates(), getPWAInfo(), forceSWUpdate(), checkSWFiles()');
+
+    console.groupCollapsed('🛠️ PWA Updater Debug functions loaded:');
+    console.log('- clearPWACache()');
+    console.log('- checkPWAUpdates()');
+    console.log('- getPWAInfo()');
+    console.log('- forceSWUpdate()');
+    console.log('- checkSWFiles()');
     
     if (window.pwaUpdater.isDevelopmentEnvironment()) {
         console.log('🔧 Development functions: enablePWADevNotifications(), disablePWADevNotifications()');
     }
+
+    console.groupEnd();
 });
