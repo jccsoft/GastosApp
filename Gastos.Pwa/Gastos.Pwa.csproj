@@ -14,29 +14,29 @@
 
   <!-- Obtener información de Git -->
   <Target Name="GetGitInfo" BeforeTargets="Build">
-    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git rev-parse --short HEAD 2>nul || echo unknown" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
     </Exec>
-    <Exec Command="git rev-parse --abbrev-ref HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git rev-parse --abbrev-ref HEAD 2>nul || echo unknown" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitBranch" />
     </Exec>
-    <Exec Command="git log -1 --format=%cd --date=iso" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git log -1 --format=%%cd --date=format:%%Y-%%m-%%d%%20%%H:%%M:%%S 2>nul || echo $([System.DateTime]::Now.ToString(&quot;yyyy-MM-dd HH:mm:ss&quot;))" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitDate" />
     </Exec>
-    <Exec Command="git describe --tags --abbrev=0" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git describe --tags --abbrev=0 2>nul || echo v1.0.0" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitLatestTag" />
     </Exec>
-    <Exec Command="git rev-list --count HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git rev-list --count HEAD 2>nul || echo 0" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitCount" />
     </Exec>
     
-    <!-- Definir propiedades por defecto si Git no está disponible -->
+    <!-- Limpiar valores en caso de errores -->
     <PropertyGroup>
-      <GitCommitHash Condition="'$(GitCommitHash)' == ''">unknown</GitCommitHash>
-      <GitBranch Condition="'$(GitBranch)' == ''">unknown</GitBranch>
-      <GitCommitDate Condition="'$(GitCommitDate)' == ''">$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))</GitCommitDate>
-      <GitLatestTag Condition="'$(GitLatestTag)' == ''">v1.0.0</GitLatestTag>
-      <GitCommitCount Condition="'$(GitCommitCount)' == ''">0</GitCommitCount>
+      <GitCommitHash Condition="'$(GitCommitHash)' == '' OR $(GitCommitHash.Contains('fatal'))">unknown</GitCommitHash>
+      <GitBranch Condition="'$(GitBranch)' == '' OR $(GitBranch.Contains('fatal'))">unknown</GitBranch>
+      <GitCommitDate Condition="'$(GitCommitDate)' == '' OR $(GitCommitDate.Contains('fatal'))">$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))</GitCommitDate>
+      <GitLatestTag Condition="'$(GitLatestTag)' == '' OR $(GitLatestTag.Contains('fatal'))">v1.0.0</GitLatestTag>
+      <GitCommitCount Condition="'$(GitCommitCount)' == '' OR $(GitCommitCount.Contains('fatal'))">0</GitCommitCount>
       
       <!-- Crear versión informacional -->
       <AssemblyInformationalVersion>$(GitLatestTag)-$(GitCommitCount)-$(GitCommitHash)</AssemblyInformationalVersion>
@@ -49,6 +49,9 @@
     <WriteLinesToFile File="wwwroot/version-info.json" 
                       Lines='{"version":"$(GitLatestTag)","build":"$(GitCommitCount)","commit":"$(GitCommitHash)","branch":"$(GitBranch)","date":"$(GitCommitDate)","buildDate":"$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))"}' 
                       Overwrite="true" />
+                      
+    <!-- Log para debug -->
+    <Message Text="Git Info: Version=$(GitLatestTag), Build=$(GitCommitCount), Commit=$(GitCommitHash), Branch=$(GitBranch), Date=$(GitCommitDate)" Importance="high" />
   </Target>
 
   <ItemGroup>

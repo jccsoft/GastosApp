@@ -1,9 +1,11 @@
 @page "/"
+@using Gastos.Pwa.Services
+@using Gastos.Pwa.Models
 @inject LocalizationService Loc
+@inject IVersionService VersionService
 
 <PageHeading Title="@Loc.Get(RS.AppTitle)" IsHome="true" />
 
-<p>Versión 55</p>
 <MudContainer MaxWidth="MaxWidth.Large">
     <AuthorizeView>
         <Authorized>
@@ -16,6 +18,24 @@
             <MudText Class="mt-5">@_unauthorizedText</MudText>
         </NotAuthorized>
     </AuthorizeView>
+
+    <!-- Información de versión compacta -->
+    @if (versionInfo != null)
+    {
+        <MudAlert Severity="Severity.Info" Icon="Icons.Material.Filled.Info" Class="mt-3 mb-4">
+            <div class="d-flex align-center justify-space-between">
+                <MudText Typo="Typo.body2">
+                    <strong>@Loc.Get(RS.AppTitle)</strong> @versionInfo.DisplayText
+                </MudText>
+                <MudButton Size="Size.Small" 
+                           Variant="Variant.Text" 
+                           Href="/pwa-settings"
+                           EndIcon="Icons.Material.Filled.ArrowForward">
+                    Ver detalles
+                </MudButton>
+            </div>
+        </MudAlert>
+    }
 
     <MudGrid Class="mt-5">
         <MudItem xs="12" sm="6" md="2">
@@ -51,6 +71,21 @@
 </MudContainer>
 
 @code {
+    private VersionInfo? versionInfo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            versionInfo = await VersionService.GetVersionInfoAsync();
+        }
+        catch
+        {
+            // En caso de error, no mostrar información de versión
+            versionInfo = null;
+        }
+    }
+
     private string Greeting(string username) => string.Format(Loc.Get(RS.Hello0), username);
     private MarkupString _welcomeText => (MarkupString)(string.Format(Loc.Get(RS.HomeTextWellcome0), $"<strong>{Loc.Get(RS.AppTitle)}</strong>"));
     private string _unauthorizedText => string.Format(Loc.Get(RS.HomeTextLoginToStart0), Loc.Get(RS.ActLogin));

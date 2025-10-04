@@ -1,6 +1,6 @@
+using Gastos.Pwa.Models;
 using System.Net.Http.Json;
 using System.Reflection;
-using Gastos.Pwa.Models;
 
 namespace Gastos.Pwa.Services;
 
@@ -10,15 +10,9 @@ public interface IVersionService
     VersionInfo GetAssemblyVersionInfo();
 }
 
-public class VersionService : IVersionService
+public class VersionService(HttpClient httpClient) : IVersionService
 {
-    private readonly HttpClient _httpClient;
     private VersionInfo? _cachedVersionInfo;
-
-    public VersionService(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
 
     public async Task<VersionInfo> GetVersionInfoAsync()
     {
@@ -30,8 +24,8 @@ public class VersionService : IVersionService
         try
         {
             // Intentar obtener la información de versión del archivo JSON generado en build
-            _cachedVersionInfo = await _httpClient.GetFromJsonAsync<VersionInfo>("version-info.json");
-            
+            _cachedVersionInfo = await httpClient.GetFromJsonAsync<VersionInfo>("version-info.json");
+
             if (_cachedVersionInfo != null)
             {
                 return _cachedVersionInfo;
@@ -51,7 +45,7 @@ public class VersionService : IVersionService
     {
         var assembly = Assembly.GetExecutingAssembly();
         var assemblyName = assembly.GetName();
-        
+
         var versionInfo = new VersionInfo
         {
             Version = assemblyName.Version?.ToString(3) ?? "1.0.0",
