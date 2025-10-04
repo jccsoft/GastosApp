@@ -4,7 +4,52 @@
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
     <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
     <BlazorEnableCompression>false</BlazorEnableCompression>
+    
+    <!-- Configuración de versionado automático -->
+    <GenerateAssemblyVersionInfo>true</GenerateAssemblyVersionInfo>
+    <GenerateAssemblyFileVersionInfo>true</GenerateAssemblyFileVersionInfo>
+    <GenerateAssemblyInformationalVersionAttribute>true</GenerateAssemblyInformationalVersionAttribute>
+    <GenerateAssemblyConfigurationAttribute>true</GenerateAssemblyConfigurationAttribute>
   </PropertyGroup>
+
+  <!-- Obtener información de Git -->
+  <Target Name="GetGitInfo" BeforeTargets="Build">
+    <Exec Command="git rev-parse --short HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
+    </Exec>
+    <Exec Command="git rev-parse --abbrev-ref HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitBranch" />
+    </Exec>
+    <Exec Command="git log -1 --format=%cd --date=iso" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitDate" />
+    </Exec>
+    <Exec Command="git describe --tags --abbrev=0" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitLatestTag" />
+    </Exec>
+    <Exec Command="git rev-list --count HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitCount" />
+    </Exec>
+    
+    <!-- Definir propiedades por defecto si Git no está disponible -->
+    <PropertyGroup>
+      <GitCommitHash Condition="'$(GitCommitHash)' == ''">unknown</GitCommitHash>
+      <GitBranch Condition="'$(GitBranch)' == ''">unknown</GitBranch>
+      <GitCommitDate Condition="'$(GitCommitDate)' == ''">$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))</GitCommitDate>
+      <GitLatestTag Condition="'$(GitLatestTag)' == ''">v1.0.0</GitLatestTag>
+      <GitCommitCount Condition="'$(GitCommitCount)' == ''">0</GitCommitCount>
+      
+      <!-- Crear versión informacional -->
+      <AssemblyInformationalVersion>$(GitLatestTag)-$(GitCommitCount)-$(GitCommitHash)</AssemblyInformationalVersion>
+      
+      <!-- Generar archivo de información de versión -->
+      <VersionInfoFile>$(OutputPath)version-info.json</VersionInfoFile>
+    </PropertyGroup>
+    
+    <!-- Crear archivo JSON con información de versión -->
+    <WriteLinesToFile File="wwwroot/version-info.json" 
+                      Lines='{"version":"$(GitLatestTag)","build":"$(GitCommitCount)","commit":"$(GitCommitHash)","branch":"$(GitBranch)","date":"$(GitCommitDate)","buildDate":"$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))"}' 
+                      Overwrite="true" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="DocIntel.Api.Sdk" />
@@ -35,6 +80,7 @@
     <None Include="wwwroot\staticwebapp.config.json" />
     <None Include="wwwroot\web.config" />
     <None Include="wwwroot\.htaccess" />
+    <None Include="wwwroot\version-info.json" />
   </ItemGroup>
 
 </Project>

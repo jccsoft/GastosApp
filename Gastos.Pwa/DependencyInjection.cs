@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Gastos.Pwa.Services;
 
 namespace Gastos.Pwa;
 
@@ -14,7 +15,8 @@ public static class DependencyInjection
             .AddScoped<BlazorService>()
             .AddScoped<ThemeService>()
             .AddScoped<PwaUpdateService>()
-            .AddScoped<INetworkStatusService, NetworkStatusService>();
+            .AddScoped<INetworkStatusService, NetworkStatusService>()
+            .AddScoped<IVersionService, VersionService>();
 
         builder.AddAuthServices();
 

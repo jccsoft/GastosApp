@@ -1,9 +1,12 @@
 @page "/pwa-settings"
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 @using Microsoft.JSInterop
+@using Gastos.Pwa.Services
+@using Gastos.Pwa.Models
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject IWebAssemblyHostEnvironment HostEnvironment
+@inject IVersionService VersionService
 
 <PageHeading Title="Configuración PWA" IsHome="true" />
 
@@ -14,6 +17,63 @@
     </MudText>
 
     <MudGrid>
+        <!-- Información de Versión -->
+        <MudItem xs="12">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Información de Versión</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    @if (versionInfo != null)
+                    {
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                                <tr>
+                                    <td><strong>Versión:</strong></td>
+                                    <td>
+                                        <MudChip T="string" Icon="Icons.Material.Filled.Tag" Color="Color.Primary" Size="Size.Small">
+                                            @versionInfo.DisplayText
+                                        </MudChip>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Build:</strong></td>
+                                    <td>#@versionInfo.Build</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Commit:</strong></td>
+                                    <td>
+                                        <code>@versionInfo.ShortCommit</code>
+                                        @if (!string.IsNullOrEmpty(versionInfo.Branch) && versionInfo.Branch != "unknown")
+                                        {
+                                            <MudChip T="string" Icon="Icons.Material.Filled.AccountTree" Color="Color.Secondary" Size="Size.Small" Class="ml-2">
+                                                @versionInfo.Branch
+                                            </MudChip>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha del Commit:</strong></td>
+                                    <td>@versionInfo.FormattedCommitDate</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha de Build:</strong></td>
+                                    <td>@versionInfo.FormattedBuildDate</td>
+                                </tr>
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                    else
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ml-2">Cargando información de versión...</MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+
         <!-- Información de Instalación -->
         <MudItem xs="12">
             <MudCard>
@@ -229,6 +289,7 @@
     private bool hasServiceWorker = false;
     private string cacheSize = "Calculando...";
     private string displayMode = "browser";
+    private VersionInfo? versionInfo;
     
     private readonly DeviceInfo deviceInfo = new();
 
@@ -236,11 +297,25 @@
     {
         if (firstRender)
         {
+            await GetVersionInfo();
             await GetDeviceInfo();
             await GetCacheInfo();
             await CheckInstallStatus();
             await CheckServiceWorker();
             StateHasChanged();
+        }
+    }
+
+    private async Task GetVersionInfo()
+    {
+        try
+        {
+            versionInfo = await VersionService.GetVersionInfoAsync();
+        }
+        catch
+        {
+            // En caso de error, usar información del assembly como fallback
+            versionInfo = VersionService.GetAssemblyVersionInfo();
         }
     }
 
