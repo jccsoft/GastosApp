@@ -1,0 +1,129 @@
+# Workflow simplificado para versionado manual
+name: Manual Version & Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+      custom_version:
+        description: 'Custom version (optional, format: v1.2.3)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Calculate New Version
+      id: version
+      run: |
+        if [ -n "${{ inputs.custom_version }}" ]; then
+          NEW_VERSION="${{ inputs.custom_version }}"
+          if [[ ! $NEW_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Custom version must be in format v1.2.3"
+            exit 1
+          fi
+        else
+          # Obtener la última tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+          
+          # Extraer números de versión
+          VERSION_NUM=${LAST_TAG#v}
+          IFS='.' read -ra VERSION_PARTS <<< "$VERSION_NUM"
+          MAJOR=${VERSION_PARTS[0]:-0}
+          MINOR=${VERSION_PARTS[1]:-0}
+          PATCH=${VERSION_PARTS[2]:-0}
+          
+          # Aplicar bump
+          case "${{ inputs.version_type }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+        fi
+        
+        echo "New version: $NEW_VERSION"
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        
+        # Verificar que la tag no existe
+        if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
+          echo "Error: Tag $NEW_VERSION already exists"
+          exit 1
+        fi
+
+    - name: Get Recent Commits
+      id: commits
+      run: |
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -n "$LAST_TAG" ]; then
+          COMMITS=$(git log ${LAST_TAG}..HEAD --oneline --max-count=20)
+        else
+          COMMITS=$(git log --oneline --max-count=20)
+        fi
+        
+        echo "commits<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Tag and Release
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        NEW_VERSION="${{ steps.version.outputs.new_version }}"
+        
+        # Crear tag
+        git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+        git push origin "$NEW_VERSION"
+        
+        echo "Created and pushed tag: $NEW_VERSION"
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.new_version }}
+        name: Release ${{ steps.version.outputs.new_version }}
+        draft: false
+        prerelease: false
+        body: |
+          🚀 **Release ${{ steps.version.outputs.new_version }}**
+          
+          Version bump: **${{ inputs.version_type }}**
+          
+          ## Recent changes:
+          ```
+          ${{ steps.commits.outputs.commits }}
+          ```
+          
+          ---
+          *This release was created manually via GitHub Actions workflow.*
+        token: ${{ secrets.GITHUB_TOKEN }}
