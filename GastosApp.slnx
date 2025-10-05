@@ -9,6 +9,7 @@
     <File Path="DuplicarRegistros.txt" />
     <File Path="Info.txt" />
     <File Path="README.md" />
+    <File Path="Versioning.md" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="Gastos.Api/Gastos.Api.csproj" />

@@ -6,7 +6,10 @@
 
 <PageHeading Title="@Loc.Get(RS.AppTitle)" IsHome="true" />
 
-<MudContainer MaxWidth="MaxWidth.Large">
+<MudContainer MaxWidth="MaxWidth.Large" >
+    <MudStack Row="false" Justify="Justify.SpaceBetween" Style="height: 90vh;">
+
+    <div>
     <AuthorizeView>
         <Authorized>
             <MudText Typo="Typo.h4" GutterBottom="true" Class="my-5">@Greeting(context.User.GetUserName())</MudText>
@@ -18,25 +21,7 @@
             <MudText Class="mt-5">@_unauthorizedText</MudText>
         </NotAuthorized>
     </AuthorizeView>
-
-    <!-- Información de versión compacta -->
-    @if (versionInfo != null)
-    {
-        <MudAlert Severity="Severity.Info" Icon="Icons.Material.Filled.Info" Class="mt-3 mb-4">
-            <div class="d-flex align-center justify-space-between">
-                <MudText Typo="Typo.body2">
-                    <strong>@Loc.Get(RS.AppTitle)</strong> @versionInfo.DisplayText
-                </MudText>
-                <MudButton Size="Size.Small" 
-                           Variant="Variant.Text" 
-                           Href="/pwa-settings"
-                           EndIcon="Icons.Material.Filled.ArrowForward">
-                    Ver detalles
-                </MudButton>
-            </div>
-        </MudAlert>
-    }
-
+    
     <MudGrid Class="mt-5">
         <MudItem xs="12" sm="6" md="2">
             <MenuCard Href="/receipts-reader" Color="Color.Success" Icon="@Icons.Material.Filled.ReadMore"
@@ -68,6 +53,19 @@
                       Description="@(string.Format(Loc.Get(RS.InfoStats0), Loc.Get(RS.EntityStats)))" />
         </MudItem>
     </MudGrid>
+
+    </div>
+
+    <!-- Información de versión compacta -->
+    @if (versionInfo != null)
+    {
+        <MudLink Href="/pwa-settings" >
+            <MudText Typo="Typo.body2" Style="color: grey" Class="text-center">
+                    @($"{versionInfo.DisplayText} {versionInfo.FormattedCommitDate}")
+            </MudText>
+        </MudLink>
+    }
+    </MudStack>
 </MudContainer>
 
 @code {

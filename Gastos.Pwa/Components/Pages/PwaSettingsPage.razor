@@ -1,8 +1,5 @@
 @page "/pwa-settings"
 @using Microsoft.AspNetCore.Components.WebAssembly.Hosting
-@using Microsoft.JSInterop
-@using Gastos.Pwa.Services
-@using Gastos.Pwa.Models
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject IWebAssemblyHostEnvironment HostEnvironment
@@ -11,18 +8,15 @@
 <PageHeading Title="Configuración PWA" IsHome="true" />
 
 <MudContainer MaxWidth="MaxWidth.Medium">
-    <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-4">
-        <MudIcon Icon="Icons.Material.Filled.Settings" Class="mr-2" />
-        Configuración PWA
-    </MudText>
 
     <MudGrid>
+
         <!-- Información de Versión -->
         <MudItem xs="12">
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Información de Versión</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Info">Información de Versión</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
@@ -32,25 +26,19 @@
                             <tbody>
                                 <tr>
                                     <td><strong>Versión:</strong></td>
-                                    <td>
-                                        <MudChip T="string" Icon="Icons.Material.Filled.Tag" Color="Color.Primary" Size="Size.Small">
-                                            @versionInfo.DisplayText
-                                        </MudChip>
-                                    </td>
+                                    <td>@versionInfo.Version</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Build:</strong></td>
-                                    <td>#@versionInfo.Build</td>
+                                    <td>#@(versionInfo.Build)</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Commit:</strong></td>
                                     <td>
-                                        <code>@versionInfo.ShortCommit</code>
+                                        @versionInfo.ShortCommit
                                         @if (!string.IsNullOrEmpty(versionInfo.Branch) && versionInfo.Branch != "unknown")
                                         {
-                                            <MudChip T="string" Icon="Icons.Material.Filled.AccountTree" Color="Color.Secondary" Size="Size.Small" Class="ml-2">
-                                                @versionInfo.Branch
-                                            </MudChip>
+                                            @($" ({versionInfo.Branch})")
                                         }
                                     </td>
                                 </tr>
@@ -72,47 +60,72 @@
                     }
                 </MudCardContent>
             </MudCard>
-        </MudItem>
-
+        </MudItem>        
+        
         <!-- Información de Instalación -->
         <MudItem xs="12">
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Estado de Instalación</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Info">Estado de Instalación</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
                     @if (isInstalled)
                     {
-                        <MudAlert Severity="Severity.Success" Icon="Icons.Material.Filled.CheckCircle">
-                            <MudText>La aplicación está instalada como PWA</MudText>
-                            <MudText Typo="Typo.caption">Modo: @displayMode</MudText>
-                        </MudAlert>
+                        <MudText>La aplicación está instalada como PWA</MudText>
+                        <MudText>Modo: @displayMode</MudText>
                     }
                     else
                     {
-                        <MudAlert Severity="Severity.Info" Icon="Icons.Material.Filled.GetApp">
-                            <MudText>La aplicación puede instalarse como PWA</MudText>
-                        </MudAlert>
-                        
                         @if (canInstall)
                         {
-                            <MudButton Variant="Variant.Filled" 
-                                     Color="Color.Primary" 
-                                     StartIcon="Icons.Material.Filled.GetApp"
-                                     OnClick="InstallPWA"
-                                     Class="mt-3">
+                            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Baseline">
+                                <MudText>La aplicación puede instalarse como PWA</MudText>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           StartIcon="Icons.Material.Filled.GetApp" Class="mt-3"
+                                           OnClick="InstallPWA">
                                 Instalar Aplicación
                             </MudButton>
+                            </MudStack>
                         }
                         else
                         {
-                            <MudAlert Severity="Severity.Warning" Icon="Icons.Material.Filled.Info" Class="mt-3">
-                                <MudText>Para instalar la aplicación:</MudText>
-                                <MudText>• Busca el ícono de instalación en la barra de direcciones del navegador</MudText>
-                                <MudText>• O usa el menú del navegador para "Instalar aplicación"</MudText>
-                            </MudAlert>
+                            <MudText>La aplicación puede instalarse como PWA</MudText>
+                            <MudText>Instrucciones</MudText>
+                            <MudTabs>
+                                <MudTabPanel Text="Windows">
+                                    <div class="mt-3">
+                                        <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome/Edge:</strong></MudText>
+                                        <ol>
+                                            <li>Busca el ícono de instalación en la barra de direcciones</li>
+                                            <li>Haz clic en "Instalar Registro de Tíquets"</li>
+                                            <li>La app aparecerá en el menú de inicio</li>
+                                        </ol>
+                                    </div>
+                                </MudTabPanel>
+                                <MudTabPanel Text="Android">
+                                    <div class="mt-3">
+                                        <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome:</strong></MudText>
+                                        <ol>
+                                            <li>Toca el menú de tres puntos (⋮)</li>
+                                            <li>Selecciona "Añadir a pantalla de inicio"</li>
+                                            <li>Confirma la instalación</li>
+                                        </ol>
+                                    </div>
+                                </MudTabPanel>
+                                <MudTabPanel Text="iOS">
+                                    <div class="mt-3">
+                                        <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Safari:</strong></MudText>
+                                        <ol>
+                                            <li>Toca el botón de compartir (□↗)</li>
+                                            <li>Selecciona "Añadir a pantalla de inicio"</li>
+                                            <li>Personaliza el nombre si es necesario</li>
+                                            <li>Toca "Añadir"</li>
+                                        </ol>
+                                    </div>
+                                </MudTabPanel>
+                            </MudTabs>
                         }
                     }
                 </MudCardContent>
@@ -124,7 +137,7 @@
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Información del Dispositivo</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Info">Información del Dispositivo</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
@@ -144,29 +157,11 @@
                             </tr>
                             <tr>
                                 <td><strong>Soporte PWA:</strong></td>
-                                <td>
-                                    @if (deviceInfo.SupportsPWA)
-                                    {
-                                        <MudChip T="string" Icon="Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small">Soportado</MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip T="string" Icon="Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small">No Soportado</MudChip>
-                                    }
-                                </td>
+                                <td>@(deviceInfo.SupportsPWA ? "Soportado" : "No soportado")</td>
                             </tr>
                             <tr>
                                 <td><strong>Service Worker:</strong></td>
-                                <td>
-                                    @if (hasServiceWorker)
-                                    {
-                                        <MudChip T="string" Icon="Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small">Activo</MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip T="string" Icon="Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small">No disponible</MudChip>
-                                    }
-                                </td>
+                                <td>@(hasServiceWorker ? "Activo" : "No disponible")</td>
                             </tr>
                         </tbody>
                     </MudSimpleTable>
@@ -179,7 +174,7 @@
             <MudCard>
                 <MudCardHeader>
                     <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Gestión de Cache</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Info">Gestión de Cache</MudText>
                     </CardHeaderContent>
                 </MudCardHeader>
                 <MudCardContent>
@@ -219,7 +214,7 @@
                 <MudCard>
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h6">Debug de Autenticación</MudText>
+                            <MudText Typo="Typo.h6" Color="Color.Info">Debug de Autenticación</MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
@@ -234,52 +229,6 @@
                 </MudCard>
             </MudItem>
         }
-
-        <!-- Instrucciones de Instalación -->
-        <MudItem xs="12">
-            <MudCard>
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Instrucciones de Instalación</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudTabs>
-                        <MudTabPanel Text="Windows">
-                            <div class="mt-3">
-                                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome/Edge:</strong></MudText>
-                                <ol>
-                                    <li>Busca el ícono de instalación en la barra de direcciones</li>
-                                    <li>Haz clic en "Instalar Registro de Tíquets"</li>
-                                    <li>La app aparecerá en el menú de inicio</li>
-                                </ol>
-                            </div>
-                        </MudTabPanel>
-                        <MudTabPanel Text="Android">
-                            <div class="mt-3">
-                                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Chrome:</strong></MudText>
-                                <ol>
-                                    <li>Toca el menú de tres puntos (⋮)</li>
-                                    <li>Selecciona "Añadir a pantalla de inicio"</li>
-                                    <li>Confirma la instalación</li>
-                                </ol>
-                            </div>
-                        </MudTabPanel>
-                        <MudTabPanel Text="iOS">
-                            <div class="mt-3">
-                                <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Safari:</strong></MudText>
-                                <ol>
-                                    <li>Toca el botón de compartir (□↗)</li>
-                                    <li>Selecciona "Añadir a pantalla de inicio"</li>
-                                    <li>Personaliza el nombre si es necesario</li>
-                                    <li>Toca "Añadir"</li>
-                                </ol>
-                            </div>
-                        </MudTabPanel>
-                    </MudTabs>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
     </MudGrid>
 </MudContainer>
 
