@@ -39,7 +39,7 @@ public class VersionInfo
     {
         get
         {
-            if (DateTime.TryParse(Date, out var commitDate))
+            if (DateTime.TryParse(Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime commitDate))
             {
                 return commitDate.ToString("dd/MM/yyyy HH:mm");
             }
@@ -54,7 +54,7 @@ public class VersionInfo
     {
         get
         {
-            if (DateTime.TryParse(BuildDate, out var buildDate))
+            if (DateTime.TryParse(BuildDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime buildDate))
             {
                 return buildDate.ToString("dd/MM/yyyy HH:mm");
             }

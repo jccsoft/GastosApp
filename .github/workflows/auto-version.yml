@@ -8,8 +8,8 @@ on:
 
 # Permisos necesarios para el workflow
 permissions:
-  contents: write  # Necesario para crear tags y releases
-  packages: read   # Necesario para leer paquetes si los hay
+  contents: write    # Necesario para crear tags y releases
+  actions: read      # Necesario para leer el workflow
 
 jobs:
   version-and-tag:
@@ -94,25 +94,31 @@ jobs:
         echo "$COMMITS" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Create Tag
+    - name: Create Tag and Push
       if: steps.version.outputs.skip != 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        # Configurar git con el bot de GitHub Actions
         git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
         NEW_VERSION="${{ steps.version.outputs.new_version }}"
         
         # Crear tag localmente
         git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
         
-        # Hacer push del tag usando el token
+        # Configurar la URL remota con el token
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+        
+        # Push del tag
         git push origin "$NEW_VERSION"
         
         echo "Created and pushed tag: $NEW_VERSION"
 
     - name: Create Release
       if: steps.version.outputs.skip != 'true'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.new_version }}
         name: Release ${{ steps.version.outputs.new_version }}
