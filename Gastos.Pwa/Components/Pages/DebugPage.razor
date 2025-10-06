@@ -1,20 +1,14 @@
 @page "/debug"
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using System.Text.Json
-@using System.Text.Json.Serialization
+
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject ISnackbar Snackbar
 
-<PageTitle>Debug</PageTitle>
+<PageHeading Title="Debug Info" />
+
 
 <MudContainer MaxWidth="MaxWidth.Large">
-    <MudText Typo="Typo.h6" Class="mb-4">
-        <MudIcon Icon="@Icons.Material.Filled.BugReport" Class="mr-2" />
-        Debug Info
-    </MudText>
 
     <MudGrid>
         <!-- Estado del Usuario -->
