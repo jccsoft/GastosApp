@@ -1,6 +1,6 @@
 {
   "name": "Registro de Tíquets",
-  "short_name": "Registro de Tíquets",
+  "short_name": "Tíquets",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
@@ -8,17 +8,11 @@
   "theme_color": "#03173d",
   "prefer_related_applications": false,
   "scope": "/",
-  "orientation": "any",
+  //"orientation": "any",
   "categories": ["productivity", "finance"],
   "icons": [
     {
-      "src": "icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-192.png",
+      "src": "maskable_icon_x192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
@@ -27,13 +21,31 @@
       "src": "maskable_icon_x512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "maskable"
-    },
-    {
-      "src": "maskable_icon_x192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
+      "purpose": "any"
     }
+    //{
+    //  "src": "icon-512.png",
+    //  "type": "image/png",
+    //  "sizes": "512x512",
+    //  "purpose": "any"
+    //},
+    //{
+    //  "src": "icon-192.png",
+    //  "type": "image/png",
+    //  "sizes": "192x192",
+    //  "purpose": "any"
+    //},
+    //{
+    //  "src": "maskable_icon_x512.png",
+    //  "type": "image/png",
+    //  "sizes": "512x512",
+    //  "purpose": "maskable"
+    //},
+    //{
+    //  "src": "maskable_icon_x192.png",
+    //  "type": "image/png",
+    //  "sizes": "192x192",
+    //  "purpose": "maskable"
+    //}
   ]
 }

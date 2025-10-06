@@ -65,5 +65,5 @@ public class VersionInfo
     /// <summary>
     /// Obtiene un texto descriptivo de la versión
     /// </summary>
-    public string DisplayText => $"v{FullVersion} ({ShortCommit})";
+    public string DisplayText => $"{FullVersion} ({ShortCommit})";
 }
