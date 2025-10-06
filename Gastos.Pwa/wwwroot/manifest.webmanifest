@@ -8,7 +8,7 @@
   "theme_color": "#03173d",
   "prefer_related_applications": false,
   "scope": "/",
-  "orientation": "natural",
+  "orientation": "any",
   "categories": ["productivity", "finance"],
   "icons": [
     {
