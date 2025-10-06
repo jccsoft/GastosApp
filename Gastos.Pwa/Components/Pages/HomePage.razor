@@ -59,7 +59,7 @@
     <!-- Información de versión compacta -->
     @if (versionInfo != null)
     {
-        <MudLink Href="/pwa-settings" >
+        <MudLink Href="/pwa-settings" Class="mt-5" >
             <MudText Typo="Typo.body2" Style="color: grey" Class="text-center">
                     @($"{versionInfo.DisplayText} {versionInfo.FormattedCommitDate}")
             </MudText>
