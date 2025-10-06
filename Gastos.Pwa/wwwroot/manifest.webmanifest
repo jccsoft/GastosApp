@@ -11,13 +11,13 @@
   "categories": ["productivity", "finance"],
   "icons": [
     {
-      "src": "maskable_icon_x192_p40.png",
+      "src": "maskable_icon_x192_p30.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "maskable_icon_x512_p40.png",
+      "src": "maskable_icon_x512_p30.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
