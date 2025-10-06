@@ -2,6 +2,40 @@
     font-size: 16px;
 }
 
+/* Permitir rotación libre en PWA */
+@media (display-mode: standalone) {
+    html, body {
+        /* Asegurar que el contenido se adapte a la rotación */
+        width: 100%;
+        height: 100%;
+        overflow-x: auto;
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+    }
+    
+    /* Prevenir zoom no deseado en rotación */
+    body {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+}
+
+/* Media queries para orientación */
+@media screen and (orientation: landscape) {
+    html {
+        font-size: 14px; /* Ajustar tamaño de fuente en landscape */
+    }
+}
+
+@media screen and (orientation: portrait) {
+    html {
+        font-size: 16px; /* Tamaño normal en portrait */
+    }
+}
+
 .mud-navmenu.mud-navmenu-default .mud-nav-link.active:not(.mud-nav-link-disabled) {
     color: white;
 }
