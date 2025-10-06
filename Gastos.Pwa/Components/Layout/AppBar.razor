@@ -11,10 +11,14 @@
     {
         <Menu MenuType="superior" />
     }
-    <MudText Typo="@(StateContainer.IsMobile ? Typo.body1 : Typo.h6)" Style="margin-left: 3rem;">
+
+    <MudIconButton Icon="@Icons.Material.Filled.Home" Color="Color.Inherit" Edge="Edge.Start" Href="/" Class="ms-1" />
+
+    <MudText Typo="@(StateContainer.IsMobile ? Typo.body1 : Typo.h6)" Class="ms-5">
         @StateContainer.PageTitle
     </MudText>
     <MudSpacer />
+
     <AuthorizeView>
         <Authorized>
             <MudHidden Breakpoint="Breakpoint.SmAndDown">
