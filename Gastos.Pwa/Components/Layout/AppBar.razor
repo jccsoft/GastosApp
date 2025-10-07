@@ -32,14 +32,7 @@
         </Authorized>
         <NotAuthorized>
             <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined" Size="@(StateContainer.IsMobile ? Size.Small: Size.Medium)">
-                @if (StateContainer.IsMobile)
-                {
-                    @Loc.Get(RS.DemoModeMessage1)
-                }
-                else
-                {
-                    @(string.Format($"{Loc.Get(RS.DemoModeMessage1)}. {Loc.Get(RS.DemoModeMessage2)}"))
-                }                
+                @Loc.Get(StateContainer.IsMobile ? RS.DemoModeMsg1 : RS.DemoModeMsg2)
             </MudChip>
             <MudSpacer />       
             <MudTooltip Text="@Loc.Get(RS.ActLogin)">

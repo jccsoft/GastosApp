@@ -141,8 +141,8 @@
   <data name="Hello0" xml:space="preserve">
     <value>Hello {0} !</value>
   </data>
-  <data name="DemoModeMessage1" xml:space="preserve">
-    <value>DEMO MODE</value>
+  <data name="DemoModeMsg1" xml:space="preserve">
+    <value>DEMO</value>
   </data>
   <data name="TableSearch" xml:space="preserve">
     <value>Search</value>
@@ -459,8 +459,8 @@
   <data name="ErrorStatusCodeUnauthorized" xml:space="preserve">
     <value>You must log in to perform this operation.</value>
   </data>
-  <data name="DemoModeMessage2" xml:space="preserve">
-    <value>Log in to access your data</value>
+  <data name="DemoModeMsg2" xml:space="preserve">
+    <value>DEMO MODE. Log in to access your data.</value>
   </data>
   <data name="Themes" xml:space="preserve">
     <value>Themes</value>
