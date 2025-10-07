@@ -6,3 +6,6 @@ DEPLOYMENT
 - Hacer merge de la rama main en prod
 - Sincronizar
 - Volver a main
+
+ICONOS PARA ANDROID
+- https://maskable.app/editor
