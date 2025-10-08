@@ -37,8 +37,11 @@ else
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="@_columns[0]">@context.FileName</MudTd>
-        <MudTd DataLabel="@_columns[1]">@context.CreatedAtUtc.ToLocalTimeLong()</MudTd>
-        <MudTd DataLabel="@_columns[2]">@context.CompletedAtUtc.ToLocalTimeLong()</MudTd>
+        @if (StateContainer.IsNotMobile)
+        {
+            <MudTd DataLabel="@_columns[1]">@context.CreatedAtUtc.ToLocalTimeLong()</MudTd>
+            <MudTd DataLabel="@_columns[2]">@context.CompletedAtUtc.ToLocalTimeLong()</MudTd>                
+        }
         <MudTd DataLabel="@_columns[3]">
             @((AnalysisJobStatusResponse)context.Status switch
             {

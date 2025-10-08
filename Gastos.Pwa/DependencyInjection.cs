@@ -1,6 +1,6 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Gastos.Pwa.Services;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Gastos.Pwa;
 
@@ -11,6 +11,7 @@ public static class DependencyInjection
         builder.Services
             .AddLocalizationServices()
             .AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped)
+            .AddValidatorsFromAssemblyContaining<Gastos.Shared.IApplicationMarker>(ServiceLifetime.Scoped)
             .AddScoped<StateContainer>()
             .AddScoped<BlazorService>()
             .AddScoped<ThemeService>()
