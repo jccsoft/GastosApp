@@ -14,9 +14,9 @@ public static class DependencyInjection
             .AddMyLocalizationServices();
 
         builder.Services
-            .AddOpenApi()
-            .AddHttpContextAccessor()
-            .AddHttpForwarder();
+            .AddOpenApi() // For Swagger/OpenAPI support
+            .AddHttpContextAccessor() // To access HttpContext in services
+            .AddHttpForwarder(); // For reverse proxying
 
         return builder;
     }
