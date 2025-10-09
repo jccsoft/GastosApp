@@ -14,6 +14,7 @@
   </Target>
   
   <ItemGroup>   
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" />   
     <PackageReference Include="DocIntel.Api.Sdk" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
