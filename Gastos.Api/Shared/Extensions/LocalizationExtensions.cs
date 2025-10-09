@@ -4,12 +4,12 @@ namespace Gastos.Api.Shared.Extensions;
 
 public static class LocalizationExtensions
 {
-    public static IServiceCollection AddLocalizationServices(this IServiceCollection services)
+    public static WebApplicationBuilder AddMyLocalizationServices(this WebApplicationBuilder builder)
     {
-        services.AddLocalization(options => options.ResourcesPath = ResourcesPath);
-        services.AddScoped<LocalizationService>();
+        builder.Services.AddLocalization(options => options.ResourcesPath = ResourcesPath);
+        builder.Services.AddScoped<LocalizationService>();
 
-        return services;
+        return builder;
     }
 
     public static void UseMyRequestLocalization(this WebApplication app)

@@ -1,0 +1,1 @@
+Gastos.Api project: deployed in Azure in the 'jcdcGastosApi' app service. Gastos.Pwa project: deployed in Azure in the 'jcdcGastosApp' static web application. Both projects connected to the 'GastosApp' repository in GitHub.
