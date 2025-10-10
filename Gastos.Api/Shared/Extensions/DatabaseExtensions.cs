@@ -49,8 +49,6 @@ public static class DatabaseExtensions
         return builder;
     }
 
-
-
     /// <summary>
     /// Applies pending database migrations to the application database.
     /// This method should be called during application startup to ensure the database schema is up to date.
