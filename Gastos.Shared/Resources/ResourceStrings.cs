@@ -90,6 +90,7 @@ public enum ResourceStrings
     SizingUnitValue,
     NoUnit,
     NoNetworkMessage,
+    ParamEmptyImageUrl,
     PendingReceipts,
     PwaUpdateNewVersionAvailable,
     PwaUpdateClickToUpdate,

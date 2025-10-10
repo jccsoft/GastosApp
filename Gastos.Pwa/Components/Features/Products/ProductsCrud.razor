@@ -48,7 +48,11 @@
 </TableCrud>
 
 <MudToolBar>
-    <MudSwitch T="bool" Value="_paramEmptyImageUrl" ValueChanged="OnParamEmptyImageUrlChanged" Color="Color.Primary">Sin imagen</MudSwitch>
+    <MudSwitch T="bool"
+               Label="@Loc.Get(RS.ParamEmptyImageUrl)"
+               Value="@_paramEmptyImageUrl"e
+               ValueChanged="@OnParamEmptyImageUrlChanged"
+               Color="Color.Primary" Size="Size.Small" />
 </MudToolBar>
 
 

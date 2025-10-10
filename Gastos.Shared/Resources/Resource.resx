@@ -504,4 +504,7 @@
   <data name="PwaUpdateClickToUpdate" xml:space="preserve">
     <value>Pulse aquí para actualizar</value>
   </data>
+  <data name="ParamEmptyImageUrl" xml:space="preserve">
+    <value>Sin imagen asignada</value>
+  </data>
 </root>

@@ -9,14 +9,14 @@
                    AllItemsText="@Loc.Get(RS.TableAllItems)" />
 }
 
-<MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Baseline" Class="pb-1">
+<MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Baseline" Class="pb-1">
     <MudSwitch T="bool"
                Label="@Loc.Get(RS.TableAllowRemove)"
                Value="@AllowRemoveValue" 
                ValueChanged="@AllowRemoveValueChanged"
                Color="Color.Error" Class="mx-3" Size="Size.Small" />
 
-    <MudText Style="font-size:smaller;" hidden="@(string.IsNullOrEmpty(RowClickText))" >
+    <MudText Style="font-size:small;" hidden="@(string.IsNullOrEmpty(RowClickText))" >
         @RowClickText
     </MudText>
 </MudStack>
