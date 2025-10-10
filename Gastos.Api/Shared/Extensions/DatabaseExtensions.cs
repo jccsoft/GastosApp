@@ -41,10 +41,10 @@ public static class DatabaseExtensions
     {
         builder.Services
             .AddScoped<ISizingRepository, SizingRepository>()
-            .AddTransient<IProductRepository, ProductRepository>()
-            .AddTransient<IStoreRepository, StoreRepository>()
-            .AddTransient<IReceiptRepository, ReceiptRepository>()
-            .AddTransient<IStatRepository, StatRepository>();
+            .AddScoped<IProductRepository, ProductRepository>()
+            .AddScoped<IStoreRepository, StoreRepository>()
+            .AddScoped<IReceiptRepository, ReceiptRepository>()
+            .AddScoped<IStatRepository, StatRepository>();
 
         return builder;
     }

@@ -14,7 +14,7 @@ public static class CorsExtensions
     /// In development environments, allows any origin, method, and header for easier testing.
     /// In production environments, restricts access to specific trusted origins and enables credentials.
     /// </remarks>
-    public static WebApplicationBuilder AddMyCors(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddMyCorsPolicy(this WebApplicationBuilder builder)
     {
         builder.Services.AddCors(options =>
         {
