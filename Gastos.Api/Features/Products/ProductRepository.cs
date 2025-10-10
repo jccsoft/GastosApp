@@ -30,6 +30,11 @@ public class ProductRepository(AppDbContext context) : IProductRepository
             }
         }
 
+        if (parameters.EmptyImageUrl)
+        {
+            query = query.Where(p => p.ImageUrl == null || p.ImageUrl.Length == 0);
+        }
+
         query = query.OrderBy(p => p.Name);
 
         var pagedResponse = await ApiPagedResponse<Product>.CreateAsync(

@@ -47,9 +47,16 @@
 
 </TableCrud>
 
+<MudToolBar>
+    <MudSwitch T="bool" Value="_paramEmptyImageUrl" ValueChanged="OnParamEmptyImageUrlChanged" Color="Color.Primary">Sin imagen</MudSwitch>
+</MudToolBar>
+
+
 @code {
     private TableCrud<ProductDto>? _table;
     private ProductParameters _parameters => StateContainer.ProductParams;
+    private bool _paramEmptyImageUrl = false;
+
     private string _errorMessage = "";
     private bool _allowRemove = false;
     private Guid _selectedProductId = Guid.Empty;
@@ -74,6 +81,7 @@
         TableData<ProductDto> output = new();
 
         _parameters.UpdatePageInfo(state.Page, state.PageSize);
+        _parameters.EmptyImageUrl = _paramEmptyImageUrl;
 
         var response = await ProductApi.GetAllAsync(_parameters, token);
         if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ProductDto> pagedResponse)
@@ -143,6 +151,11 @@
         await _table!.ReloadServerDataAsync();
     }
 
+    private async Task OnParamEmptyImageUrlChanged(bool value)
+    {
+        _paramEmptyImageUrl = value;
+        await _table!.ReloadServerDataAsync();
+    }
 
 
     private void OnBreakpointChanged() => StateHasChanged();
@@ -151,4 +164,5 @@
     {
         StateContainer.BreakpointChanged -= OnBreakpointChanged;
     }
+
 }
