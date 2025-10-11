@@ -61,7 +61,7 @@
 
 1. **Access Test Endpoint**:
    ```
-   GET https://jcdcgastosapi.azurewebsites.net/api/diagnostics/logs/test
+   GET https://jcdcgastosapi.azurewebsites.net/gastos-api/diagnostics/logs/test
    ```
    
    Expected response:
@@ -81,7 +81,7 @@
 
 2. **Generate Telemetry Data**:
    ```
-   GET https://jcdcgastosapi.azurewebsites.net/api/diagnostics/telemetry/test
+   GET https://jcdcgastosapi.azurewebsites.net/gastos-api/diagnostics/telemetry/test
    ```
 
 ## Step 4: Validate Data in Application Insights

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace Gastos.Api.Features.Diagnostics;
@@ -7,7 +6,7 @@ public static class DiagnosticsEndpoints
 {
     public static IEndpointRouteBuilder MapDiagnosticsEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/diagnostics")
+        var group = app.MapGroup($"/{GastosApiEndpoints.ApiBase}/diagnostics")
             .WithTags("Diagnostics")
             .WithOpenApi();
 
@@ -20,7 +19,7 @@ public static class DiagnosticsEndpoints
             .WithSummary("Test Application Insights logging");
 
         group.MapGet("/telemetry/test", TestTelemetryGeneration)
-            .WithName("TestTelemetryGeneration")  
+            .WithName("TestTelemetryGeneration")
             .WithSummary("Generate test telemetry data");
 
         return app;
@@ -29,11 +28,11 @@ public static class DiagnosticsEndpoints
     private static IResult TestApplicationInsightsLogs(ILogger<Program> logger)
     {
         var testId = Guid.NewGuid().ToString("N")[..8];
-        
+
         logger.LogInformation("🔍 Application Insights Test - Information Log (ID: {TestId})", testId);
         logger.LogWarning("⚠️ Application Insights Test - Warning Log (ID: {TestId})", testId);
         logger.LogError("❌ Application Insights Test - Error Log (ID: {TestId})", testId);
-        
+
         // Log with custom properties
         using (logger.BeginScope(new Dictionary<string, object>
         {
@@ -75,7 +74,7 @@ public static class DiagnosticsEndpoints
 
         // Simulate some work
         await Task.Delay(100);
-        
+
         // Add some metrics simulation
         activity?.SetTag("simulated.duration", "100ms");
         activity?.SetTag("simulated.operation", "data_processing");
