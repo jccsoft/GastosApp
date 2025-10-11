@@ -1,57 +1,72 @@
 namespace Gastos.Api.Features.Receipts;
 
-public class ReceiptRepository(AppDbContext context) : IReceiptRepository
+public class ReceiptRepository(AppDbContext context, ILogger<ReceiptRepository> logger) : IReceiptRepository
 {
     private readonly bool isInMemoryDatabase = context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";
 
     public async Task<ApiPagedResponse<Receipt>> GetAllAsync(string userId, ReceiptParameters parameters, CancellationToken token)
     {
-        var query = context.Receipts
-            .Where(r => r.UserId == userId)
-            .Include(r => r.Store)
-            .Include(r => r.Items)
-            .ThenInclude(ri => ri.Product)
-            .AsNoTracking();
+        try
+        {
+            var query = context.Receipts
+                .Where(r => r.UserId == userId)
+                .Include(r => r.Store)
+                .Include(r => r.Items)
+                .ThenInclude(ri => ri.Product)
+                .AsNoTracking();
 
-        if (parameters.ProductId.HasValue && parameters.ProductId.Value != Guid.Empty)
-        {
-            query = query.Where(r => r.Items
-                .Any(ri => ri.ProductId == parameters.ProductId.Value));
-        }
-        else if (!string.IsNullOrWhiteSpace(parameters.ProductName))
-        {
-            string search = parameters.ProductName.Trim().ToLower().RemoveAccents();
-            if (isInMemoryDatabase)
+            if (parameters.ProductId.HasValue && parameters.ProductId.Value != Guid.Empty)
             {
                 query = query.Where(r => r.Items
-                    .Any(ri => ri.Product != null &&
-                         ri.Product.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)));
+                    .Any(ri => ri.ProductId == parameters.ProductId.Value));
             }
-            else
+            else if (!string.IsNullOrWhiteSpace(parameters.ProductName))
             {
-                query = query.Where(r => r.Items
-                    .Any(ri => ri.Product != null &&
-                    EF.Functions.ILike(
-                        EF.Functions.Unaccent(ri.Product.Name).ToLower(),
-                    $"%{search}%")));
+                string search = parameters.ProductName.Trim().ToLower().RemoveAccents();
+                if (isInMemoryDatabase)
+                {
+                    query = query.Where(r => r.Items
+                        .Any(ri => ri.Product != null &&
+                             ri.Product.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)));
+                }
+                else
+                {
+                    query = query.Where(r => r.Items
+                        .Any(ri => ri.Product != null &&
+                        EF.Functions.ILike(
+                            EF.Functions.Unaccent(ri.Product.Name).ToLower(),
+                        $"%{search}%")));
+                }
             }
+
+            if (parameters.FromDateUtc.HasValue)
+                query = query.Where(r => r.TransactionDateUtc >= parameters.FromDateUtc.Value);
+
+            if (parameters.ToDateUtc.HasValue)
+                query = query.Where(r => r.TransactionDateUtc <= parameters.ToDateUtc.Value);
+
+            query = query.OrderByDescending(r => r.TransactionDateUtc);
+
+            var pagedResponse = await ApiPagedResponse<Receipt>.CreateAsync(
+                userId,
+                query,
+                parameters.Page,
+                parameters.PageSize);
+
+            return pagedResponse;
         }
-
-        if (parameters.FromDateUtc.HasValue)
-            query = query.Where(r => r.TransactionDateUtc >= parameters.FromDateUtc.Value);
-
-        if (parameters.ToDateUtc.HasValue)
-            query = query.Where(r => r.TransactionDateUtc <= parameters.ToDateUtc.Value);
-
-        query = query.OrderByDescending(r => r.TransactionDateUtc);
-
-        var pagedResponse = await ApiPagedResponse<Receipt>.CreateAsync(
-            userId,
-            query,
-            parameters.Page,
-            parameters.PageSize);
-
-        return pagedResponse;
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred in GetAllAsync.");
+            return new ApiPagedResponse<Receipt>
+            {
+                UserId = userId,
+                Items = [],
+                Page = parameters.Page,
+                PageSize = parameters.PageSize,
+                TotalItems = 0
+            };
+        }
     }
 
     public async Task<Receipt?> GetByIdAsync(string userId, Guid id, CancellationToken token)
