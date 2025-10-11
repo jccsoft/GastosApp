@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Gastos.Api;
 
 public static class DependencyInjection
@@ -7,14 +5,14 @@ public static class DependencyInjection
     public static WebApplicationBuilder AddMyApiServices(this WebApplicationBuilder builder)
     {
         builder
-            .AddMyOptions()
-            .AddMyValidators()
-            .AddMyCorsPolicy()
-            .AddMyAuthServices()
-            .AddMyDatabaseServices()
-            .AddMyRepoServices()
-            .AddMyLocalizationServices()
-            .AddMyTelemetryServices(); // Agregamos configuración de telemetría
+            .AddOptionsServices()
+            .AddValidatorServices()
+            .AddCorsPolicy()
+            .AddAuthServices()
+            .AddDatabaseServices()
+            .AddRepoServices()
+            .AddLocalizationServices()
+            .AddTelemetryServices(); // Agregamos configuración de telemetría
 
         builder.Services
             .AddOpenApi() // For Swagger/OpenAPI support
@@ -24,12 +22,12 @@ public static class DependencyInjection
         return builder;
     }
 
-    private static WebApplicationBuilder AddMyTelemetryServices(this WebApplicationBuilder builder)
+    private static WebApplicationBuilder AddTelemetryServices(this WebApplicationBuilder builder)
     {
         // Configurar logging detallado para debug
         builder.Logging.Configure(options =>
         {
-            options.ActivityTrackingOptions = 
+            options.ActivityTrackingOptions =
                 ActivityTrackingOptions.SpanId |
                 ActivityTrackingOptions.TraceId |
                 ActivityTrackingOptions.ParentId |

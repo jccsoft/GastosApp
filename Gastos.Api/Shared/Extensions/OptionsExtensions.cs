@@ -18,7 +18,7 @@ public static class OptionsExtensions
     /// </list>
     /// All options are validated on application start to ensure configuration integrity.
     /// </remarks>
-    public static WebApplicationBuilder AddMyOptions(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddOptionsServices(this WebApplicationBuilder builder)
     {
         builder.Services
             .AddOptions<GastosApiOptions>().BindConfiguration(GastosApiOptions.ConfigurationSection).ValidateOnStart();

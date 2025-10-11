@@ -10,9 +10,11 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var pagedReceipts = await receiptRepo.GetAllAsync(httpContext.GetUserId(), parameters, token);
+                var pagedReceipts = await receiptRepo.GetAllAsync(userId, parameters, token);
 
                 var response = pagedReceipts.ToDto(receipt => receipt.ToDto());
 
@@ -23,7 +25,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con parámetros ProductId: {ProductId}, ProductName: {ProductName}, FromDateUtc: {FromDateUtc}, ToDateUtc: {ToDateUtc}, Page: {Page}, PageSize: {PageSize}",
                     nameof(GastosApiEndpoints.Receipts.GetAll),
-                    httpContext.GetUserId(),
+                    userId,
                     parameters.ProductId,
                     parameters.ProductName,
                     parameters.FromDateUtc,
@@ -40,9 +42,11 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var receipt = await receiptRepo.GetByIdAsync(httpContext.GetUserId(), id, token);
+                var receipt = await receiptRepo.GetByIdAsync(userId, id, token);
 
                 return receipt is null ? Results.NotFound() : TypedResults.Ok(receipt.ToDto());
             }
@@ -51,7 +55,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con id {Id}",
                     nameof(GastosApiEndpoints.Receipts.Get),
-                    httpContext.GetUserId(),
+                    userId,
                     id);
                 return Results.Problem();
             }
@@ -65,13 +69,15 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 var validationResult = await validator.ValidateAsync(newReceipt, token);
                 if (!validationResult.IsValid)
                     return validationResult.ToResult();
 
-                var result = await receiptRepo.CreateAsync(httpContext.GetUserId(), newReceipt.ToEntity(), token);
+                var result = await receiptRepo.CreateAsync(userId, newReceipt.ToEntity(), token);
 
                 return result switch
                 {
@@ -85,7 +91,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con ReceiptId: {ReceiptId}, SourceId: {SourceId}, StoreId: {StoreId}, TransactionDateUtc: {TransactionDateUtc}",
                     nameof(GastosApiEndpoints.Receipts.Create),
-                    httpContext.GetUserId(),
+                    userId,
                     newReceipt.Id,
                     newReceipt.SourceId,
                     newReceipt.StoreId,
@@ -102,13 +108,15 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 var validationResult = await validator.ValidateAsync(updatedReceipt, token);
                 if (!validationResult.IsValid)
                     return validationResult.ToResult();
 
-                var result = await receiptRepo.UpdateAsync(httpContext.GetUserId(), updatedReceipt.ToEntity(), token);
+                var result = await receiptRepo.UpdateAsync(userId, updatedReceipt.ToEntity(), token);
 
                 return result switch
                 {
@@ -123,7 +131,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con ReceiptId: {ReceiptId}, SourceId: {SourceId}, StoreId: {StoreId}, TransactionDateUtc: {TransactionDateUtc}",
                     nameof(GastosApiEndpoints.Receipts.Update),
-                    httpContext.GetUserId(),
+                    userId,
                     updatedReceipt.Id,
                     updatedReceipt.SourceId,
                     updatedReceipt.StoreId,
@@ -139,12 +147,14 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 if (options.Value.LockUnauthenticated && !httpContext.User.IsAuthenticated())
                     return Results.Unauthorized();
 
-                var result = await receiptRepo.DeleteAsync(httpContext.GetUserId(), id, token);
+                var result = await receiptRepo.DeleteAsync(userId, id, token);
 
                 return result switch
                 {
@@ -159,7 +169,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con id {Id}",
                     nameof(GastosApiEndpoints.Receipts.Delete),
-                    httpContext.GetUserId(),
+                    userId,
                     id);
                 return Results.Problem();
             }
@@ -172,9 +182,11 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var exists = await receiptRepo.ExistsBySourceId(httpContext.GetUserId(), sourceId, receiptIdToExlude, token);
+                var exists = await receiptRepo.ExistsBySourceId(userId, sourceId, receiptIdToExlude, token);
 
                 return TypedResults.Ok(exists);
             }
@@ -183,7 +195,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con sourceId: {SourceId}, receiptIdToExlude: {ReceiptIdToExlude}",
                     nameof(GastosApiEndpoints.Receipts.ExistsBySourceId),
-                    httpContext.GetUserId(),
+                    userId,
                     sourceId,
                     receiptIdToExlude);
                 return Results.Problem();
@@ -198,9 +210,11 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var exists = await receiptRepo.ExistsByStoreIdAndDate(httpContext.GetUserId(), storeId, transactionDateUtc, receiptIdToExclude, token);
+                var exists = await receiptRepo.ExistsByStoreIdAndDate(userId, storeId, transactionDateUtc, receiptIdToExclude, token);
 
                 return TypedResults.Ok(exists);
             }
@@ -209,7 +223,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con storeId: {StoreId}, transactionDateUtc: {TransactionDateUtc}, receiptIdToExclude: {ReceiptIdToExclude}",
                     nameof(GastosApiEndpoints.Receipts.ExistsByStoreIdAndDate),
-                    httpContext.GetUserId(),
+                    userId,
                     storeId,
                     transactionDateUtc,
                     receiptIdToExclude);
@@ -224,10 +238,12 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 var exists = await receiptRepo.ExistsByStoreSourceNameAndDate(
-                    httpContext.GetUserId(),
+                    userId,
                     storeSourceName.UrlDecode(),
                     transactionDateUtc,
                     token);
@@ -239,7 +255,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con storeSourceName: {StoreSourceName}, transactionDateUtc: {TransactionDateUtc}",
                     nameof(GastosApiEndpoints.Receipts.ExistsByStoreSourceNameAndDate),
-                    httpContext.GetUserId(),
+                    userId,
                     storeSourceName,
                     transactionDateUtc);
                 return Results.Problem();
@@ -252,9 +268,11 @@ public static class ReceiptEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var product = await receiptRepo.GetProductBySourceDescription(httpContext.GetUserId(), description.UrlDecode(), token);
+                var product = await receiptRepo.GetProductBySourceDescription(userId, description.UrlDecode(), token);
 
                 return product is null ? Results.NotFound() : TypedResults.Ok(product);
             }
@@ -263,7 +281,7 @@ public static class ReceiptEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con description {Description}",
                     nameof(GastosApiEndpoints.Receipts.GetProductIdBySourceDescription),
-                    httpContext.GetUserId(),
+                    userId,
                     description);
                 return Results.Problem();
             }

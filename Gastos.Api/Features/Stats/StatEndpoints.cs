@@ -10,9 +10,11 @@ public static class StatEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var stats = await statRepo.GetStatsAsync(httpContext.GetUserId(), parameters, token);
+                var stats = await statRepo.GetStatsAsync(userId, parameters, token);
 
                 return TypedResults.Ok(stats.Select(s => s.ToDto()));
             }
@@ -21,7 +23,7 @@ public static class StatEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con parámetros Period: {Period}, DateStartUtc: {DateStartUtc}, DateEndUtc: {DateEndUtc}",
                     nameof(GastosApiEndpoints.Stats.GetAll),
-                    httpContext.GetUserId(),
+                    userId,
                     parameters.Period,
                     parameters.DateStartUtc,
                     parameters.DateEndUtc);

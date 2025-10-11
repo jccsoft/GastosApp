@@ -25,7 +25,7 @@ public static class AuthExtensions
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when builder is null.</exception>
     /// <exception cref="InvalidOperationException">Thrown when Auth0 configuration is missing or invalid.</exception>
-    public static WebApplicationBuilder AddMyAuthServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddAuthServices(this WebApplicationBuilder builder)
     {
         var authOptions = builder.Configuration.GetSection(Auth0Options.ConfigurationSection).Get<Auth0Options>();
         string authority = $"https://{authOptions!.Domain}/";

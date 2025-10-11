@@ -18,7 +18,7 @@ public static class ValidationExtensions
     /// - The assembly containing the <see cref="Program"/> class
     /// All validators are registered with scoped lifetime.
     /// </remarks>
-    public static WebApplicationBuilder AddMyValidators(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddValidatorServices(this WebApplicationBuilder builder)
     {
         builder.Services
             .AddValidatorsFromAssemblyContaining<Gastos.Shared.IApplicationMarker>(ServiceLifetime.Scoped)

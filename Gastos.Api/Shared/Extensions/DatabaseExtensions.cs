@@ -13,7 +13,7 @@ public static class DatabaseExtensions
     /// </summary>
     /// <param name="builder">The web application builder to configure.</param>
     /// <returns>The configured web application builder for method chaining.</returns>
-    public static WebApplicationBuilder AddMyDatabaseServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddDatabaseServices(this WebApplicationBuilder builder)
     {
         string connectionString = builder.Environment.IsProduction() ?
             Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_Supabase")! :
@@ -37,7 +37,7 @@ public static class DatabaseExtensions
     /// </summary>
     /// <param name="builder">The web application builder to configure.</param>
     /// <returns>The configured web application builder for method chaining.</returns>
-    public static WebApplicationBuilder AddMyRepoServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddRepoServices(this WebApplicationBuilder builder)
     {
         builder.Services
             .AddScoped<ISizingRepository, SizingRepository>()

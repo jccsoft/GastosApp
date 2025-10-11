@@ -10,9 +10,11 @@ public static class StoreEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var pagedStores = await storeRepo.GetAllAsync(httpContext.GetUserId(), parameters, token);
+                var pagedStores = await storeRepo.GetAllAsync(userId, parameters, token);
 
                 var response = pagedStores.ToDto(store => store.ToDto());
 
@@ -23,7 +25,7 @@ public static class StoreEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con parámetros SearchString: {SearchString}, Page: {Page}, PageSize: {PageSize}",
                     nameof(GastosApiEndpoints.Stores.GetAll),
-                    httpContext.GetUserId(),
+                    userId,
                     parameters.SearchString,
                     parameters.Page,
                     parameters.PageSize);
@@ -37,9 +39,11 @@ public static class StoreEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
-                var store = await storeRepo.GetByIdAsync(httpContext.GetUserId(), id, token);
+                var store = await storeRepo.GetByIdAsync(userId, id, token);
 
                 return store is null ? Results.NotFound() : TypedResults.Ok(store.ToDto());
             }
@@ -48,7 +52,7 @@ public static class StoreEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con id {Id}",
                     nameof(GastosApiEndpoints.Stores.Get),
-                    httpContext.GetUserId(),
+                    userId,
                     id);
                 return Results.Problem();
             }
@@ -62,6 +66,8 @@ public static class StoreEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 if (options.Value.LockUnauthenticated && !httpContext.User.IsAuthenticated())
@@ -71,7 +77,7 @@ public static class StoreEndpoints
                 if (!validationResult.IsValid)
                     return validationResult.ToResult();
 
-                var result = await storeRepo.CreateAsync(httpContext.GetUserId(), newStore.ToEntity(), token);
+                var result = await storeRepo.CreateAsync(userId, newStore.ToEntity(), token);
 
                 return result switch
                 {
@@ -85,7 +91,7 @@ public static class StoreEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con StoreId: {StoreId}, Name: {Name}, SourceName: {SourceName}",
                     nameof(GastosApiEndpoints.Stores.Create),
-                    httpContext.GetUserId(),
+                    userId,
                     newStore.Id,
                     newStore.Name,
                     newStore.SourceName);
@@ -101,6 +107,8 @@ public static class StoreEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 if (options.Value.LockUnauthenticated && !httpContext.User.IsAuthenticated())
@@ -110,7 +118,7 @@ public static class StoreEndpoints
                 if (!validationResult.IsValid)
                     return validationResult.ToResult();
 
-                var result = await storeRepo.UpdateAsync(httpContext.GetUserId(), updatedStore.ToEntity(), token);
+                var result = await storeRepo.UpdateAsync(userId, updatedStore.ToEntity(), token);
 
                 return result switch
                 {
@@ -125,7 +133,7 @@ public static class StoreEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con StoreId: {StoreId}, Name: {Name}, SourceName: {SourceName}",
                     nameof(GastosApiEndpoints.Stores.Update),
-                    httpContext.GetUserId(),
+                    userId,
                     updatedStore.Id,
                     updatedStore.Name,
                     updatedStore.SourceName);
@@ -140,12 +148,14 @@ public static class StoreEndpoints
             [FromServices] ILoggerFactory loggerFactory,
             CancellationToken token) =>
         {
+            var userId = httpContext.GetUserId();
+
             try
             {
                 if (options.Value.LockUnauthenticated && !httpContext.User.IsAuthenticated())
                     return Results.Unauthorized();
 
-                var result = await storeRepo.DeleteAsync(httpContext.GetUserId(), id, token);
+                var result = await storeRepo.DeleteAsync(userId, id, token);
 
                 return result switch
                 {
@@ -160,7 +170,7 @@ public static class StoreEndpoints
                 var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con id {Id}",
                     nameof(GastosApiEndpoints.Stores.Delete),
-                    httpContext.GetUserId(),
+                    userId,
                     id);
                 return Results.Problem();
             }
