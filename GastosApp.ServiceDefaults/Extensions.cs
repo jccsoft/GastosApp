@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 
 namespace GastosApp.ServiceDefaults;
 
@@ -46,7 +47,7 @@ public static class Extensions
             logging.IncludeScopes = true;
         });
 
-        builder.Services.AddOpenTelemetry()
+        var openTelemetryBuilder = builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
             {
                 metrics.AddAspNetCoreInstrumentation()
@@ -67,7 +68,20 @@ public static class Extensions
                     .AddHttpClientInstrumentation();
             });
 
-        builder.AddOpenTelemetryExporters();
+        // Add Azure Monitor if connection string is available
+        var azureMonitorConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"] 
+                                         ?? builder.Configuration["AzureMonitor:ConnectionString"];
+
+        if (!string.IsNullOrEmpty(azureMonitorConnectionString))
+        {
+            // Use Azure Monitor OpenTelemetry for Application Insights
+            openTelemetryBuilder.UseAzureMonitor();
+        }
+        else
+        {
+            // Fallback to OTLP if Azure Monitor connection string is not available
+            builder.AddOpenTelemetryExporters();
+        }
 
         return builder;
     }

@@ -1,4 +1,5 @@
 global using FluentValidation;
+global using Gastos.Api.Features.Diagnostics;
 global using Gastos.Api.Features.Products;
 global using Gastos.Api.Features.Receipts;
 global using Gastos.Api.Features.Sizings;

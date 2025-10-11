@@ -13,6 +13,7 @@ public static class ApiEndpointsExtensions
         app.MapReceiptEndpoints();
         app.MapSizingEndpoints();
         app.MapStatEndpoints();
+        app.MapDiagnosticsEndpoints(); // Add diagnostics endpoints
         return app;
     }
 
