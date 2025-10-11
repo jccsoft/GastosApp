@@ -29,6 +29,11 @@ public static class ReceiptEndpoints
 
                 var response = pagedReceipts.ToDto(receipt => receipt.ToDto());
 
+                logger.LogInformation("Response de {Method} para el usuario {User}: {@Response}",
+                    nameof(GastosApiEndpoints.Receipts.GetAll),
+                    userId,
+                    response);
+
                 return TypedResults.Ok(response);
             }
             catch (Exception ex)
