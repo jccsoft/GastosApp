@@ -29,10 +29,10 @@ public static class ReceiptEndpoints
 
                 var response = pagedReceipts.ToDto(receipt => receipt.ToDto());
 
-                logger.LogInformation("Response de {Method} para el usuario {User}: {@Response}",
+                logger.LogInformation("Response de {Method} para el usuario {User} con {Count} recibos",
                     nameof(GastosApiEndpoints.Receipts.GetAll),
                     userId,
-                    response);
+                    response.Items.Count);
 
                 return TypedResults.Ok(response);
             }
