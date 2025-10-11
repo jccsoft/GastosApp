@@ -6,7 +6,7 @@ public static class DiagnosticsEndpoints
 {
     public static IEndpointRouteBuilder MapDiagnosticsEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup($"/{GastosApiEndpoints.ApiBase}/diagnostics")
+        var group = app.MapGroup($"{GastosApiEndpoints.ApiBase}/diagnostics")
             .WithTags("Diagnostics")
             .WithOpenApi();
 

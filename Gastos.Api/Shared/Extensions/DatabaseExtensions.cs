@@ -17,7 +17,7 @@ public static class DatabaseExtensions
     {
         string connectionString = builder.Environment.IsProduction() ?
             Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_Supabase")! :
-            builder.Configuration.GetConnectionString("Default")!;
+            builder.Configuration.GetConnectionString("Supabase")!;
 
 
         builder.Services.AddDbContext<AppDbContext>(options =>
