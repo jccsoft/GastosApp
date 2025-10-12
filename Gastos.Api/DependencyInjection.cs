@@ -11,9 +11,9 @@ public static class DependencyInjection
             .AddAuthServices()
             .AddDatabaseServices()
             .AddRepoServices()
-            .AddLocalizationServices();
-        //.AddTelemetryServices(); // Agregamos configuración de telemetría
-        //.LogApplicationInsightsConfiguration(); // Log Application Insights configuration
+            .AddLocalizationServices()
+            .AddTelemetryServices() // Agregamos configuración de telemetría
+            .LogApplicationInsightsConfiguration(); // Log Application Insights configuration
 
         builder.Services
             .AddOpenApi() // For Swagger/OpenAPI support

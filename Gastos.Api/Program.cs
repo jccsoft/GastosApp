@@ -1,5 +1,4 @@
 using Gastos.Api;
-using Gastos.Api.Middleware;
 using GastosApp.ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,10 +14,10 @@ app.UseMyRequestLocalization();
 app.MapDefaultEndpoints();
 
 // Agregar middleware de logging detallado para debug
-if (app.Environment.IsProduction() || app.Environment.IsStaging())
-{
-    app.UseRequestLogging();
-}
+//if (app.Environment.IsProduction() || app.Environment.IsStaging())
+//{
+//    app.UseRequestLogging();
+//}
 
 app.UseCors();
 app.UseAuthentication();
