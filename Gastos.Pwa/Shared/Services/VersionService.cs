@@ -1,8 +1,8 @@
-using Gastos.Pwa.Models;
+using Gastos.Pwa.Shared.Models;
 using System.Net.Http.Json;
 using System.Reflection;
 
-namespace Gastos.Pwa.Services;
+namespace Gastos.Pwa.Shared.Services;
 
 public interface IVersionService
 {

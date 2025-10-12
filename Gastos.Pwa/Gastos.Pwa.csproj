@@ -14,19 +14,19 @@
 
   <!-- Obtener información de Git -->
   <Target Name="GetGitInfo" BeforeTargets="Build">
-    <Exec Command="git rev-parse --short HEAD 2>nul || echo unknown" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git rev-parse --short HEAD 2&gt;nul || echo unknown" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
     </Exec>
-    <Exec Command="git rev-parse --abbrev-ref HEAD 2>nul || echo unknown" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git rev-parse --abbrev-ref HEAD 2&gt;nul || echo unknown" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitBranch" />
     </Exec>
-    <Exec Command="git log -1 --format=%%cd --date=format:%%Y-%%m-%%d%%20%%H:%%M:%%S 2>nul || echo $([System.DateTime]::Now.ToString(&quot;yyyy-MM-dd HH:mm:ss&quot;))" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git log -1 --format=%%cd --date=format:%%Y-%%m-%%d%%20%%H:%%M:%%S 2&gt;nul || echo $([System.DateTime]::Now.ToString(&quot;yyyy-MM-dd HH:mm:ss&quot;))" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitDate" />
     </Exec>
-    <Exec Command="git describe --tags --abbrev=0 2>nul || echo v1.0.0" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git describe --tags --abbrev=0 2&gt;nul || echo v1.0.0" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitLatestTag" />
     </Exec>
-    <Exec Command="git rev-list --count HEAD 2>nul || echo 0" ConsoleToMSBuild="true" IgnoreExitCode="true">
+    <Exec Command="git rev-list --count HEAD 2&gt;nul || echo 0" ConsoleToMSBuild="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitCount" />
     </Exec>
     
@@ -46,9 +46,7 @@
     </PropertyGroup>
     
     <!-- Crear archivo JSON con información de versión -->
-    <WriteLinesToFile File="wwwroot/version-info.json" 
-                      Lines='{"version":"$(GitLatestTag)","build":"$(GitCommitCount)","commit":"$(GitCommitHash)","branch":"$(GitBranch)","date":"$(GitCommitDate)","buildDate":"$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))"}' 
-                      Overwrite="true" />
+    <WriteLinesToFile File="wwwroot/version-info.json" Lines="{&quot;version&quot;:&quot;$(GitLatestTag)&quot;,&quot;build&quot;:&quot;$(GitCommitCount)&quot;,&quot;commit&quot;:&quot;$(GitCommitHash)&quot;,&quot;branch&quot;:&quot;$(GitBranch)&quot;,&quot;date&quot;:&quot;$(GitCommitDate)&quot;,&quot;buildDate&quot;:&quot;$([System.DateTime]::Now.ToString(&quot;yyyy-MM-dd HH:mm:ss&quot;))&quot;}" Overwrite="true" />
                       
     <!-- Log para debug -->
     <Message Text="Git Info: Version=$(GitLatestTag), Build=$(GitCommitCount), Commit=$(GitCommitHash), Branch=$(GitBranch), Date=$(GitCommitDate)" Importance="high" />

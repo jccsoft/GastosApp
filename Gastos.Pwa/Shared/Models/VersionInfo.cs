@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Gastos.Pwa.Models;
+namespace Gastos.Pwa.Shared.Models;
 
 public class VersionInfo
 {

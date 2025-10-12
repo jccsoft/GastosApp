@@ -12,8 +12,8 @@ public static class DependencyInjection
             .AddDatabaseServices()
             .AddRepoServices()
             .AddLocalizationServices()
-            .AddTelemetryServices() // Agregamos configuración de telemetría
-            .LogApplicationInsightsConfiguration(); // Log Application Insights configuration
+            .AddTelemetryServices(); // Agregamos configuración de telemetría
+                                     //.LogApplicationInsightsConfiguration(); // Log Application Insights configuration
 
         builder.Services
             .AddOpenApi() // For Swagger/OpenAPI support
@@ -72,6 +72,9 @@ public static class DependencyInjection
         }
         else
         {
+            builder.Logging.SetMinimumLevel(LogLevel.Debug);
+            builder.Logging.AddFilter("Gastos.Pwa.Shared.Services.BearerTokenHttpHandler", LogLevel.Debug);
+
             builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
             builder.Logging.AddFilter("Gastos.Api", LogLevel.Debug);
 

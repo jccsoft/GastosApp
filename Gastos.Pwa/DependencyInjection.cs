@@ -1,5 +1,4 @@
 using FluentValidation;
-using Gastos.Pwa.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Gastos.Pwa;
