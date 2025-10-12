@@ -11,33 +11,18 @@ public static class ReceiptEndpoints
             CancellationToken token) =>
         {
             var userId = httpContext.GetUserId();
-            var logger = CreateLogger(loggerFactory);
 
             try
             {
-                logger.LogInformation("Iniciando {Method} para el usuario {User} con parámetros ProductId: {ProductId}, ProductName: {ProductName}, FromDateUtc: {FromDateUtc}, ToDateUtc: {ToDateUtc}, Page: {Page}, PageSize: {PageSize}",
-                    nameof(GastosApiEndpoints.Receipts.GetAll),
-                    userId, parameters.ProductId, parameters.ProductName, parameters.FromDateUtc,
-                    parameters.ToDateUtc, parameters.Page, parameters.PageSize);
-
                 var pagedReceipts = await receiptRepo.GetAllAsync(userId, parameters, token);
 
-                logger.LogInformation("Finalizando {Method} para el usuario {User} con {Count} recibos y parámetros ProductId: {ProductId}, ProductName: {ProductName}, FromDateUtc: {FromDateUtc}, ToDateUtc: {ToDateUtc}, Page: {Page}, PageSize: {PageSize}",
-                    nameof(GastosApiEndpoints.Receipts.GetAll),
-                    userId, pagedReceipts.Items.Count, parameters.ProductId, parameters.ProductName,
-                    parameters.FromDateUtc, parameters.ToDateUtc, parameters.Page, parameters.PageSize);
-
                 var response = pagedReceipts.ToDto(receipt => receipt.ToDto());
-
-                logger.LogInformation("Response de {Method} para el usuario {User} con {Count} recibos",
-                    nameof(GastosApiEndpoints.Receipts.GetAll),
-                    userId,
-                    response.Items.Count);
 
                 return TypedResults.Ok(response);
             }
             catch (Exception ex)
             {
+                var logger = CreateLogger(loggerFactory);
                 logger.LogError(ex, "Error en {Method} para el usuario {User} con parámetros ProductId: {ProductId}, ProductName: {ProductName}, FromDateUtc: {FromDateUtc}, ToDateUtc: {ToDateUtc}, Page: {Page}, PageSize: {PageSize}",
                     nameof(GastosApiEndpoints.Receipts.GetAll),
                     userId,
