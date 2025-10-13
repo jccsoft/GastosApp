@@ -37,7 +37,7 @@
         Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
 
         Snackbar.Add(new MarkupString($"<center><p class='p-0 m-0'>{Loc.Get(RS.PwaUpdateNewVersionAvailable).ToUpper()}.</p><p class='p-0 m-0'>{Loc.Get(RS.PwaUpdateClickToUpdate).ToUpper()}.</p></center>"),
-            Severity.Warning,
+            Severity.Info,
             config =>
             {
                 config.RequireInteraction = true;
