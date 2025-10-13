@@ -129,13 +129,12 @@ else
 
     private async Task FetchAnalysisJobsAsync()
     {
+        _loading = true;
+        _analysisJobs = null;
+        GetAllAnalysisJobsRequest request = new() { Page = 1, PageSize = 100 };
+
         try
         {
-            _loading = true;
-            _analysisJobs = null;
-
-            GetAllAnalysisJobsRequest request = new() { Page = 1, PageSize = 100 };
-
             var responseGetAll = await DocIntelApi.GetAllAnalysisJobsAsync(request);
 
             if (responseGetAll.IsSuccessStatusCode && responseGetAll.Content is AnalysisJobCollectionResponse collectionResponse)
@@ -174,14 +173,11 @@ else
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error fetching analysis jobs");
-            _errorMessage = Loc.Get(RS.DocIntelNoResponse);
+            _errorMessage = BlazorService.GetResponseError(ex);
         }
-        finally
-        {
-            _loading = false;
-            StateHasChanged();
-        }
+        
+        _loading = false;
+        StateHasChanged();
     }
 
 

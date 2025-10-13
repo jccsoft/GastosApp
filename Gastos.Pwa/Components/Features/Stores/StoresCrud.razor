@@ -48,28 +48,33 @@
 
     private async Task<TableData<StoreDto>> ServerReload(TableState state, CancellationToken token)
     {
-        _errorMessage = "";
-        
+        _errorMessage = "";        
         TableData<StoreDto> output = new();
-
         _parameters.UpdatePageInfo(state.Page, state.PageSize);
 
-        var response = await StoreApi.GetAllAsync(_parameters, token);
-        if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<StoreDto> pagedResponse)
+        try
         {
-            if (pagedResponse.UserId != _currentUserId)
+            var response = await StoreApi.GetAllAsync(_parameters, token);
+            if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<StoreDto> pagedResponse)
             {
-                _errorMessage = Loc.Get(RS.ErrorUserMismatch);
+                if (pagedResponse.UserId != _currentUserId)
+                {
+                    _errorMessage = Loc.Get(RS.ErrorUserMismatch);
+                }
+                else
+                {
+                    output.Items = pagedResponse.Items;
+                    output.TotalItems = pagedResponse.TotalItems;
+                }
             }
             else
             {
-                output.Items = pagedResponse.Items;
-                output.TotalItems = pagedResponse.TotalItems;
+                _errorMessage = BlazorService.GetResponseError(response);
             }
         }
-        else
+        catch (Exception ex)
         {
-            _errorMessage = BlazorService.GetResponseError(response);
+            _errorMessage = BlazorService.GetResponseError(ex);
         }
 
         StateHasChanged();

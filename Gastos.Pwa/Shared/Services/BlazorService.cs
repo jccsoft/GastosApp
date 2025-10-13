@@ -5,37 +5,58 @@ namespace Gastos.Pwa.Shared.Services;
 public class BlazorService(
     IDialogService dialogService,
     IJSRuntime js,
-    ISnackbar Snackbar,
-    LocalizationService Loc)
+    ISnackbar snackbar,
+    LocalizationService loc,
+    ILogger<BlazorService> logger)
 {
-    public async Task<bool> ConfirmDeletionAsync(string question)
-    {
-        var result = await dialogService.ShowMessageBox(
-            title: "",
-            message: question,
-            yesText: Loc.Get(RS.ActDelete),
-            cancelText: Loc.Get(RS.ActCancel),
-            options: new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
 
-        return result is true;
-    }
-
+    #region ERROR MESSAGES
     public string GetResponseError<T>(Refit.ApiResponse<T> response)
     {
+        logger.LogError("API Error: {StatusCode} - {ReasonPhrase}", response.StatusCode, response.ReasonPhrase);
+
         return response.StatusCode switch
         {
-            System.Net.HttpStatusCode.BadRequest => Loc.Get(RS.ErrorStatusCodeBadRequest),
-            System.Net.HttpStatusCode.Conflict => Loc.Get(RS.ErrorStatusCodeConflict),
-            System.Net.HttpStatusCode.NotFound => Loc.Get(RS.ErrorStatusCodeNotFound),
-            System.Net.HttpStatusCode.Unauthorized => Loc.Get(RS.ErrorStatusCodeUnauthorized),
-            _ => Loc.Get(RS.ErrorUnknown)
+            System.Net.HttpStatusCode.BadRequest => loc.Get(RS.ErrorStatusCodeBadRequest),
+            System.Net.HttpStatusCode.Conflict => loc.Get(RS.ErrorStatusCodeConflict),
+            System.Net.HttpStatusCode.NotFound => loc.Get(RS.ErrorStatusCodeNotFound),
+            System.Net.HttpStatusCode.Unauthorized => loc.Get(RS.ErrorStatusCodeUnauthorized),
+            _ => loc.Get(RS.ErrorUnknown)
+        };
+    }
+
+    public string GetResponseError(Exception ex)
+    {
+        logger.LogError(ex, "API Exception");
+
+        return ex switch
+        {
+            TaskCanceledException => loc.Get(RS.ErrorRequestTimedOut),
+            HttpRequestException httpEx when httpEx.InnerException is System.Net.Sockets.SocketException => loc.Get(RS.ErrorNetwork),
+            _ => loc.Get(RS.ErrorUnknown)
         };
     }
 
     public void ShowResponseError<T>(Refit.ApiResponse<T> response)
     {
-        Snackbar.Add(GetResponseError(response), Severity.Error);
+        snackbar.Add(GetResponseError(response), Severity.Error);
     }
+
+    #endregion
+
+
+    public async Task<bool> ConfirmDeletionAsync(string question)
+    {
+        var result = await dialogService.ShowMessageBox(
+            title: "",
+            message: question,
+            yesText: loc.Get(RS.ActDelete),
+            cancelText: loc.Get(RS.ActCancel),
+            options: new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+
+        return result is true;
+    }
+
 
 #pragma warning disable S1104 // Fields should not have public accessibility
     public Converter<decimal?> DecimalConverter = new()
@@ -72,7 +93,7 @@ public class BlazorService(
             ["DocIntelReceiptId"] = id,
             ["Filename"] = filename
         };
-        var dialog = await dialogService.ShowAsync<ReceiptCreateFromDocIntelDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}", parameters);
+        var dialog = await dialogService.ShowAsync<ReceiptCreateFromDocIntelDialog>($"{loc.Get(RS.ActCreate)} {loc.Get(RS.EntityReceipt)}", parameters);
         var result = await dialog.Result;
 
         return result;
@@ -81,7 +102,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenEditReceiptDialogAsync(Guid id)
     {
         var dialogParameters = new DialogParameters { ["ReceiptId"] = id };
-        var dialog = await dialogService.ShowAsync<ReceiptEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Medium });
+        var dialog = await dialogService.ShowAsync<ReceiptEditDialog>($"{loc.Get(RS.ActEdit)} {loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Medium });
         var result = await dialog.Result;
 
         return result;
@@ -90,7 +111,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenEditReceiptItemDialogAsync(ReceiptItemDto receiptItem)
     {
         var dialogParameters = new DialogParameters { ["Item"] = receiptItem };
-        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{Loc.Get(RS.ActEdit)} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
+        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{loc.Get(RS.ActEdit)} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
 
         return result;
@@ -99,7 +120,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenInfoReceiptDialogAsync(ReceiptDto receipt)
     {
         var dialogParameters = new DialogParameters { ["Receipt"] = receipt };
-        var dialog = await dialogService.ShowAsync<ReceiptInfo>($"Info {Loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
+        var dialog = await dialogService.ShowAsync<ReceiptInfo>($"Info {loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
 
         return result;
@@ -110,7 +131,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenAddProductDialogAsync(string initialName = "")
     {
         var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
-        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{loc.Get(RS.ActCreate)} {loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
         var result = await dialog.Result;
 
         return result;
@@ -118,7 +139,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenEditProductDialogAsync(Guid id)
     {
         var dialogParameters = new DialogParameters { ["ProductId"] = id };
-        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{loc.Get(RS.ActEdit)} {loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
         var result = await dialog.Result;
 
         return result;
@@ -129,7 +150,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenAddStoreDialogAsync(string initialName = "")
     {
         var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
-        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{loc.Get(RS.ActCreate)} {loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
         var result = await dialog.Result;
 
         return result;
@@ -138,7 +159,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenEditStoreDialogAsync(Guid id)
     {
         var dialogParameters = new DialogParameters { ["StoreId"] = id };
-        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{loc.Get(RS.ActEdit)} {loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
         var result = await dialog.Result;
 
         return result;
@@ -160,11 +181,11 @@ public class BlazorService(
     {
         if (success)
         {
-            Snackbar.Add(Loc.Get(RS.TextCopiedToClipboard), Severity.Success);
+            snackbar.Add(loc.Get(RS.TextCopiedToClipboard), Severity.Success);
         }
         else
         {
-            Snackbar.Add(Loc.Get(RS.ErrorCopyingText), Severity.Error);
+            snackbar.Add(loc.Get(RS.ErrorCopyingText), Severity.Error);
         }
     }
     #endregion

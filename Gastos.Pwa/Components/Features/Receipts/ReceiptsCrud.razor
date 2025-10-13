@@ -84,63 +84,13 @@
 
         try
         {
-            // Log detallado de la llamada
-            Console.WriteLine($"🔍 Calling ReceiptApi.GetAllAsync with parameters:");
-            Console.WriteLine($"   ProductName: '{_parameters.ProductName}'");
-            Console.WriteLine($"   Page: {_parameters.Page}");
-            Console.WriteLine($"   PageSize: {_parameters.PageSize}");
-            Console.WriteLine($"   FromDateUtc: {_parameters.FromDateUtc}");
-            Console.WriteLine($"   ToDateUtc: {_parameters.ToDateUtc}");
-
             var response = await ReceiptApi.GetAllAsync(_parameters, token);
-            
-            // DIAGNÓSTICO DETALLADO
-            Console.WriteLine($"🔍 Response Status: {response.StatusCode}");
-            Console.WriteLine($"🔍 Response IsSuccess: {response.IsSuccessStatusCode}");
-            Console.WriteLine($"🔍 Response.Content is null: {response.Content is null}");
-            
-            // Verificar si hay error
-            if (response.Error != null)
-            {
-                Console.WriteLine($"🔍 Response Error exists");
-                Console.WriteLine($"🔍 Response Error Status: {response.Error.StatusCode}");
-                Console.WriteLine($"🔍 Response Error Reason: '{response.Error.ReasonPhrase}'");
-                
-                var errorContent = response.Error.Content;
-                Console.WriteLine($"🔍 Response Error Content: '{errorContent}'");
-                Console.WriteLine($"🔍 Response Error Content Length: {errorContent?.Length ?? 0}");
-                
-                // Verificar si el contenido de error es HTML (típico de Azure errors)
-                if (!string.IsNullOrEmpty(errorContent))
-                {
-                    var isHtml = errorContent.TrimStart().StartsWith("<", StringComparison.OrdinalIgnoreCase);
-                    Console.WriteLine($"🔍 Error content appears to be HTML: {isHtml}");
-                    
-                    if (isHtml)
-                    {
-                        Console.WriteLine("🔍 HTML Error detected - likely Azure routing/authentication issue");
-                    }
-                }
-            }
-
-            // Verificar headers si están disponibles
-            if (response.Headers != null)
-            {
-                Console.WriteLine("🔍 Response Headers:");
-                foreach (var header in response.Headers)
-                {
-                    Console.WriteLine($"   {header.Key}: {string.Join(", ", header.Value)}");
-                }
-            }
 
             if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ReceiptDto> pagedResponse)
-            {
-                Console.WriteLine($"🔍 Success: Content deserialized successfully with {pagedResponse.Items.Count} items");
-                
+            {                
                 if(pagedResponse.UserId != _currentUserId)
                 {
                     _errorMessage = Loc.Get(RS.ErrorUserMismatch);
-                    Console.WriteLine($"🔍 User mismatch: Expected {_currentUserId}, got {pagedResponse.UserId}");
                 }
                 else
                 {
@@ -149,35 +99,13 @@
                 }
             }
             else
-            {
-                if (response.IsSuccessStatusCode)
-                {
-                    Console.WriteLine("🔍 Response was successful (200) but Content is null - JSON deserialization failed");
-                    Console.WriteLine("🔍 This typically means the response body was empty or contained invalid JSON");
-                }
-                else
-                {
-                    Console.WriteLine($"🔍 Response was not successful: {response.StatusCode}");
-                }
-                
+            {                
                 _errorMessage = BlazorService.GetResponseError(response);
-                Console.WriteLine($"🔍 Final error message: {_errorMessage}");
             }
-        }
-        catch (TaskCanceledException tex)
-        {
-            Console.WriteLine($"🔍 Request was cancelled/timeout: {tex.Message}");
-            _errorMessage = "La solicitud tardó demasiado tiempo. Verifica tu conexión.";
-        }
-        catch (HttpRequestException hex)
-        {
-            Console.WriteLine($"🔍 HTTP request failed: {hex.Message}");
-            _errorMessage = $"Error de conexión: {hex.Message}";
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"🔍 Unexpected exception: {ex}");
-            _errorMessage = $"Error inesperado: {ex.Message}";
+            _errorMessage = BlazorService.GetResponseError(ex);
         }
 
         StateHasChanged();

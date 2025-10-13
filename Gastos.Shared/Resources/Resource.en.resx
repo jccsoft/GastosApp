@@ -507,4 +507,10 @@
   <data name="ParamEmptyImageUrl" xml:space="preserve">
     <value>No image assigned</value>
   </data>
+  <data name="ErrorRequestTimedOut" xml:space="preserve">
+    <value>The request took too long. Please check your connection.</value>
+  </data>
+  <data name="ErrorNetwork" xml:space="preserve">
+    <value>Connection error</value>
+  </data>
 </root>
