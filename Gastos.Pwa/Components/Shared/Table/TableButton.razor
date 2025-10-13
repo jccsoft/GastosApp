@@ -1,5 +1,5 @@
 ﻿@inject LocalizationService Loc
-
+@inject StateContainer StateContainer
 
 <MudTooltip Text="@_tooltipText">
     <MudIconButton Icon="@_icon"
@@ -19,7 +19,17 @@
     [Parameter] public string? Class { get; set; }
     [Parameter] public bool Hidden { get; set; } = false;
 
-    private Size _size => Size ?? (Action == TableAction.Add ? MudBlazor.Size.Medium : MudBlazor.Size.Small);
+    private Size _size
+    {
+        get
+        {
+            if(StateContainer.IsMobile && Action == TableAction.AddTicket)
+            {
+                return MudBlazor.Size.Large;
+            }
+            return Size ?? (Action == TableAction.Add ? MudBlazor.Size.Medium : MudBlazor.Size.Small);
+        }
+    }
 
     private Color _color => Action switch
     {
