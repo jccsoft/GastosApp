@@ -2,31 +2,84 @@
 
 @using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.Http.Internal
+@using Gastos.Pwa.Shared.Extensions
 
 @inject IDocIntelApi DocIntelApi
 @inject ISnackbar Snackbar
 @inject StateContainer StateContainer
 @inject LocalizationService Loc
 @inject ILogger<AnalysisJobsCreation> Logger
+@inject ICameraService CameraService
 
 
-<MudStack Style="width: 100%">
+<MudStack Style="width: 100%" Class="mb-3">
     <MudFileUpload T="IReadOnlyList<IBrowserFile>" @ref="@_fileUpload" OnFilesChanged="OnInputFileChanged" AppendMultipleFiles="true"
                    Accept="@(string.Join(',',_acceptedFileExtensions))"
                    Hidden="@false" InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10" InputStyle="opacity:0" tabindex="-1"
                    @ondrop="@ClearDragClass" @ondragenter="@SetDragClass" @ondragleave="@ClearDragClass" @ondragend="@ClearDragClass">
         <ActivatorContent>
             <MudPaper Height="22vh" Outlined="true" Class="@_dragClass">
-                <MudText Typo="Typo.body1">
-                    @Loc.Get(RS.DragFilesHereOrClick)
-                </MudText>
-                @foreach (var fileName in _selectedFiles.Select(x => x.File.Name))
-                {
-                    <MudChip T="string" Color="Color.Dark" Text="@fileName" tabindex="-1" Size="@(StateContainer.IsMobile? Size.Small: Size.Medium)" />
-                }
+                <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height: 100%; padding: 16px;">
+                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.body1" Align="Align.Center">
+                        @Loc.Get(RS.DragFilesHereOrClick)
+                    </MudText>
+                    @if (_selectedFiles.Any())
+                    {
+                        <MudStack Row Wrap="Wrap.Wrap" Justify="Justify.Center" Spacing="1" Class="mt-2">
+                            @foreach (var fileName in _selectedFiles.Select(x => x.File.Name))
+                            {
+                                <MudChip T="string" Color="Color.Dark" Text="@fileName" tabindex="-1" Size="@(StateContainer.IsMobile? Size.Small: Size.Medium)" />
+                            }
+                        </MudStack>
+                    }
+                </MudStack>
             </MudPaper>
         </ActivatorContent>
     </MudFileUpload>
+    
+
+    <MudStack Row="false" AlignItems="AlignItems.Center">
+        <MudButton OnClick="@OpenPhotoModal"
+                   Color="Color.Primary"
+                   Variant="Variant.Outlined"
+                   Class="p-3"
+                   StartIcon="@Icons.Material.Filled.CameraAlt" Size="Size.Large"
+                   Disabled="@(!_cameraAvailable)">
+            Tomar Foto
+        </MudButton>
+        @if (!_cameraAvailable && _cameraChecked)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-2">
+                Cámara no disponible
+            </MudText>
+        }
+    </MudStack>
+    <!-- Camera Photo Button -->
+@*     <MudCard Outlined="true" Class="pa-2">
+        <MudCardContent Class="pa-2">
+            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Primary" />
+                    <MudText Typo="Typo.body1">Tomar foto del tíquet</MudText>
+                </MudStack>
+                <MudButton OnClick="@OpenPhotoModal" 
+                          Color="Color.Primary" 
+                          Variant="Variant.Outlined" 
+                          StartIcon="@Icons.Material.Filled.CameraAlt"
+                          Disabled="@(!_cameraAvailable)">
+                    Tomar Foto
+                </MudButton>
+            </MudStack>
+            @if (!_cameraAvailable && _cameraChecked)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">
+                    Cámara no disponible
+                </MudText>
+            }
+        </MudCardContent>
+    </MudCard> *@
+    
     <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4">
         <MudButton OnClick="@CreateAnalysisJobsAsync" Disabled="@(!_selectedFiles.Any())" Color="Color.Primary" Variant="Variant.Filled">
             @Loc.Get(RS.ReadReceipts)
@@ -38,6 +91,9 @@
     </MudToolBar>
 </MudStack>
 
+<!-- Photo Capture Modal -->
+<PhotoCaptureModal @bind-IsVisible="@_photoModalVisible" OnPhotoCaptured="@OnPhotoCaptured" />
+
 @code {
     private readonly List<SelectedFile> _selectedFiles = new();
     private sealed record SelectedFile(IBrowserFile File, string IdempotencyKey);
@@ -48,10 +104,72 @@
     private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
     private string _dragClass = DefaultDragClass;
 
+    // Camera related fields
+    private bool _photoModalVisible = false;
+    private bool _cameraAvailable = false;
+    private bool _cameraChecked = false;
 
     protected override void OnInitialized()
     {
         StateContainer.BreakpointChanged += OnBreakpointChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CheckCameraAvailability();
+        }
+    }
+
+    private async Task CheckCameraAvailability()
+    {
+        try
+        {
+            var result = await CameraService.IsCameraAvailableAsync();
+            _cameraAvailable = result.Available;
+            _cameraChecked = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error checking camera availability");
+            _cameraAvailable = false;
+            _cameraChecked = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenPhotoModal()
+    {
+        if (_cameraAvailable)
+        {
+            _photoModalVisible = true;
+        }
+        else
+        {
+            Snackbar.Add("Cámara no disponible", Severity.Warning);
+        }
+    }
+
+    private void OnPhotoCaptured(PhotoCapturedEventArgs args)
+    {
+        try
+        {
+            // Create a browser file from the captured image data
+            var browserFile = new BrowserFileFromStream(args.ImageData, args.FileName, args.MimeType);
+
+            // Add to selected files
+            var selectedFile = new SelectedFile(File: browserFile, IdempotencyKey: Guid.NewGuid().ToString());
+            _selectedFiles.Add(selectedFile);
+
+            Snackbar.Add($"Foto {args.FileName} añadida a la lista", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error processing captured photo");
+            Snackbar.Add("Error al procesar la foto", Severity.Error);
+        }
     }
 
     private void OnInputFileChanged(InputFileChangeEventArgs e)
@@ -101,7 +219,9 @@
                 }
                 else
                 {
-                    Snackbar.Add(string.Format(Loc.Get(RS.ErrorWithFile), selectedFile.File.Name, apiResponse.Error.ReasonPhrase), Severity.Error);
+                    string errorMessage = (apiResponse.GetErrorMessage() ?? apiResponse.Error.ReasonPhrase) ?? Loc.Get(RS.ErrorUnknown);
+                    MarkupString message = new($"{string.Format(Loc.Get(RS.ErrorWithFile), selectedFile.File.Name, errorMessage)}<br/>{errorMessage}");
+                    Snackbar.Add(message, Severity.Error);
                 }
             }
 
@@ -131,8 +251,8 @@
     private void ClearDragClass()
         => _dragClass = DefaultDragClass;
 
-
     private void OnBreakpointChanged() => StateHasChanged();
 
     public void Dispose() => StateContainer.BreakpointChanged -= OnBreakpointChanged;
 }
+

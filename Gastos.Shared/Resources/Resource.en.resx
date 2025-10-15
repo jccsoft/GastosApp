@@ -259,7 +259,7 @@
     <value>Read request for {0} created successfully</value>
   </data>
   <data name="ErrorWithFile" xml:space="preserve">
-    <value>Error with {0}: {1}</value>
+    <value>Error with {0}:</value>
   </data>
   <data name="FieldActions" xml:space="preserve">
     <value>Actions</value>
@@ -313,7 +313,7 @@
     <value>Receipts pending to be created</value>
   </data>
   <data name="ErrorReceiptAlreadyCreated" xml:space="preserve">
-    <value>Receipt already created for this store on this date. Please delete it.</value>
+    <value>Receipt already created.</value>
   </data>
   <data name="FieldDateCreation" xml:space="preserve">
     <value>Creation</value>

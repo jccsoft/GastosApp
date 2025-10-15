@@ -1,14 +1,10 @@
 ﻿@implements IDisposable
 
-@using static DocIntel.Contracts.Responses.Common.AnalysisJobStatusResponse
-
 @inject IDocIntelApi DocIntelApi
 @inject IReceiptApi ReceiptApi
-@inject PersistentComponentState ApplicationState
 @inject ISnackbar Snackbar
 @inject StateContainer StateContainer
 @inject BlazorService BlazorService
-@inject ILogger<AnalysisJobsPending> Logger
 @inject LocalizationService Loc
 
 
@@ -26,110 +22,48 @@ else if (_analysisJobs.ItemsCount == 0)
 }
 else
 {
-    <MudTable Items="@_analysisJobs.Items" 
-              Dense Hover Breakpoint="Breakpoint.Sm" Class="mb-5"
-              Loading="@_loading" LoadingProgressColor="Color.Info">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">@Loc.Get(RS.PendingReceipts)</MudText>
-        </ToolBarContent>
-    <HeaderContent>
-        <TableHeaderColumns Columns="@_columns" />
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="@_columns[0]">@context.FileName</MudTd>
-        @if (StateContainer.IsNotMobile)
-        {
-            <MudTd DataLabel="@_columns[1]">@context.CreatedAtUtc.ToLocalTimeLong()</MudTd>
-            <MudTd DataLabel="@_columns[2]">@context.CompletedAtUtc.ToLocalTimeLong()</MudTd>                
-        }
-        <MudTd DataLabel="@_columns[3]">
-            @((AnalysisJobStatusResponse)context.Status switch
-            {
-                Pending or InProgress => 
-                    (@<Loading Size="Size.Small" Class="ml-3" />),
-                Successful => 
-                    (@<MudIcon Icon="@Icons.Material.Filled.Check" Color="Color.Success" />),
-                Failed =>
-                    (@<MudList T="string">
-                        @foreach (var error in context.Errors)
-                            {
-                                <MudListItem Text="@error" />
-                            }
-                    </MudList>),
-                    _ => (@<MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" />)
-            })
-        </MudTd>
-        <MudTd DataLabel="@_columns[4]">
-            @if (!_loading)
-            {
-                @if (context.ReceiptCreated)
-                {
-                    <MudTooltip Text="@Loc.Get(RS.ErrorReceiptAlreadyCreated)">
-                        <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" />
-                    </MudTooltip>
-                }
-                else
-                {
-                    <TableButton Action="@TableAction.AddTicket" 
-                                    OnClick="(() => OpenCreateReceiptDialogAsync(context.Id, context.DocumentId, context.FileName))" 
-                                    Hidden="@(context.DocumentId is null || context.Status != (int)AnalysisJobStatusResponse.Successful)" />
-                }
+    <MudText Typo="Typo.h6">@($"{Loc.Get(RS.PendingReceipts)}:")</MudText>
 
-                <TableButton Action="@TableAction.Delete" 
-                            OnClick="() => DeleteAnalysisJobAsync(context)" 
-                            Hidden="@(!_allowRemove)" />                        
-            }
-        </MudTd>
-    </RowTemplate>
-    <PagerContent>
-        <TablePagerContent @bind-AllowRemoveValue="@_allowRemove" ShowPageSizeOptions="false" />
-    </PagerContent>
-    </MudTable>
+
+    <MudGrid Class="mt-5" Spacing="2">
+        @foreach (var job in _analysisJobs.Items)
+        {
+            <MudItem xs="12" sm="4">
+                <AnalysisJobCard Job="@job"
+                                 OnCreateClick="(() => OpenCreateReceiptDialogAsync(job.Id, job.DocumentId, job.FileName))"
+                                 OnDeleteClick="() => DeleteAnalysisJobAsync(job.Id, job.FileName)" />
+            </MudItem>
+        }
+    </MudGrid>
 }
 
-@code {
 
+@code {
     private PendingJobCollection? _analysisJobs;
-    private PersistingComponentStateSubscription _persistingSubscription;
 
     private string? _errorMessage;
-    private string[] _columns = null!;
-    private bool _loading = false;
-    private bool _allowRemove = false;
 
     private System.Timers.Timer? _refreshTimer;
-    private const int _refreshIntervalMilliseconds = 1000;
+    private const int _refreshIntervalMilliseconds = 500;
 
     protected override void OnInitialized()  
     {    
         StateContainer.AnalysisJobCreated += OnAnalysisJobCreated;  
         StateContainer.BreakpointChanged += OnBreakpointChanged;
 
-        _columns = new[] { Loc.Get(RS.EntityFile), Loc.Get(RS.FieldDateCreation), Loc.Get(RS.FieldDateCompleted), Loc.Get(RS.FieldStatus), Loc.Get(RS.FieldActions) };
-
         _refreshTimer = new System.Timers.Timer(_refreshIntervalMilliseconds);
         _refreshTimer.Elapsed += TimerElapsed;  
     }  
 
     protected override async Task OnInitializedAsync()
-    {
-        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistData);
-
-        if (ApplicationState.TryTakeFromJson<PendingJobCollection>(nameof(_analysisJobs), out var restoredData) && restoredData is not null)
-        {
-            _analysisJobs = restoredData;
-            CheckPendingJobsStatus();
-        }
-        else
-        {
-            await FetchAnalysisJobsAsync();
-        }        
+    {      
+        await FetchPendingAnalysisJobsAsync();
     }
 
-
-    private async Task FetchAnalysisJobsAsync()
+    private async Task FetchPendingAnalysisJobsAsync()
     {
-        _loading = true;
+        _refreshTimer?.Stop();
+
         _analysisJobs = null;
         GetAllAnalysisJobsRequest request = new() { Page = 1, PageSize = 100 };
 
@@ -140,31 +74,6 @@ else
             if (responseGetAll.IsSuccessStatusCode && responseGetAll.Content is AnalysisJobCollectionResponse collectionResponse)
             {
                 _analysisJobs = GetPendingJobCollection(collectionResponse);
-
-                var jobsWithDocumentId = _analysisJobs.Items.Where(i => i.DocumentId is not null).ToList();
-
-                var receiptTasks = jobsWithDocumentId
-                    .Select(async job =>
-                    {
-                        var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)job.DocumentId!);
-                        if (responseReceipt.IsSuccessStatusCode &&
-                            responseReceipt.Content is ReceiptResponse receiptResponse &&
-                            receiptResponse.TransactionDateUtc is not null)
-                        {
-                            var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
-                                receiptResponse.Merchant,
-                                (DateTime)receiptResponse.TransactionDateUtc);
-
-                            bool receiptExists = responseExists.IsSuccessStatusCode && responseExists.Content;
-
-                            job.ReceiptCreated = receiptExists;
-                        }
-                    })
-                    .ToList();
-
-                await Task.WhenAll(receiptTasks);
-
-                CheckPendingJobsStatus();
             }
             else
             {
@@ -175,29 +84,68 @@ else
         {
             _errorMessage = BlazorService.GetResponseError(ex);
         }
-        
-        _loading = false;
+
         StateHasChanged();
+
+        await CheckAnalysisJobsStatus();
+
+        _refreshTimer?.Start();
     }
 
-
-    private void CheckPendingJobsStatus()
+    private async Task CheckAnalysisJobsStatus()
     {
-        if (_analysisJobs is not null &&
-            _analysisJobs.Items.Any(i => 
-                i.Status == (int)AnalysisJobStatusResponse.Pending || 
-                i.Status == (int)AnalysisJobStatusResponse.InProgress))
+        if (_analysisJobs is null) return;
+
+        foreach (var localJob in _analysisJobs.Items)
         {
-            _refreshTimer?.Start();
+            if (localJob.CheckPending)
+            {
+                var response = await DocIntelApi.GetAnalysisJobByIdAsync(localJob.Id);
+
+                if (response.IsSuccessStatusCode &&
+                    response.Content is AnalysisJobResponse remoteJob)
+                {
+                    localJob.Status = remoteJob.Status;
+
+                    if (remoteJob.Status == (int)AnalysisJobStatusResponse.Successful && remoteJob.DocumentId is not null)
+                    {
+                        var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
+                        if (responseReceipt.IsSuccessStatusCode &&
+                            responseReceipt.Content is ReceiptResponse receiptResponse &&
+                            receiptResponse.TransactionDateUtc is not null)
+                        {
+                            var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
+                                receiptResponse.Merchant,
+                                (DateTime)receiptResponse.TransactionDateUtc);
+                            bool receiptExists = responseExists.IsSuccessStatusCode && responseExists.Content;
+                            localJob.IsReceiptAlreadyCreated = receiptExists;
+                            localJob.ReceiptMerchant = receiptResponse.Merchant ?? "";
+                            localJob.ReceiptTransactionDate = (DateTime)receiptResponse.TransactionDateUtc;
+
+                            localJob.DocumentId = remoteJob.DocumentId;
+                        }
+                    }
+
+                    StateHasChanged();
+                }
+            }
         }
     }
 
     private async void TimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         _refreshTimer?.Stop();
-        await InvokeAsync(async () => await FetchAnalysisJobsAsync());
-    }
 
+        if (_analysisJobs is not null &&
+            _analysisJobs.Items.Any(i =>
+                i.Status == (int)AnalysisJobStatusResponse.Pending ||
+                i.Status == (int)AnalysisJobStatusResponse.InProgress))
+        {
+            await InvokeAsync(async () => await CheckAnalysisJobsStatus());
+
+            _refreshTimer?.Start();
+        }
+    }
 
 
     #region ACTIONS
@@ -212,29 +160,26 @@ else
         var result = await BlazorService.OpenCreateReceiptDialogAsync(receiptId, fileName);
         if (result is not null && !result.Canceled)
         {
-            _loading = true;
-
             StateHasChanged();
 
             await DocIntelApi.DeleteAnalysisJobAsync(analysisJobId);
 
-            await FetchAnalysisJobsAsync();
+            await FetchPendingAnalysisJobsAsync();
         }
     }
 
-    private async Task DeleteAnalysisJobAsync(AnalysisJobResponse analysisJobResponse)
+    private async Task DeleteAnalysisJobAsync(Guid jobId, string fileName)
     {
         bool confirmedDeletion = await BlazorService.ConfirmDeletionAsync(
-            string.Format(Loc.Get(RS.AskDeleteAnalysisJob0), analysisJobResponse.FileName));
+            string.Format(Loc.Get(RS.AskDeleteAnalysisJob0), fileName));
 
         if (confirmedDeletion)
         {
-            var response = await DocIntelApi.DeleteAnalysisJobAsync(analysisJobResponse.Id);
+            var response = await DocIntelApi.DeleteAnalysisJobAsync(jobId);
             if (response.IsSuccessStatusCode)
             {
                 Snackbar.Add(Loc.Get(RS.SuccessDelete), Severity.Success);
-                _allowRemove = false;
-                await FetchAnalysisJobsAsync();
+                await FetchPendingAnalysisJobsAsync();
             }
             else
             {
@@ -243,23 +188,12 @@ else
         }
     }
 
-    private void OnAnalysisJobCreated(List<Guid> jobIds)
+    private async void OnAnalysisJobCreated(List<Guid> jobIds)
     {
-        _ = FetchAnalysisJobsAsync();
+        await FetchPendingAnalysisJobsAsync();
     }
     #endregion
 
-
-
-    private Task PersistData()
-    {
-        if (_analysisJobs is not null)
-        {
-            ApplicationState.PersistAsJson(nameof(_analysisJobs), _analysisJobs);            
-        }
-
-        return Task.CompletedTask;
-    }
 
     private void OnBreakpointChanged() => StateHasChanged();
 
@@ -269,18 +203,8 @@ else
         StateContainer.BreakpointChanged -= OnBreakpointChanged;
 
         _refreshTimer?.Dispose();
-        _persistingSubscription.Dispose();
     } 
 
-
-
-    #region PENDING ANALYSIS JOBS
-
-    private sealed class PendingAnalysisJob : AnalysisJobResponse
-    {
-        public bool ReceiptCreated { get; set; } = false;
-    }
-    private sealed class PendingJobCollection: PagedResponse<PendingAnalysisJob> { }
 
 
     private PendingJobCollection GetPendingJobCollection(AnalysisJobCollectionResponse analysisJobCollectionResponse)
@@ -292,17 +216,13 @@ else
                 {
                     Id = item.Id,
                     FileName = item.FileName,
-                    CreatedAtUtc = item.CreatedAtUtc,
-                    CompletedAtUtc = item.CompletedAtUtc,
                     DocumentId = item.DocumentId,
                     Status = item.Status,
-                    Errors = item.Errors,
-                    ReceiptCreated = false
+                    Errors = item.Errors
                 }).ToList(),
             ItemsCount = analysisJobCollectionResponse.ItemsCount,
             Page = analysisJobCollectionResponse.Page,
             PageSize = analysisJobCollectionResponse.PageSize
         };
     }
-    #endregion
 }

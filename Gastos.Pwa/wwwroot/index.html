@@ -61,6 +61,9 @@
     <!-- Utility Scripts -->
     <script src="js/clipboard-helper.js"></script>
     <script src="js/culture-helper.js"></script>
+    
+    <!-- Camera Helper Script -->
+    <script src="js/camera-helper.js"></script>
 
     <!-- Blazor WebAssembly -->
     <script src="_framework/blazor.webassembly.js"></script>
@@ -118,6 +121,7 @@
                 if (typeof window.pwaUpdater !== 'undefined') loadedTools.push('PWAUpdater');
                 if (typeof window.diagnoseApp !== 'undefined') loadedTools.push('PWADiagnostics');
                 if (typeof window.PWAUpdateTester !== 'undefined') loadedTools.push('PWAUpdateTester');
+                if (typeof window.cameraHelper !== 'undefined') loadedTools.push('CameraHelper');
 
                 console.log(`✅ Tools loaded: ${loadedTools.join(', ')}`);
 

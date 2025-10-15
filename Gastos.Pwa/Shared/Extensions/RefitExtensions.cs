@@ -138,6 +138,12 @@ public static class RefitExtensions
                         messages.Add(msg);
                 }
             }
+            else
+            {
+                var msg2 = propertyValue.ToString();
+                if (!string.IsNullOrWhiteSpace(msg2))
+                    messages.Add(msg2);
+            }
         }
         return messages;
     }

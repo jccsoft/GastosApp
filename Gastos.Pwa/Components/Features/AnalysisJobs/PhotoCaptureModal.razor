@@ -1,0 +1,265 @@
+@implements IDisposable
+
+@inject ICameraService CameraService
+@inject ISnackbar Snackbar
+@inject LocalizationService Loc
+@inject ILogger<PhotoCaptureModal> Logger
+
+<MudDialog @bind-Visible="@_isVisible"
+           Options="new DialogOptions { FullScreen = true, CloseButton = true, MaxWidth = MaxWidth.Large }">
+    <TitleContent>
+        <MudText Typo="Typo.h5">Tomar Foto</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="4" Style="height: 80vh;">
+            @if (!_cameraInitialized && !_error)
+            {
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 100%;">
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                    <MudText Typo="Typo.body1">Inicializando cámara...</MudText>
+                </MudStack>
+            }
+            else if (_error)
+            {
+                <MudAlert Severity="Severity.Error">
+                    <MudText Typo="Typo.body1">@_errorMessage</MudText>
+                    <MudButton OnClick="@RetryInitializeCamera" Color="Color.Primary" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Refresh">
+                        Reintentar
+                    </MudButton>
+                </MudAlert>
+            }
+@*             else
+            { *@
+                <MudPaper Elevation="3" Class="pa-2" Style="position: relative; overflow: hidden; border-radius: 8px; height: 100%;">
+                    <video id="@_videoElementId" autoplay muted playsinline
+                           style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                    </video>
+                    
+                    <!-- Overlay for capture guidance -->
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                                background: linear-gradient(transparent 20%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.1) 60%, transparent 80%);
+                                pointer-events: none; border-radius: 4px;">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                    border: 2px solid white; width: 90%; height: 90%; border-radius: 8px;
+                                    box-shadow: 0 0 0 9999px rgba(0,0,0,0.3);">
+                        </div>
+                    </div>
+                    
+                    <!-- Camera controls overlay -->
+                    <div style="position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;">
+                        <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2">
+                            @if (_availableCameras.Count > 1)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid" 
+                                             Color="Color.Surface" 
+                                             Variant="Variant.Filled"
+                                             OnClick="@SwitchCamera" />
+                            }
+                            
+                            <MudIconButton Icon="@Icons.Material.Filled.CameraAlt" 
+                                         Color="Color.Primary" 
+                                         Variant="Variant.Filled"
+                                         Size="Size.Large"
+                                         OnClick="@CapturePhoto"
+                                         Disabled="@_capturing" />
+                                         
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                         Color="Color.Surface" 
+                                         Variant="Variant.Filled"
+                                         OnClick="@CloseModal" />
+                        </MudStack>
+                    </div>
+                </MudPaper>
+            @* } *@
+            
+            <!-- Hidden canvas for image capture -->
+            <canvas id="@_canvasElementId" style="display: none;"></canvas>
+        </MudStack>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback<PhotoCapturedEventArgs> OnPhotoCaptured { get; set; }
+
+    private bool _isVisible;
+    private bool _cameraInitialized = false;
+    private bool _error = false;
+    private bool _capturing = false;
+    private string _errorMessage = string.Empty;
+    private readonly string _videoElementId = $"camera-video-{Guid.NewGuid():N}";
+    private readonly string _canvasElementId = $"camera-canvas-{Guid.NewGuid():N}";
+    private List<CameraDevice> _availableCameras = new();
+    private int _currentCameraIndex = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsVisible != _isVisible)
+        {
+            _isVisible = IsVisible;
+            if (_isVisible)
+            {
+                await InitializeCamera();
+            }
+            else
+            {
+                await StopCamera();
+            }
+        }
+    }
+
+    private async Task InitializeCamera()
+    {
+        try
+        {
+            _error = false;
+            _cameraInitialized = false;
+            StateHasChanged();
+
+            // Check if camera is available
+            var availability = await CameraService.IsCameraAvailableAsync();
+            if (!availability.Available)
+            {
+                _error = true;
+                _errorMessage = availability.Error ?? "Cámara no disponible";
+                StateHasChanged();
+                return;
+            }
+
+            // Get available cameras
+            var devicesResult = await CameraService.GetCameraDevicesAsync();
+            if (devicesResult.Success && devicesResult.Cameras?.Any() == true)
+            {
+                _availableCameras = devicesResult.Cameras;
+            }
+
+            // Wait a bit for the DOM elements to be rendered
+            await Task.Delay(100);
+
+            // Initialize camera
+            var result = await CameraService.InitializeCameraAsync(_videoElementId, _canvasElementId);
+            if (result.Success)
+            {
+                _cameraInitialized = true;
+                Snackbar.Add("Cámara lista", Severity.Success);
+            }
+            else
+            {
+                _error = true;
+                _errorMessage = result.Error ?? "Error al inicializar la cámara";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing camera");
+            _error = true;
+            _errorMessage = "Error al inicializar la cámara";
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task RetryInitializeCamera()
+    {
+        await InitializeCamera();
+    }
+
+    private async Task SwitchCamera()
+    {
+        if (_availableCameras.Count <= 1) return;
+
+        try
+        {
+            _currentCameraIndex = (_currentCameraIndex + 1) % _availableCameras.Count;
+            var selectedCamera = _availableCameras[_currentCameraIndex];
+            
+            var result = await CameraService.SwitchCameraAsync(selectedCamera.DeviceId, _videoElementId, _canvasElementId);
+            if (!result.Success)
+            {
+                Snackbar.Add(result.Error ?? "Error al cambiar cámara", Severity.Error);
+                // Revert camera index
+                _currentCameraIndex = (_currentCameraIndex - 1 + _availableCameras.Count) % _availableCameras.Count;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error switching camera");
+            Snackbar.Add("Error al cambiar cámara", Severity.Error);
+        }
+    }
+
+    private async Task CapturePhoto()
+    {
+        if (_capturing || !_cameraInitialized) return;
+
+        try
+        {
+            _capturing = true;
+            StateHasChanged();
+
+            var result = await CameraService.CapturePhotoAsync();
+            if (result.Success && !string.IsNullOrEmpty(result.ImageData))
+            {
+                // Convert base64 to byte array
+                var imageBytes = Convert.FromBase64String(result.ImageData);
+                
+                // Create a filename with timestamp
+                var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                var fileName = $"receipt_photo_{timestamp}.jpg";
+
+                // Notify parent component
+                var args = new PhotoCapturedEventArgs
+                {
+                    ImageData = imageBytes,
+                    FileName = fileName,
+                    MimeType = result.MimeType ?? "image/jpeg",
+                    Width = result.Width,
+                    Height = result.Height
+                };
+
+                await OnPhotoCaptured.InvokeAsync(args);
+                await CloseModal();
+            }
+            else
+            {
+                Snackbar.Add(result.Error ?? "Error al capturar foto", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error capturing photo");
+            Snackbar.Add("Error al capturar foto", Severity.Error);
+        }
+        finally
+        {
+            _capturing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await StopCamera();
+        _isVisible = false;
+        await IsVisibleChanged.InvokeAsync(_isVisible);
+    }
+
+    private async Task StopCamera()
+    {
+        try
+        {
+            await CameraService.StopCameraAsync();
+            _cameraInitialized = false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error stopping camera");
+        }
+    }
+
+    public void Dispose()
+    {
+        _ = Task.Run(async () => await StopCamera());
+    }
+}

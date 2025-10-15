@@ -1,4 +1,5 @@
 using FluentValidation;
+using Gastos.Pwa.Camera;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 namespace Gastos.Pwa;
@@ -16,7 +17,8 @@ public static class DependencyInjection
             .AddScoped<ThemeService>()
             .AddScoped<PwaUpdateService>()
             .AddScoped<INetworkStatusService, NetworkStatusService>()
-            .AddScoped<IVersionService, VersionService>();
+            .AddScoped<IVersionService, VersionService>()
+            .AddScoped<ICameraService, CameraService>();
 
         builder.AddAuthServices();
 

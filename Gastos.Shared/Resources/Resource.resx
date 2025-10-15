@@ -259,7 +259,7 @@
     <value>Solicitud para {0} creada con éxito</value>
   </data>
   <data name="ErrorWithFile" xml:space="preserve">
-    <value>Error con {0}: {1}</value>
+    <value>Error con {0}:</value>
   </data>
   <data name="FieldActions" xml:space="preserve">
     <value>Acciones</value>
@@ -313,7 +313,7 @@
     <value>Tíquets pendientes de crear</value>
   </data>
   <data name="ErrorReceiptAlreadyCreated" xml:space="preserve">
-    <value>Tíquet ya creado para esta tienda en esta fecha. Elimínelo.</value>
+    <value>Tíquet ya creado.</value>
   </data>
   <data name="FieldDateCreation" xml:space="preserve">
     <value>Creación</value>

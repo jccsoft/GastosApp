@@ -1,0 +1,76 @@
+﻿@inject LocalizationService Loc
+@inject StateContainer StateContainer
+
+<MudCard Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Style="height: 3rem;">@Job.FileName</MudText>
+        </CardHeaderContent>
+        <CardHeaderAvatar>
+            @if (_isPending)
+            {
+                <Loading Size="Size.Small" Class="ml-3" />
+            }
+            else if (_isSuccessful)
+            {
+                <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Check" Size="Size.Large" />
+            }
+            else
+            {
+                <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Error" Size="Size.Medium" />
+            }
+        </CardHeaderAvatar>
+    </MudCardHeader>
+    <MudCardContent Class="pt-0">
+        <MudGrid Spacing="1">
+            <MudItem xs="3">@Loc.Get(RS.EntityStore)</MudItem>
+            <MudItem xs="9"><MudText>@Job.ReceiptMerchant</MudText></MudItem>
+            <MudItem xs="3">@Loc.Get(RS.FieldDate)</MudItem>
+            <MudItem xs="9"><MudText>@Job.ReceiptTransactionDate.ToLocalTimeShort()</MudText></MudItem>
+        </MudGrid>
+        @if(_isFailed && Job.Errors.Any())
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-2">
+                @foreach(var error in Job.Errors)
+                {
+                    <div>@error</div>
+                }
+            </MudAlert>
+        }
+    </MudCardContent>
+    <MudCardActions>
+        @if (!_isPending)
+        {
+            @if (_isAlreadyCreated)
+            {
+                <MudChip T="string" Color="Color.Error">@Loc.Get(RS.ErrorReceiptAlreadyCreated)</MudChip>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PostAdd" Color="Color.Primary"
+                            OnClick="@OnCreateClick" FullWidth="true">
+                    @($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}")
+                </MudButton>
+            }
+            <MudSpacer />
+                           @* Size="@(_isAlreadyCreated ? Size.Large : Size.Medium)" *@
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                           Color="@(_isAlreadyCreated ? Color.Error : Color.Default)"
+                           Size="Size.Large"
+                           OnClick="@OnDeleteClick" />
+        }
+    </MudCardActions>
+</MudCard>
+
+
+@code {
+    [Parameter] public required PendingAnalysisJob Job { get; set; }
+    [Parameter] public EventCallback OnCreateClick { get; set; }
+    [Parameter] public EventCallback OnDeleteClick { get; set; }
+
+    private AnalysisJobStatusResponse _jobStatus => (AnalysisJobStatusResponse)Job.Status;
+    private bool _isSuccessful => _jobStatus == AnalysisJobStatusResponse.Successful;
+    private bool _isFailed => _jobStatus == AnalysisJobStatusResponse.Failed;
+    private bool _isPending => Job.CheckPending;
+    private bool _isAlreadyCreated => Job.IsReceiptAlreadyCreated;
+}
