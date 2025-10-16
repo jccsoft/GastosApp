@@ -408,8 +408,8 @@
   <data name="ValidProductUnitsPack" xml:space="preserve">
     <value>Units per pack must be greater than zero.</value>
   </data>
-  <data name="ValidProductUniqueNameAndUnitsPack" xml:space="preserve">
-    <value>A product with this name and units/pack already exists.</value>
+  <data name="ValidProductUnique" xml:space="preserve">
+    <value>Product already exists.</value>
   </data>
   <data name="ValidReceiptItemQuantity" xml:space="preserve">
     <value>Quantity cannot be zero.</value>

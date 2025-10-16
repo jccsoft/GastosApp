@@ -111,13 +111,15 @@ public class ProductRepository(AppDbContext context) : IProductRepository
         }
     }
 
-    public async Task<bool> ExistsByNameAndUnitsPack(string userId, string name, int unitsPack, Guid? productIdToExclude, CancellationToken token)
+    public async Task<bool> Exists(string userId, string name, int unitsPack, int? sizingId, decimal? sizingValue, Guid? productIdToExclude, CancellationToken token)
     {
         return await context.Products
             .Where(p => p.UserId == userId)
             .AsNoTracking()
             .AnyAsync(p => p.Id != productIdToExclude &&
                            EF.Functions.ILike(p.Name, name.Trim()) &&
-                           p.UnitsPack == unitsPack, token);
+                           p.UnitsPack == unitsPack &&
+                           p.SizingId == sizingId &&
+                           p.SizingValue == sizingValue, token);
     }
 }

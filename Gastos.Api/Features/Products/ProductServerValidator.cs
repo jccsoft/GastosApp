@@ -9,13 +9,13 @@ public sealed class ProductServerValidator : ProductClientValidator
         _productRepo = productRepo;
 
         RuleFor(x => x)
-            .MustAsync(ValidateUniqueNameAndUnitsPack)
-            .WithMessage(loc.Get(RS.ValidProductUniqueNameAndUnitsPack));
+            .MustAsync(ValidateUnique)
+            .WithMessage(loc.Get(RS.ValidProductUnique));
     }
 
-    private async Task<bool> ValidateUniqueNameAndUnitsPack(ProductDto dto, CancellationToken token)
+    private async Task<bool> ValidateUnique(ProductDto dto, CancellationToken token)
     {
-        return !await _productRepo.ExistsByNameAndUnitsPack(dto.UserId, dto.Name, dto.UnitsPack, dto.Id, token);
+        return !await _productRepo.Exists(dto.UserId, dto.Name, dto.UnitsPack, dto.SizingId, dto.SizingValue, dto.Id, token);
     }
 }
 

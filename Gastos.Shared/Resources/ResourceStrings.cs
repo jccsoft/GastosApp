@@ -119,7 +119,7 @@ public enum ResourceStrings
     ValidProductNameMandatory,
     ValidProductNameTooLong0,
     ValidProductUnitsPack,
-    ValidProductUniqueNameAndUnitsPack,
+    ValidProductUnique,
     ValidReceiptId,
     ValidReceiptTransactionDateUtc,
     ValidReceiptSourceId,

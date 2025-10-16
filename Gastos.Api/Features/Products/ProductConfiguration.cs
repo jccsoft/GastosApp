@@ -9,7 +9,7 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
 
-        builder.HasIndex(p => new { p.UserId, p.Name, p.UnitsPack, p.SizingValue }).IsUnique();
+        builder.HasIndex(p => new { p.UserId, p.Name, p.UnitsPack, p.SizingId, p.SizingValue }).IsUnique();
 
         builder.Property(p => p.ImageUrl).HasMaxLength(2048);
 

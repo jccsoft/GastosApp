@@ -7,5 +7,5 @@ public interface IProductRepository
     Task<RepoResult> CreateAsync(string userId, Product newProduct, CancellationToken token);
     Task<RepoResult> UpdateAsync(string userId, Product updatedProduct, CancellationToken token);
     Task<RepoResult> DeleteAsync(string userId, Guid id, CancellationToken token);
-    Task<bool> ExistsByNameAndUnitsPack(string userId, string name, int unitsPack, Guid? productIdToExclude, CancellationToken token);
+    Task<bool> Exists(string userId, string name, int unitsPack, int? sizingId, decimal? sizingValue, Guid? productIdToExclude, CancellationToken token);
 }
