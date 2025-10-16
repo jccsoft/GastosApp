@@ -47,14 +47,13 @@
                     
                 <!-- Camera controls overlay -->
                 <div style="position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;">
-                    <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2">
-                        @if (_availableCameras.Count > 1)
-                        {
-                            <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid" 
-                                            Color="Color.Surface" 
-                                            Variant="Variant.Filled"
-                                            OnClick="@SwitchCamera" />
-                        }
+                    <MudStack Row Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
+
+                        <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid"
+                                       Color=@(_availableCameras.Count == 0 ? Color.Transparent : Color.Info)
+                                       Variant="Variant.Filled"
+                                        Disabled=@(_availableCameras.Count == 0)
+                                        OnClick="@SwitchCamera" />
                             
                         <MudIconButton Icon="@Icons.Material.Filled.CameraAlt" 
                                         Color="Color.Primary" 
@@ -64,7 +63,7 @@
                                         Disabled="@_capturing" />
                                          
                         <MudIconButton Icon="@Icons.Material.Filled.Close" 
-                                        Color="Color.Surface" 
+                                        Color="Color.Secondary" 
                                         Variant="Variant.Filled"
                                         OnClick="@CloseModal" />
                     </MudStack>
