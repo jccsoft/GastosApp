@@ -513,4 +513,7 @@
   <data name="ErrorNetwork" xml:space="preserve">
     <value>Connection error</value>
   </data>
+  <data name="ErrorReceiptAlreadyPending" xml:space="preserve">
+    <value>Receipt already read.</value>
+  </data>
 </root>

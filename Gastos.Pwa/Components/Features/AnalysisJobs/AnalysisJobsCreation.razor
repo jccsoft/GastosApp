@@ -55,30 +55,6 @@
             </MudText>
         }
     </MudStack>
-    <!-- Camera Photo Button -->
-@*     <MudCard Outlined="true" Class="pa-2">
-        <MudCardContent Class="pa-2">
-            <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Primary" />
-                    <MudText Typo="Typo.body1">Tomar foto del tíquet</MudText>
-                </MudStack>
-                <MudButton OnClick="@OpenPhotoModal" 
-                          Color="Color.Primary" 
-                          Variant="Variant.Outlined" 
-                          StartIcon="@Icons.Material.Filled.CameraAlt"
-                          Disabled="@(!_cameraAvailable)">
-                    Tomar Foto
-                </MudButton>
-            </MudStack>
-            @if (!_cameraAvailable && _cameraChecked)
-            {
-                <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">
-                    Cámara no disponible
-                </MudText>
-            }
-        </MudCardContent>
-    </MudCard> *@
     
     <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4">
         <MudButton OnClick="@CreateAnalysisJobsAsync" Disabled="@(!_selectedFiles.Any())" Color="Color.Primary" Variant="Variant.Filled">
@@ -152,7 +128,7 @@
         }
     }
 
-    private void OnPhotoCaptured(PhotoCapturedEventArgs args)
+    private async Task OnPhotoCaptured(PhotoCapturedEventArgs args)
     {
         try
         {
@@ -164,6 +140,8 @@
             _selectedFiles.Add(selectedFile);
 
             Snackbar.Add($"Foto {args.FileName} añadida a la lista", Severity.Success);
+
+            await CreateAnalysisJobsAsync();
         }
         catch (Exception ex)
         {

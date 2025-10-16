@@ -40,4 +40,40 @@ public static class StringExtensions
 
         return output;
     }
+
+    // función para sustituir caracteres no alfabéticos por espacios, eliminar espacios múltiples y recortar espacios al inicio y al final, y devolver la primera palabra
+    public static string GetFirstWord(this string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        var sb = new StringBuilder();
+
+        bool lastWasSpace = true;
+        foreach (char c in input)
+        {
+            if (char.IsLetter(c))
+            {
+                sb.Append(c);
+                lastWasSpace = false;
+            }
+            else
+            {
+                if (!lastWasSpace)
+                {
+                    sb.Append(' ');
+                    lastWasSpace = true;
+                }
+            }
+        }
+
+        var result = sb.ToString().Trim();
+        var firstSpaceIndex = result.IndexOf(' ');
+        if (firstSpaceIndex >= 0)
+        {
+            return result[..firstSpaceIndex];
+        }
+
+        return result;
+    }
 }

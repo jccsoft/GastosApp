@@ -4,13 +4,16 @@ namespace Gastos.Pwa.Shared.Models;
 
 public sealed class PendingAnalysisJob
 {
-    public Guid Id { get; set; }
-    public string FileName { get; set; } = "";
+    public Guid Id { get; init; }
+    public string FileName { get; init; } = "";
+    public DateTime CreatedAtUtc { get; init; }
+    public DateTime? CompletedAtUtc { get; set; }
     public int Status { get; set; }
     public Guid? DocumentId { get; set; }
-    public string[] Errors { get; set; } = [];
+    public string[] Errors { get; init; } = [];
 
     public bool IsReceiptAlreadyCreated { get; set; } = false;
+    public bool IsReceiptAlreadyPending { get; set; } = false;
     public string ReceiptMerchant { get; set; } = "";
     public DateTime? ReceiptTransactionDate { get; set; }
 

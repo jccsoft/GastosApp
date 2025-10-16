@@ -28,49 +28,49 @@
                     </MudButton>
                 </MudAlert>
             }
-@*             else
-            { *@
-                <MudPaper Elevation="3" Class="pa-2" Style="position: relative; overflow: hidden; border-radius: 8px; height: 100%;">
-                    <video id="@_videoElementId" autoplay muted playsinline
-                           style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
-                    </video>
+
+            <MudPaper Elevation="3" Class="pa-2" Style="position: relative; overflow: hidden; border-radius: 8px; height: 100%;">
+                <video id="@_videoElementId" autoplay muted playsinline
+                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                </video>
                     
-                    <!-- Overlay for capture guidance -->
-                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
-                                background: linear-gradient(transparent 20%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.1) 60%, transparent 80%);
-                                pointer-events: none; border-radius: 4px;">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                                    border: 2px solid white; width: 90%; height: 90%; border-radius: 8px;
-                                    box-shadow: 0 0 0 9999px rgba(0,0,0,0.3);">
-                        </div>
+                <!-- Overlay for capture guidance -->
+                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+                            background: linear-gradient(transparent 20%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.1) 60%, transparent 80%);
+                            pointer-events: none; border-radius: 4px;"
+                     hidden="@(!_cameraInitialized)">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                border: 2px solid white; width: 90%; height: 90%; border-radius: 8px;
+                                box-shadow: 0 0 0 9999px rgba(0,0,0,0.3);">
                     </div>
+                </div>
                     
-                    <!-- Camera controls overlay -->
-                    <div style="position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;">
-                        <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2">
-                            @if (_availableCameras.Count > 1)
-                            {
-                                <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid" 
-                                             Color="Color.Surface" 
-                                             Variant="Variant.Filled"
-                                             OnClick="@SwitchCamera" />
-                            }
+                <!-- Camera controls overlay -->
+                <div style="position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;">
+                    <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2">
+                        @if (_availableCameras.Count > 1)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid" 
+                                            Color="Color.Surface" 
+                                            Variant="Variant.Filled"
+                                            OnClick="@SwitchCamera" />
+                        }
                             
-                            <MudIconButton Icon="@Icons.Material.Filled.CameraAlt" 
-                                         Color="Color.Primary" 
-                                         Variant="Variant.Filled"
-                                         Size="Size.Large"
-                                         OnClick="@CapturePhoto"
-                                         Disabled="@_capturing" />
+                        <MudIconButton Icon="@Icons.Material.Filled.CameraAlt" 
+                                        Color="Color.Primary" 
+                                        Variant="Variant.Filled"
+                                        Size="Size.Large"
+                                        OnClick="@CapturePhoto"
+                                        Disabled="@_capturing" />
                                          
-                            <MudIconButton Icon="@Icons.Material.Filled.Close" 
-                                         Color="Color.Surface" 
-                                         Variant="Variant.Filled"
-                                         OnClick="@CloseModal" />
-                        </MudStack>
-                    </div>
-                </MudPaper>
-            @* } *@
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                        Color="Color.Surface" 
+                                        Variant="Variant.Filled"
+                                        OnClick="@CloseModal" />
+                    </MudStack>
+                </div>
+            </MudPaper>
+
             
             <!-- Hidden canvas for image capture -->
             <canvas id="@_canvasElementId" style="display: none;"></canvas>
@@ -142,7 +142,6 @@
             if (result.Success)
             {
                 _cameraInitialized = true;
-                Snackbar.Add("Cámara lista", Severity.Success);
             }
             else
             {

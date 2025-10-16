@@ -2,11 +2,11 @@ namespace Gastos.Pwa.Camera;
 
 public class CameraService(IJSRuntime jsRuntime, ILogger<CameraService> logger) : ICameraService
 {
-    public async Task<CameraInitResult> InitializeCameraAsync(string videoElementId, string canvasElementId)
+    public async Task<CameraResult> InitializeCameraAsync(string videoElementId, string canvasElementId)
     {
         try
         {
-            var result = await jsRuntime.InvokeAsync<CameraInitResult>(
+            var result = await jsRuntime.InvokeAsync<CameraResult>(
                 "cameraHelper.initializeCamera", videoElementId, canvasElementId);
 
             logger.LogInformation("Camera initialization result: {Success}", result.Success);
@@ -15,7 +15,7 @@ public class CameraService(IJSRuntime jsRuntime, ILogger<CameraService> logger) 
         catch (Exception ex)
         {
             logger.LogError(ex, "Error initializing camera");
-            return new CameraInitResult { Success = false, Error = ex.Message };
+            return new CameraResult { Success = false, Error = ex.Message };
         }
     }
 
@@ -83,11 +83,11 @@ public class CameraService(IJSRuntime jsRuntime, ILogger<CameraService> logger) 
         }
     }
 
-    public async Task<CameraInitResult> SwitchCameraAsync(string deviceId, string videoElementId, string canvasElementId)
+    public async Task<CameraResult> SwitchCameraAsync(string deviceId, string videoElementId, string canvasElementId)
     {
         try
         {
-            var result = await jsRuntime.InvokeAsync<CameraInitResult>(
+            var result = await jsRuntime.InvokeAsync<CameraResult>(
                 "cameraHelper.switchCamera", deviceId, videoElementId, canvasElementId);
 
             logger.LogInformation("Switch camera result: {Success}", result.Success);
@@ -96,7 +96,7 @@ public class CameraService(IJSRuntime jsRuntime, ILogger<CameraService> logger) 
         catch (Exception ex)
         {
             logger.LogError(ex, "Error switching camera");
-            return new CameraInitResult { Success = false, Error = ex.Message };
+            return new CameraResult { Success = false, Error = ex.Message };
         }
     }
 }

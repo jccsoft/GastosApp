@@ -60,8 +60,6 @@ public class RequestLoggingMiddleware(RequestDelegate next, ILogger<RequestLoggi
                 context.Request.Method,
                 context.Request.Path,
                 stopwatch.ElapsedMilliseconds);
-
-            throw;
         }
         finally
         {

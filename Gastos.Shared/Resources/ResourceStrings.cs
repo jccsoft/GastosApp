@@ -46,6 +46,7 @@ public enum ResourceStrings
     ErrorNoStoreSelected,
     ErrorReadingReceipt,
     ErrorReceiptAlreadyCreated,
+    ErrorReceiptAlreadyPending,
     ErrorRequestTimedOut,
     ErrorStatusCodeBadRequest,
     ErrorStatusCodeConflict,

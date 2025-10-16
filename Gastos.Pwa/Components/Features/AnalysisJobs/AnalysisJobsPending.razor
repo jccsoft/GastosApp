@@ -26,7 +26,7 @@ else
 
 
     <MudGrid Class="mt-5" Spacing="2">
-        @foreach (var job in _analysisJobs.Items)
+        @foreach (var job in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
         {
             <MudItem xs="12" sm="4">
                 <AnalysisJobCard Job="@job"
@@ -96,7 +96,7 @@ else
     {
         if (_analysisJobs is null) return;
 
-        foreach (var localJob in _analysisJobs.Items)
+        foreach (var localJob in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
         {
             if (localJob.CheckPending)
             {
@@ -106,19 +106,32 @@ else
                     response.Content is AnalysisJobResponse remoteJob)
                 {
                     localJob.Status = remoteJob.Status;
+                    localJob.CompletedAtUtc = remoteJob.CompletedAtUtc;
 
                     if (remoteJob.Status == (int)AnalysisJobStatusResponse.Successful && remoteJob.DocumentId is not null)
                     {
                         var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
                         if (responseReceipt.IsSuccessStatusCode &&
                             responseReceipt.Content is ReceiptResponse receiptResponse &&
+                            !string.IsNullOrEmpty(receiptResponse.Merchant) &&
                             receiptResponse.TransactionDateUtc is not null)
                         {
-                            var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
-                                receiptResponse.Merchant,
-                                (DateTime)receiptResponse.TransactionDateUtc);
-                            bool receiptExists = responseExists.IsSuccessStatusCode && responseExists.Content;
-                            localJob.IsReceiptAlreadyCreated = receiptExists;
+                            if (_analysisJobs.Items.Any(j =>
+                                j.CreatedAtUtc <= localJob.CreatedAtUtc && j.Id != localJob.Id &&
+                                j.ReceiptMerchant.GetFirstWord().ToLower() == receiptResponse.Merchant.GetFirstWord().ToLower() &&
+                                j.ReceiptTransactionDate == receiptResponse.TransactionDateUtc))
+                            {
+                                localJob.IsReceiptAlreadyPending = true;
+                            }
+                            else
+                            {
+                                var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
+                                    receiptResponse.Merchant!,
+                                    (DateTime)receiptResponse.TransactionDateUtc);
+
+                                localJob.IsReceiptAlreadyCreated = responseExists.IsSuccessStatusCode && responseExists.Content;
+                            }
+
                             localJob.ReceiptMerchant = receiptResponse.Merchant ?? "";
                             localJob.ReceiptTransactionDate = (DateTime)receiptResponse.TransactionDateUtc;
 
@@ -216,6 +229,8 @@ else
                 {
                     Id = item.Id,
                     FileName = item.FileName,
+                    CreatedAtUtc = item.CreatedAtUtc,
+                    CompletedAtUtc = item.CompletedAtUtc,
                     DocumentId = item.DocumentId,
                     Status = item.Status,
                     Errors = item.Errors

@@ -4,7 +4,15 @@
 <MudCard Outlined="true">
     <MudCardHeader>
         <CardHeaderContent>
-            <MudText Style="height: 3rem;">@Job.FileName</MudText>
+            <MudTooltip>
+                <ChildContent>
+                    <MudText Style="height: 3rem;">@Job.FileName</MudText>
+                </ChildContent>
+                <TooltipContent>
+                    <MudText>@($"{Loc.Get(RS.FieldDateCreation)}: {Job.CreatedAtUtc.ToLocalTimeLong()}")</MudText>
+                    <MudText>@($"{Loc.Get(RS.FieldDateCompleted)}: {Job.CompletedAtUtc.ToLocalTimeLong()}")</MudText>
+                </TooltipContent>                
+            </MudTooltip>
         </CardHeaderContent>
         <CardHeaderAvatar>
             @if (_isPending)
@@ -22,12 +30,9 @@
         </CardHeaderAvatar>
     </MudCardHeader>
     <MudCardContent Class="pt-0">
-        <MudGrid Spacing="1">
-            <MudItem xs="3">@Loc.Get(RS.EntityStore)</MudItem>
-            <MudItem xs="9"><MudText>@Job.ReceiptMerchant</MudText></MudItem>
-            <MudItem xs="3">@Loc.Get(RS.FieldDate)</MudItem>
-            <MudItem xs="9"><MudText>@Job.ReceiptTransactionDate.ToLocalTimeShort()</MudText></MudItem>
-        </MudGrid>
+        <MudText Typo="Typo.h6">@Job.ReceiptMerchant</MudText>
+        <MudText Typo="Typo.h6">@Job.ReceiptTransactionDate.ToLocalTimeShort()</MudText>
+
         @if(_isFailed && Job.Errors.Any())
         {
             <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-2">
@@ -44,6 +49,10 @@
             @if (_isAlreadyCreated)
             {
                 <MudChip T="string" Color="Color.Error">@Loc.Get(RS.ErrorReceiptAlreadyCreated)</MudChip>
+            }
+            else if (_isAlreadyPending)
+            {
+                <MudChip T="string" Color="Color.Warning">@Loc.Get(RS.ErrorReceiptAlreadyPending)</MudChip>
             }
             else
             {
@@ -73,4 +82,5 @@
     private bool _isFailed => _jobStatus == AnalysisJobStatusResponse.Failed;
     private bool _isPending => Job.CheckPending;
     private bool _isAlreadyCreated => Job.IsReceiptAlreadyCreated;
+    private bool _isAlreadyPending => Job.IsReceiptAlreadyPending;
 }
