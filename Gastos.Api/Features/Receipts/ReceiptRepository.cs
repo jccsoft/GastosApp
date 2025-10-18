@@ -6,19 +6,29 @@ public class ReceiptRepository(AppDbContext context) : IReceiptRepository
 
     public async Task<ApiPagedResponse<Receipt>> GetAllAsync(string userId, ReceiptParameters parameters, CancellationToken token)
     {
-        var query = context.Receipts
-            .Where(r => r.UserId == userId)
-            .Include(r => r.Store)
-            .Include(r => r.Items)
-            .ThenInclude(ri => ri.Product)
-            .AsNoTracking();
+        IQueryable<Receipt>? query;
 
         if (parameters.ProductId.HasValue && parameters.ProductId.Value != Guid.Empty)
         {
-            query = query.Where(r => r.Items
-                .Any(ri => ri.ProductId == parameters.ProductId.Value));
+            // When filtering by ProductId, we can optimize the query to only include receipts that have that product
+            query = context.Receipts
+                .Where(r => r.UserId == userId && r.Items.Any(ri => ri.ProductId == parameters.ProductId.Value))
+                .Include(r => r.Store)
+                .Include(r => r.Items.Where(ri => ri.ProductId == parameters.ProductId.Value))
+                .ThenInclude(ri => ri.Product)
+                .AsNoTracking();
         }
-        else if (!string.IsNullOrWhiteSpace(parameters.ProductName))
+        else
+        {
+            query = context.Receipts
+                .Where(r => r.UserId == userId)
+                .Include(r => r.Store)
+                .Include(r => r.Items)
+                .ThenInclude(ri => ri.Product)
+                .AsNoTracking();
+        }
+
+        if (!string.IsNullOrWhiteSpace(parameters.ProductName))
         {
             string search = parameters.ProductName.Trim().ToLower().RemoveAccents();
             if (isInMemoryDatabase)
