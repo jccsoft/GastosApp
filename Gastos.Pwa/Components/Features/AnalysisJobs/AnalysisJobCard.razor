@@ -31,7 +31,7 @@
     </MudCardHeader>
     <MudCardContent Class="pt-0">
         <MudText Typo="Typo.h6">@Job.ReceiptMerchant</MudText>
-        <MudText Typo="Typo.h6">@Job.ReceiptTransactionDate.ToLocalTimeShort()</MudText>
+        <MudText Typo="Typo.h6">@(Job.ReceiptTransactionDate is null ? $"{Loc.Get(RS.FieldDate)}: ?": Job.ReceiptTransactionDate.ToLocalTimeShort())</MudText>
 
         @if(_isFailed && Job.Errors.Any())
         {
@@ -62,7 +62,7 @@
                 </MudButton>
             }
             <MudSpacer />
-                           @* Size="@(_isAlreadyCreated ? Size.Large : Size.Medium)" *@
+
             <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                            Color="@(_isAlreadyCreated ? Color.Error : Color.Default)"
                            Size="Size.Large"

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <NugetSource>O:\Repos\1.Nugets</NugetSource>
-    <NugetDestination>..\..\.nuget-local</NugetDestination>
+    <NugetDestination>..\.nuget-local</NugetDestination>
   </PropertyGroup>
 
   <Target Name="CopyNugets" AfterTargets="Compile" Condition="Exists('$(NugetSource)')">
@@ -11,6 +11,7 @@
       <DestinationFile Include="@(SourceFile->'$(NugetDestination)\%(RecursiveDir)%(Filename)%(Extension)')" />
     </ItemGroup>
     <Copy SourceFiles="@(SourceFile)" DestinationFiles="@(DestinationFile)" SkipUnchangedFiles="true" />
+    <Message Text="Copiado ficheros @(SourceFile) a $(NugetDestination)" Importance="High" />
   </Target>
   
   <ItemGroup>   

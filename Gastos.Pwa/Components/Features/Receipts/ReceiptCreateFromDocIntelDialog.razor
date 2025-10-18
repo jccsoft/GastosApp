@@ -25,7 +25,8 @@
             <MudStack AlignItems="AlignItems.End" Class="mb-5">
                 <MudStack Row AlignItems="AlignItems.Baseline">
                     <MudSelect @ref="@storeSelect" FullWidth="true" T="Guid?" Value="storeId"
-                               ValueChanged="OnStoreChanged" Label="@($"({_receiptResponse!.Merchant})")"
+                               ValueChanged="OnStoreChanged" 
+                               Label="@(string.IsNullOrEmpty(_receiptResponse!.Merchant) ? "?": $"({_receiptResponse!.Merchant})")"
                                AdornmentIcon="@(storeId.HasValue && storeId != Guid.Empty ? null : _errorIcon)"
                                AdornmentColor="@(storeId.HasValue && storeId != Guid.Empty ? Color.Default : Color.Error)"
                                Adornment="Adornment.End" Variant="Variant.Text" Immediate="true">
@@ -273,12 +274,13 @@
         }
 
         var store = stores.FirstOrDefault(s => 
-            s.SourceName is not null &&
+            !string.IsNullOrEmpty(s.SourceName) &&
+            !string.IsNullOrEmpty(_receiptResponse.Merchant) &&
             s.SourceName.ToLower().RemoveAllSpaces() == _receiptResponse.Merchant.ToLower().RemoveAllSpaces());
 
         _receipt.StoreId = store is null? Guid.Empty: store.Id;
         _receipt.SourceId = _receiptResponse.Id;
-        _receiptLocalDate = ((DateTime)_receiptResponse.TransactionDateUtc!).ToLocalTime();
+        _receiptLocalDate = _receiptResponse.TransactionDateUtc is null? DateTime.Today : ((DateTime)_receiptResponse.TransactionDateUtc!).ToLocalTime();
         _receipt.Items = [];
 
         for (int i = 0; i < _receiptResponse.Items.Count(); i++)

@@ -516,4 +516,34 @@
   <data name="ErrorReceiptAlreadyPending" xml:space="preserve">
     <value>Tíquet ya leído.</value>
   </data>
+  <data name="ErrorCameraInitFailed" xml:space="preserve">
+    <value>Error al inicializar la cámara</value>
+  </data>
+  <data name="ErrorCameraSwitching" xml:space="preserve">
+    <value>Error al cambiar cámara</value>
+  </data>
+  <data name="ErrorCameraCapturing" xml:space="preserve">
+    <value>Error al capturar foto</value>
+  </data>
+  <data name="ErrorCameraStopping" xml:space="preserve">
+    <value>Error al parar la cámara</value>
+  </data>
+  <data name="ErrorCameraUnavailable" xml:space="preserve">
+    <value>Cámara no disponible</value>
+  </data>
+  <data name="ActShotCamera" xml:space="preserve">
+    <value>Tomar Foto</value>
+  </data>
+  <data name="ActRetry" xml:space="preserve">
+    <value>Reintentar</value>
+  </data>
+  <data name="InfoCameraInitializing" xml:space="preserve">
+    <value>Inicializando cámara...</value>
+  </data>
+  <data name="InfoLoginStarting" xml:space="preserve">
+    <value>Iniciando sesión...</value>
+  </data>
+  <data name="InfoLoginProcessing" xml:space="preserve">
+    <value>Por favor, espere mientras se procesa su autenticación...</value>
+  </data>
 </root>

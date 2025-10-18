@@ -8,7 +8,7 @@
 <MudDialog @bind-Visible="@_isVisible"
            Options="new DialogOptions { FullScreen = true, CloseButton = true, MaxWidth = MaxWidth.Large }">
     <TitleContent>
-        <MudText Typo="Typo.h5">Tomar Foto</MudText>
+        <MudText Typo="Typo.h5">@Loc.Get(RS.ActShotCamera)</MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="4" Style="height: 80vh;">
@@ -16,7 +16,7 @@
             {
                 <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 100%;">
                     <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
-                    <MudText Typo="Typo.body1">Inicializando cámara...</MudText>
+                    <MudText Typo="Typo.body1">@Loc.Get(RS.InfoCameraInitializing)</MudText>
                 </MudStack>
             }
             else if (_error)
@@ -24,7 +24,7 @@
                 <MudAlert Severity="Severity.Error">
                     <MudText Typo="Typo.body1">@_errorMessage</MudText>
                     <MudButton OnClick="@RetryInitializeCamera" Color="Color.Primary" Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Refresh">
-                        Reintentar
+                        @Loc.Get(RS.ActRetry)
                     </MudButton>
                 </MudAlert>
             }
@@ -40,36 +40,35 @@
                             pointer-events: none; border-radius: 4px;"
                      hidden="@(!_cameraInitialized)">
                     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                                border: 2px solid white; width: 90%; height: 90%; border-radius: 8px;
+                                border: 2px solid white; width: 95%; height: 90%; border-radius: 8px;
                                 box-shadow: 0 0 0 9999px rgba(0,0,0,0.3);">
                     </div>
                 </div>
                     
                 <!-- Camera controls overlay -->
-                <div style="position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;">
-                    <MudStack Row Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
-
-                        <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid"
-                                       Color=@(_availableCameras.Count == 0 ? Color.Transparent : Color.Info)
-                                       Variant="Variant.Filled"
-                                        Disabled=@(_availableCameras.Count == 0)
-                                        OnClick="@SwitchCamera" />
-                            
-                        <MudIconButton Icon="@Icons.Material.Filled.CameraAlt" 
-                                        Color="Color.Primary" 
-                                        Variant="Variant.Filled"
-                                        Size="Size.Large"
-                                        OnClick="@CapturePhoto"
-                                        Disabled="@_capturing" />
-                                         
-                        <MudIconButton Icon="@Icons.Material.Filled.Close" 
-                                        Color="Color.Secondary" 
-                                        Variant="Variant.Filled"
-                                        OnClick="@CloseModal" />
-                    </MudStack>
-                </div>
+                @* <div style="position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;">
+                </div> *@
             </MudPaper>
+            <MudStack Row Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
 
+                <MudIconButton Icon="@Icons.Material.Filled.FlipCameraAndroid"
+                               Color=@(_availableCameras.Count <=1 ? Color.Transparent : Color.Info)
+                               Variant="Variant.Filled"
+                               Disabled=@(_availableCameras.Count == 0)
+                               OnClick="@SwitchCamera" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.CameraAlt"
+                               Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               Size="Size.Large"
+                               OnClick="@CapturePhoto"
+                               Disabled="@_capturing" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Color="Color.Secondary"
+                               Variant="Variant.Filled"
+                               OnClick="@CloseModal" />
+            </MudStack>
             
             <!-- Hidden canvas for image capture -->
             <canvas id="@_canvasElementId" style="display: none;"></canvas>
@@ -121,7 +120,7 @@
             if (!availability.Available)
             {
                 _error = true;
-                _errorMessage = availability.Error ?? "Cámara no disponible";
+                _errorMessage = availability.Error ?? Loc.Get(RS.ErrorCameraUnavailable);
                 StateHasChanged();
                 return;
             }
@@ -145,14 +144,14 @@
             else
             {
                 _error = true;
-                _errorMessage = result.Error ?? "Error al inicializar la cámara";
+                _errorMessage = result.Error ?? Loc.Get(RS.ErrorCameraInitFailed);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error initializing camera");
+            Logger.LogError(ex, Loc.Get(RS.ErrorCameraInitFailed));
             _error = true;
-            _errorMessage = "Error al inicializar la cámara";
+            _errorMessage = Loc.Get(RS.ErrorCameraInitFailed);
         }
         
         StateHasChanged();
@@ -175,15 +174,15 @@
             var result = await CameraService.SwitchCameraAsync(selectedCamera.DeviceId, _videoElementId, _canvasElementId);
             if (!result.Success)
             {
-                Snackbar.Add(result.Error ?? "Error al cambiar cámara", Severity.Error);
+                Snackbar.Add(result.Error ?? Loc.Get(RS.ErrorCameraSwitching), Severity.Error);
                 // Revert camera index
                 _currentCameraIndex = (_currentCameraIndex - 1 + _availableCameras.Count) % _availableCameras.Count;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error switching camera");
-            Snackbar.Add("Error al cambiar cámara", Severity.Error);
+            Logger.LogError(ex, Loc.Get(RS.ErrorCameraSwitching));
+            Snackbar.Add(Loc.Get(RS.ErrorCameraSwitching), Severity.Error);
         }
     }
 
@@ -221,13 +220,13 @@
             }
             else
             {
-                Snackbar.Add(result.Error ?? "Error al capturar foto", Severity.Error);
+                Snackbar.Add(result.Error ?? Loc.Get(RS.ErrorCameraCapturing), Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error capturing photo");
-            Snackbar.Add("Error al capturar foto", Severity.Error);
+            Logger.LogError(ex, Loc.Get(RS.ErrorCameraCapturing));
+            Snackbar.Add(Loc.Get(RS.ErrorCameraCapturing), Severity.Error);
         }
         finally
         {
@@ -252,7 +251,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error stopping camera");
+            Logger.LogError(ex, Loc.Get(RS.ErrorCameraStopping));
         }
     }
 

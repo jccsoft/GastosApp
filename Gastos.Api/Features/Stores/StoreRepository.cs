@@ -70,6 +70,11 @@ public class StoreRepository(AppDbContext context) : IStoreRepository
             var existingStore = await GetByIdAsync(userId, updatedStore.Id, token);
             if (existingStore is null) return RepoResult.NotFound;
 
+            if (string.IsNullOrEmpty(updatedStore.SourceName))
+            {
+                updatedStore.SourceName = existingStore.SourceName;
+            }
+
             context.Stores.Update(updatedStore);
             int affectedRows = await context.SaveChangesAsync(token);
             return affectedRows > 0 ? RepoResult.Success : RepoResult.NoChange;

@@ -56,7 +56,7 @@
         }
     </MudStack>
     
-    <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4">
+    <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4" hidden="@(!_selectedFiles.Any())">
         <MudButton OnClick="@CreateAnalysisJobsAsync" Disabled="@(!_selectedFiles.Any())" Color="Color.Primary" Variant="Variant.Filled">
             @Loc.Get(RS.ReadReceipts)
         </MudButton>
@@ -138,8 +138,6 @@
             // Add to selected files
             var selectedFile = new SelectedFile(File: browserFile, IdempotencyKey: Guid.NewGuid().ToString());
             _selectedFiles.Add(selectedFile);
-
-            Snackbar.Add($"Foto {args.FileName} añadida a la lista", Severity.Success);
 
             await CreateAnalysisJobsAsync();
         }

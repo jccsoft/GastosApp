@@ -22,7 +22,10 @@ else if (_analysisJobs.ItemsCount == 0)
 }
 else
 {
-    <MudText Typo="Typo.h6">@($"{Loc.Get(RS.PendingReceipts)}:")</MudText>
+    <MudStack Row Justify="Justify.SpaceBetween">
+        <MudText Typo="Typo.h6">@($"{Loc.Get(RS.PendingReceipts)}:")</MudText>
+        <MudIconButton Variant="Variant.Filled" OnClick="FetchPendingAnalysisJobsAsync" Icon="@Icons.Material.Filled.Refresh" Color="Color.Primary" />
+    </MudStack>
 
 
     <MudGrid Class="mt-5" Spacing="2">
@@ -44,7 +47,7 @@ else
     private string? _errorMessage;
 
     private System.Timers.Timer? _refreshTimer;
-    private const int _refreshIntervalMilliseconds = 500;
+    private const int _refreshIntervalMilliseconds = 300;
 
     protected override void OnInitialized()  
     {    
@@ -96,52 +99,49 @@ else
     {
         if (_analysisJobs is null) return;
 
-        foreach (var localJob in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
+        foreach (var job in _analysisJobs.Items.Where(j=> j.CheckPending).OrderBy(j => j.CreatedAtUtc))
         {
-            if (localJob.CheckPending)
+            var response = await DocIntelApi.GetAnalysisJobByIdAsync(job.Id);
+            if (!(response.IsSuccessStatusCode && response.Content is AnalysisJobResponse remoteJob)) continue;
+
+            job.Status = remoteJob.Status;
+            job.CompletedAtUtc = remoteJob.CompletedAtUtc;
+
+            if (!(remoteJob.IsSuccessful && remoteJob.DocumentId is not null)) continue;
+
+            job.DocumentId = remoteJob.DocumentId;
+
+            var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
+            if (responseReceipt.IsSuccessStatusCode && responseReceipt.Content is ReceiptResponse receiptResponse)
             {
-                var response = await DocIntelApi.GetAnalysisJobByIdAsync(localJob.Id);
+                job.ReceiptMerchant = receiptResponse.Merchant.GetFirstWord().ToUpper();
+                job.ReceiptTransactionDate = receiptResponse.TransactionDateUtc;
 
-                if (response.IsSuccessStatusCode &&
-                    response.Content is AnalysisJobResponse remoteJob)
+                if (!string.IsNullOrEmpty(receiptResponse.Merchant) && receiptResponse.TransactionDateUtc is not null)
                 {
-                    localJob.Status = remoteJob.Status;
-                    localJob.CompletedAtUtc = remoteJob.CompletedAtUtc;
-
-                    if (remoteJob.Status == (int)AnalysisJobStatusResponse.Successful && remoteJob.DocumentId is not null)
+                    if (_analysisJobs.Items.Any(j =>
+                        j.CreatedAtUtc <= job.CreatedAtUtc && 
+                        j.Id != job.Id &&
+                        j.ReceiptMerchant.GetFirstWord().ToUpper() == job.ReceiptMerchant &&
+                        j.ReceiptTransactionDate == job.ReceiptTransactionDate))
                     {
-                        var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
-                        if (responseReceipt.IsSuccessStatusCode &&
-                            responseReceipt.Content is ReceiptResponse receiptResponse &&
-                            !string.IsNullOrEmpty(receiptResponse.Merchant) &&
-                            receiptResponse.TransactionDateUtc is not null)
-                        {
-                            if (_analysisJobs.Items.Any(j =>
-                                j.CreatedAtUtc <= localJob.CreatedAtUtc && j.Id != localJob.Id &&
-                                j.ReceiptMerchant.GetFirstWord().ToLower() == receiptResponse.Merchant.GetFirstWord().ToLower() &&
-                                j.ReceiptTransactionDate == receiptResponse.TransactionDateUtc))
-                            {
-                                localJob.IsReceiptAlreadyPending = true;
-                            }
-                            else
-                            {
-                                var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
-                                    receiptResponse.Merchant!,
-                                    (DateTime)receiptResponse.TransactionDateUtc);
-
-                                localJob.IsReceiptAlreadyCreated = responseExists.IsSuccessStatusCode && responseExists.Content;
-                            }
-
-                            localJob.ReceiptMerchant = receiptResponse.Merchant ?? "";
-                            localJob.ReceiptTransactionDate = (DateTime)receiptResponse.TransactionDateUtc;
-
-                            localJob.DocumentId = remoteJob.DocumentId;
-                        }
+                        job.IsReceiptAlreadyPending = true;
                     }
+                    else
+                    {
+                        var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
+                            receiptResponse.Merchant!,
+                            (DateTime)receiptResponse.TransactionDateUtc);
 
-                    StateHasChanged();
+                        job.IsReceiptAlreadyCreated = responseExists.IsSuccessStatusCode && responseExists.Content;
+                    }                                
                 }
             }
+
+            if(string.IsNullOrEmpty(job.ReceiptMerchant)) 
+                job.ReceiptMerchant = $"{Loc.Get(RS.EntityStore)}: ?";                        
+
+            StateHasChanged();
         }
     }
 

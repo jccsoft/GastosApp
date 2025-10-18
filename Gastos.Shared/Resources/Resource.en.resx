@@ -516,4 +516,34 @@
   <data name="ErrorReceiptAlreadyPending" xml:space="preserve">
     <value>Receipt already read.</value>
   </data>
+  <data name="ErrorCameraInitFailed" xml:space="preserve">
+    <value>Error initializing camera</value>
+  </data>
+  <data name="ErrorCameraSwitching" xml:space="preserve">
+    <value>Error switching camera</value>
+  </data>
+  <data name="ErrorCameraCapturing" xml:space="preserve">
+    <value>Error capturing photo</value>
+  </data>
+  <data name="ErrorCameraStopping" xml:space="preserve">
+    <value>Error stopping camera</value>
+  </data>
+  <data name="ErrorCameraUnavailable" xml:space="preserve">
+    <value>Camera unavailable</value>
+  </data>
+  <data name="ActShotCamera" xml:space="preserve">
+    <value>Take photo</value>
+  </data>
+  <data name="ActRetry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="InfoCameraInitializing" xml:space="preserve">
+    <value>Initializing camera...</value>
+  </data>
+  <data name="InfoLoginStarting" xml:space="preserve">
+    <value>Starting login...</value>
+  </data>
+  <data name="InfoLoginProcessing" xml:space="preserve">
+    <value>Please wait while your authentication is processed...</value>
+  </data>
 </root>

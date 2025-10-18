@@ -1,13 +1,14 @@
 @page "/authentication/login"
+@inject LocalizationService Loc
 
 <RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogIn">
     <LoggingIn>
         <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
             <MudPaper Class="pa-8 text-center" Elevation="3">
                 <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" Class="mb-4" />
-                <MudText Typo="Typo.h5" Class="mb-2">Iniciando sesión</MudText>
+                <MudText Typo="Typo.h5" Class="mb-2">@Loc.Get(RS.InfoLoginStarting)</MudText>
                 <MudText Typo="Typo.body2" Color="Color.Secondary">
-                    Por favor, espere mientras se procesa su autenticación...
+                    @Loc.Get(RS.InfoLoginProcessing)
                 </MudText>
             </MudPaper>
         </MudContainer>
