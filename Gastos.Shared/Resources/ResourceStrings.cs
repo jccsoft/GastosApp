@@ -2,6 +2,7 @@
 
 public enum ResourceStrings
 {
+    ActAddLine,
     ActCancel,
     ActClearList,
     ActCreate,
@@ -130,6 +131,7 @@ public enum ResourceStrings
     ValidProductNameTooLong0,
     ValidProductUnitsPack,
     ValidProductUnique,
+    ValidReceiptDiscount,
     ValidReceiptId,
     ValidReceiptTransactionDateUtc,
     ValidReceiptSourceId,

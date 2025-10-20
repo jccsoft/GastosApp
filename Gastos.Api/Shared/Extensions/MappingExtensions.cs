@@ -51,6 +51,7 @@ public static class MappingExtensions
             TransactionDateUtc = receipt.TransactionDateUtc,
             StoreId = receipt.StoreId,
             Store = receipt.Store?.ToDto(),
+            Discount = receipt.Discount,
             Items = [.. receipt.Items.Select(i => i.ToDto())]
         };
     }
@@ -129,6 +130,7 @@ public static class MappingExtensions
             TransactionDateUtc = dto.TransactionDateUtc,
             StoreId = dto.StoreId,
             Store = dto.Store?.ToEntity(),
+            Discount = dto.Discount ?? 0,
             Items = [.. dto.Items.Select(i => i.ToEntity())]
         };
     }

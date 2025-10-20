@@ -102,16 +102,16 @@ public class BlazorService(
     public async Task<DialogResult?> OpenEditReceiptDialogAsync(Guid id)
     {
         var dialogParameters = new DialogParameters { ["ReceiptId"] = id };
-        var dialog = await dialogService.ShowAsync<ReceiptEditDialog>($"{loc.Get(RS.ActEdit)} {loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Medium });
+        var dialog = await dialogService.ShowAsync<ReceiptEditDialog>($"{loc.Get(RS.ActEdit)} {loc.Get(RS.EntityReceipt)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
 
         return result;
     }
 
-    public async Task<DialogResult?> OpenEditReceiptItemDialogAsync(ReceiptItemDto receiptItem)
+    public async Task<DialogResult?> OpenEditReceiptItemDialogAsync(ReceiptItemDto? receiptItem)
     {
         var dialogParameters = new DialogParameters { ["Item"] = receiptItem };
-        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{loc.Get(RS.ActEdit)} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
+        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{(receiptItem is null ? loc.Get(RS.ActCreate) : loc.Get(RS.ActEdit))} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
 
         return result;

@@ -11,9 +11,13 @@
     <MudDialog>
         <DialogContent>
             <MudForm Model="_editingItem" @ref="_form" Validation="@(Validator.ValidateValue)" ValidationDelay="0">
-                <MudAutocomplete T="Guid?" @bind-Value="@_editingItem.ProductId" For="@(() => _editingItem.ProductId)"
-                                 ToStringFunc="(Guid? id) => _products.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty"
-                                 SearchFunc="SearchProductAsync" Class="mb-5" Immediate />
+                <MudStack Row>
+                    <MudAutocomplete T="Guid?" @bind-Value="@_editingItem.ProductId" For="@(() => _editingItem.ProductId)"
+                                     ToStringFunc="(Guid? id) => _products.FirstOrDefault(p => p.Id == id)?.Name ?? string.Empty"
+                                     SearchFunc="SearchProductAsync" Class="mb-5" Immediate @ref="_focusProduct" />
+                    <TableButton Action="TableAction.Add" OnClick="OpenAddProductDialogAsync" ToolTipText="@($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Class="mx-0 px-0" />
+                    <TableButton Action="TableAction.Edit" OnClick="OpenEditProductDialogAsync" ToolTipText="@($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Hidden="@(_editingItem.ProductId == Guid.Empty)" Class="me-5 ms-0 ps-0" />
+                </MudStack>
                 <MudStack Row Class="my-5">
                     <MudNumericField @bind-value="@_editingItem.Quantity" For="@(() => _editingItem.Quantity)" Immediate
                                      Label="@Loc.Get(RS.FieldQuantity)" Variant="Variant.Outlined" Format="0.###" Min="1" />
@@ -41,6 +45,8 @@
     private readonly ProductDto _emptyProduct = new() { Id = Guid.Empty, Name = "-" };
 
     private MudForm? _form;
+    private MudAutocomplete<Guid?>? _focusProduct;
+    private bool _firstFocus = false;
 
 
     private bool IsDataChanged =>
@@ -75,13 +81,24 @@
     }
 
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_firstFocus && _focusProduct is not null)
+        {
+            await Task.Delay(100);
+            await _focusProduct.FocusAsync();
+            _firstFocus = true;
+            if (Item is not null) await _focusProduct.SelectAsync();
+        }
+    }
+
     private async Task SubmitAsync()
     {
         await _form!.Validate();
 
         if (_form!.IsValid)
         {
-            if (_editingItem!.ProductId != Item!.ProductId)
+            if (Item is null || _editingItem!.ProductId != Item!.ProductId)
             {
                 var response = await ProductApi.GetByIdAsync(_editingItem!.ProductId!.Value);
 
@@ -134,6 +151,37 @@
         await LoadProductsAsync(value);
 
         return _products.OrderBy(p => p.Name).Select(p => (Guid?)p.Id);
+    }
+
+    private async Task OpenAddProductDialogAsync()
+    {
+        var result = await BlazorService.OpenAddProductDialogAsync();
+        if (result is not null && !result.Canceled && result.Data is ProductDto newProduct)
+        {
+            _products.Add(newProduct);
+            _editingItem!.Product = newProduct;
+            _editingItem.ProductId = newProduct.Id;
+        }
+    }
+
+    private async Task OpenEditProductDialogAsync()
+    {
+        var productId = _editingItem!.ProductId;
+        var product = _products.FirstOrDefault(p => p.Id == productId);
+        if (product is null || productId is null || productId == Guid.Empty)
+        {
+            Snackbar.Add("No hay producto seleccionado para editar.", Severity.Warning);
+            return;
+        }
+
+        var result = await BlazorService.OpenEditProductDialogAsync(productId.Value);
+        if (result is not null && !result.Canceled && result.Data is ProductDto updatedProduct)
+        {
+            product.Name = updatedProduct.Name;
+            product.SizingId = updatedProduct.SizingId;
+            product.SizingValue = updatedProduct.SizingValue;
+            product.Sizing = updatedProduct.Sizing;
+        }
     }
     #endregion
 

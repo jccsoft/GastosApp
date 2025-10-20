@@ -25,7 +25,7 @@
     <RowTemplate>
         <MudTd DataLabel="@Loc.Get(RS.FieldDate)">@context.TransactionDateUtc.ToLocalTimeShort()</MudTd>
         <MudTd DataLabel="@Loc.Get(RS.EntityStore)">@context.Store?.Name</MudTd>
-        <MudTd DataLabel="@Loc.Get(RS.FieldAmount)">@context.Items.Sum(i => i.Amount).ToStringAmount()</MudTd>
+        <MudTd DataLabel="@Loc.Get(RS.FieldAmount)">@context.TotalAmountFormatted</MudTd>
         <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
             <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
             <TableButton Action="@TableAction.Info" OnClick="() => ShowReceiptInfo(context)" Hidden="@(!_allowRemove)" />

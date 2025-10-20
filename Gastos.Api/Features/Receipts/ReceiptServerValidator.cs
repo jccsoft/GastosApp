@@ -29,7 +29,7 @@ public sealed class ReceiptServerValidator : AbstractValidator<ReceiptDto>
         RuleFor(x => x.Items)
             .NotEmpty()
             .WithMessage(loc.Get(RS.ValidReceiptItemsAtLeastOneItem))
-            .Must(items => items.All(item => item.ProductId.HasValue && item.Quantity != 0 && item.Amount != 0))
+            .Must(items => items.All(item => (item.ProductId.HasValue && item.Quantity != 0 && item.Amount != 0) || item.Quantity == 0))
             .WithMessage(loc.Get(RS.ValidReceiptItemsAllItemsFilled))
             .Must(items =>
             {

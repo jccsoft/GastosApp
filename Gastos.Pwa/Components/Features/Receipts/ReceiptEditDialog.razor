@@ -3,7 +3,7 @@
 @inject BlazorService BlazorService
 @inject ISnackbar Snackbar
 @inject LocalizationService Loc
-
+@inject ReceiptClientValidator Validator
 
 @if (_loading)
 {
@@ -13,12 +13,14 @@ else
 {
     <MudDialog>
         <DialogContent>
-            <MudGrid Spacing="10" Class="mb-5">
-                <MudItem xs="1"></MudItem>
+            <MudForm Model="_editingReceipt" @ref="_form" Validation="@(Validator.ValidateValue)" ValidationDelay="0">
+
+            <MudGrid Spacing="5" Class="mb-5">
+                <MudItem xs="2"></MudItem>
                 <MudItem xs="5">
                     <MudSelect T="Guid?" Value="_editingReceipt!.StoreId"
                            ValueChanged="OnStoreChanged" Placeholder="@Loc.Get(RS.ActCreate)"
-                           Variant="Variant.Text" Immediate="true" FullWidth>
+                           Variant="Variant.Outlined" Immediate="true" FullWidth>
                         @foreach (var store in stores.OrderBy(s => s.Name))
                         {
                             <MudSelectItem Value="@((Guid?)store.Id)">@store.Name</MudSelectItem>
@@ -26,28 +28,30 @@ else
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="3">
-                    <MudDatePicker Style="text-align: center" Variant="Variant.Text" @bind-Date="_receiptLocalDate" DateFormat="dd/MMM" />
+                    <MudDatePicker Style="text-align: center" Variant="Variant.Outlined" @bind-Date="_receiptLocalDate" DateFormat="dd/MMM" />
                 </MudItem>
-                <MudItem xs="3">
-                    <MudChip T="string" Variant="Variant.Outlined" Color="Color.Primary" Style="font-size: larger">
-                        @_editingReceipt!.Items.Sum(i => i.Amount).ToStringAmount()
-                    </MudChip>
+                <MudItem xs="1">
+                    <TableButton Action="@TableAction.Add" OnClick="() => OpenAddItemDialogAsync()" ToolTipText="@Loc.Get(RS.ActAddLine)" Size="Size.Medium" Class="ms-2" />
                 </MudItem>
             </MudGrid>
 
             <MudTable T="ReceiptItemDto" Items="_editingReceipt!.Items.OrderBy(i => i.Product!.Name).ToList()"
-                      Dense Hover Bordered FixedHeader>
+                      Dense Hover Bordered FixedHeader CustomFooter="true">
                 <HeaderContent>
                     <MudTh></MudTh>
-                    <MudTh>@Loc.Get(RS.FieldReceiptDescription)</MudTh>
-                    <MudTh>@Loc.Get(RS.FieldQuantity)</MudTh>
+                    <MudTh>#</MudTh>
+                    <MudTh>@String.Format(Loc.Get(RS.FieldUnitPrice0), CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol)</MudTh>
                     <MudTh>@Loc.Get(RS.FieldAmount)</MudTh>
                     <MudTh></MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="@Loc.Get(RS.EntityProduct)">@context.Product!.Name</MudTd>
-                    <MudTd DataLabel="@Loc.Get(RS.FieldReceiptDescription)">@context.SourceDescription.FirstCharToUpper()</MudTd>
-                    <MudTd DataLabel="@Loc.Get(RS.FieldQuantity)" Class="text-center">@context.QuantityFormattedWithoutOne</MudTd>
+                    <MudTd DataLabel="@Loc.Get(RS.EntityProduct)">
+                        <MudTooltip Text="@context.SourceDescription.FirstCharToUpper()">
+                            @context.Product!.Name.ToUpper()
+                        </MudTooltip>
+                    </MudTd>
+                    <MudTd Class="text-center">@context.QuantityFormattedWithoutOne</MudTd>
+                    <MudTd Class="text-center">@context.UnitPriceFormatted</MudTd>
                     <MudTd DataLabel="@Loc.Get(RS.FieldAmount)" Class="text-center">@context.AmountFormatted</MudTd>
                     <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
                         <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditItemDialogAsync(context)" />
@@ -55,11 +59,33 @@ else
                     </MudTd>
                 </RowTemplate>
                 <FooterContent>
-                    <MudSwitch T="bool" Label="@Loc.Get(RS.TableAllowRemove)" @bind-Value="_allowRemove"
-                               Color="Color.Error" Class="mt-5" Size="Size.Small" />
+                    <MudTFootRow>
+                        <MudTd colspan="2" Style="border-bottom: none;"></MudTd>
+                        <MudTd><MudText Align="Align.Center">Dto:</MudText></MudTd>
+                        <MudTd colspan="1" Class="p-0">
+                            <MudTextField T="decimal?" Value="_editingReceipt!.Discount" ValueChanged="OnDiscountChanged"
+                                          For="@(() => _editingReceipt.Discount)" Converter="BlazorService.DecimalConverter"
+                                          Margin="Margin.Dense" Label="" Underline="false" Class="ms-5" Variant="Variant.Outlined"
+                                          AdornmentText="@CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol" Adornment="Adornment.End" />
+                        </MudTd>
+                        <MudTd></MudTd>
+                    </MudTFootRow>
+                    <MudTFootRow >
+                        <MudTd colspan="2" Style="border-bottom: none;"></MudTd>
+                        <MudTd><MudText Align="Align.Center" >Total:</MudText></MudTd>
+                        <MudTd colspan="1">
+                            <MudText Align="Align.Center">@_editingReceipt!.TotalAmountFormatted</MudText>
+                        </MudTd>
+                        <MudTd></MudTd>
+                    </MudTFootRow>
+                    <MudTFootRow>
+                        <MudSwitch T="bool" Label="@Loc.Get(RS.TableAllowRemove)" @bind-Value="_allowRemove"
+                                   Color="Color.Error" Class="mt-5" Size="Size.Small" />
+                    </MudTFootRow>
                 </FooterContent>
             </MudTable>
 
+            </MudForm>
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
@@ -73,6 +99,7 @@ else
     [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
     [Parameter] public Guid? ReceiptId { get; set; }
 
+    private MudForm? _form;
     private ReceiptDto? _editingReceipt;
     private DateTime? _receiptLocalDate;
     private bool _receiptChanged = false;
@@ -111,6 +138,16 @@ else
 
 
     #region ITEMS
+    private async Task OpenAddItemDialogAsync()
+    {
+        var result = await BlazorService.OpenEditReceiptItemDialogAsync(null);
+        if (result is not null && !result.Canceled && result.Data is ReceiptItemDto editItem)
+        {
+            _editingReceipt!.Items.Add(editItem);
+            _receiptChanged = true;
+        }
+    }
+
     private async Task OpenEditItemDialogAsync(ReceiptItemDto receiptItem)
     {
         var result = await BlazorService.OpenEditReceiptItemDialogAsync(receiptItem);
@@ -165,8 +202,19 @@ else
 
 
     #region RECEIPT
+    private void OnDiscountChanged(decimal? value)
+    {
+        _editingReceipt!.Discount = value ?? 0;
+        _receiptChanged = true;
+    }
+
     private async Task SaveAsync()
     {
+        await _form!.Validate();
+
+        if (!_form!.IsValid)
+            return;
+
         _editingReceipt!.TransactionDateUtc = ((DateTime)_receiptLocalDate!).ToUniversalTime();
 
         if (_isEdit)
@@ -210,4 +258,5 @@ else
 
     private void Cancel() => MudDialog.Cancel();
     #endregion
+
 }

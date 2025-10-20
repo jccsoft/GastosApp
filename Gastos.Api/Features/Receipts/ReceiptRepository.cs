@@ -81,7 +81,7 @@ public class ReceiptRepository(AppDbContext context) : IReceiptRepository
     {
         newReceipt.UserId = userId;
         newReceipt.Store = null; // Ensure Store is not set to avoid circular reference issues
-
+        newReceipt.Items.RemoveAll(ri => ri.Quantity == 0); // Remove items with zero quantity
         try
         {
             await context.Receipts.AddAsync(newReceipt, token);

@@ -6,5 +6,6 @@ public sealed class Receipt : Entity
     public DateTime? TransactionDateUtc { get; set; }
     public Guid? StoreId { get; set; }
     public Store? Store { get; set; }
+    public decimal Discount { get; set; }
     public List<ReceiptItem> Items { get; set; } = [];
 }

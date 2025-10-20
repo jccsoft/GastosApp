@@ -13,7 +13,8 @@
         @if (ShowDateRange)
         {
             <TableDateRange FromDate="@FromDate" DateStartChanged="@DateStartChanged" DateStartHelperText="@DateStartHelperText"
-                        ToDate="@ToDate" DateEndChanged="@DateEndChanged" DateEndHelperText="@DateEndHelperText" />
+                            ToDate="@ToDate" DateEndChanged="@DateEndChanged" DateEndHelperText="@DateEndHelperText"
+                            Clearable="true"/>
             <MudSpacer />
         }
         <TableButton Action="@TableAction.Add" OnClick="@OnAddClick" />

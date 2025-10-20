@@ -329,10 +329,10 @@
         bool isValid = _receipt.StoreId.HasValue && _receipt.StoreId.Value != Guid.Empty &&
             _receipt.Items is not null && _receipt.Items.Any() &&
             _receipt.Items.All(item =>
-                item.ProductId.HasValue &&
+                (item.ProductId.HasValue &&
                 item.ProductId != Guid.Empty &&
                 item.Quantity != 0 &&
-                item.Amount != 0);
+                item.Amount != 0) || item.Quantity == 0);
 
         return isValid;
     }

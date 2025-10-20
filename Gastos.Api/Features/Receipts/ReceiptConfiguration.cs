@@ -12,6 +12,8 @@ public sealed class ReceiptConfiguration : IEntityTypeConfiguration<Receipt>
         builder.Property(r => r.SourceId);
         builder.HasIndex(r => new { r.UserId, r.SourceId }).IsUnique();
 
+        builder.Property(r => r.Discount).HasDefaultValue(0);
+
         builder.HasOne(r => r.Store)
             .WithMany(s => s.Receipts)
             .HasForeignKey(r => r.StoreId)

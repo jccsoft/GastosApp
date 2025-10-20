@@ -546,4 +546,10 @@
   <data name="InfoLoginProcessing" xml:space="preserve">
     <value>Please wait while your authentication is processed...</value>
   </data>
+  <data name="ActAddLine" xml:space="preserve">
+    <value>Add line</value>
+  </data>
+  <data name="ValidReceiptDiscount" xml:space="preserve">
+    <value>The discount must be less than or equal to zero.</value>
+  </data>
 </root>
