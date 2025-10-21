@@ -12,7 +12,7 @@ public sealed class ReceiptDto : EntityDto
     {
         get
         {
-            decimal itemsTotal = Items.Sum(i => i.Amount);
+            decimal itemsTotal = Items.Where(i => i.Quantity != 0).Sum(i => i.Amount);
             decimal discountAmount = Discount ?? 0.0m;
             return itemsTotal + discountAmount;
         }

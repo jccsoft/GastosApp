@@ -43,6 +43,11 @@
                                      Size="Size.Medium" Hidden="@(_receipt.StoreId == Guid.Empty)" Class="me-5 ms-0 ps-0" />
                     <MudSpacer />
                     <MudDatePicker Style="text-align: center" Variant="Variant.Text" @bind-Date="_receiptLocalDate" DateFormat="dd/MMM" />
+                    <MudSpacer />
+                    <MudTextField T="decimal?" @bind-Value="_receipt.Discount"
+                                  For="@(() => _receipt.Discount)" Converter="BlazorService.DecimalConverter"
+                                  Margin="Margin.Dense" Label="Dto" ShrinkLabel="true" Underline="false" Class="ms-5" Variant="Variant.Text"
+                                  AdornmentText="@CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol" Adornment="Adornment.End" />
                 </MudStack>
             </MudStack>
             <MudGrid Justify="Justify.Center" Spacing="1" Class="mb-5">
@@ -88,9 +93,14 @@
                     <Alert Message="@Loc.Get(RS.ErrorIncoherentItems)" ShowCloseIcon="false" />
                 }
             </MudGrid>
-            <MudText Typo="Typo.subtitle2" hidden="@(string.IsNullOrEmpty(Filename))">
-                @Loc.Get(RS.EntityFile): @Filename
-            </MudText>
+            <MudStack Row Justify="Justify.SpaceBetween" Class="mb-5">
+                <MudText Typo="Typo.subtitle2" hidden="@(string.IsNullOrEmpty(Filename))">
+                    @Loc.Get(RS.EntityFile): @Filename
+                </MudText>
+                <MudText Typo="Typo.h6">
+                    @($"Total: {_receipt.TotalAmountFormatted}")
+                </MudText>
+            </MudStack>
         }
     </DialogContent>
     <DialogActions>
@@ -282,6 +292,7 @@
         _receipt.SourceId = _receiptResponse.Id;
         _receiptLocalDate = _receiptResponse.TransactionDateUtc is null? DateTime.Today : ((DateTime)_receiptResponse.TransactionDateUtc!).ToLocalTime();
         _receipt.Items = [];
+        _receipt.Discount = 0;
 
         for (int i = 0; i < _receiptResponse.Items.Count(); i++)
         {
@@ -327,6 +338,7 @@
     private bool IsValidReceipt()
     {
         bool isValid = _receipt.StoreId.HasValue && _receipt.StoreId.Value != Guid.Empty &&
+            _receipt.Discount <= 0 &&
             _receipt.Items is not null && _receipt.Items.Any() &&
             _receipt.Items.All(item =>
                 (item.ProductId.HasValue &&
