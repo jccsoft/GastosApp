@@ -93,7 +93,7 @@ public class BlazorService(
             ["DocIntelReceiptId"] = id,
             ["Filename"] = filename
         };
-        var dialog = await dialogService.ShowAsync<ReceiptCreateFromDocIntelDialog>($"{loc.Get(RS.ActCreate)} {loc.Get(RS.EntityReceipt)}", parameters);
+        var dialog = await dialogService.ShowAsync<ReceiptCreateFromDocIntelDialog>($"{loc.Get(RS.ActAdd)} {loc.Get(RS.EntityReceipt)}", parameters);
         var result = await dialog.Result;
 
         return result;
@@ -111,7 +111,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenEditReceiptItemDialogAsync(ReceiptItemDto? receiptItem)
     {
         var dialogParameters = new DialogParameters { ["Item"] = receiptItem };
-        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{(receiptItem is null ? loc.Get(RS.ActCreate) : loc.Get(RS.ActEdit))} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
+        var dialog = await dialogService.ShowAsync<ReceiptItemEditDialog>($"{(receiptItem is null ? loc.Get(RS.ActAdd) : loc.Get(RS.ActEdit))} Item", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.Small });
         var result = await dialog.Result;
 
         return result;
@@ -131,7 +131,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenAddProductDialogAsync(string initialName = "")
     {
         var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
-        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{loc.Get(RS.ActCreate)} {loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await dialogService.ShowAsync<ProductEditDialog>($"{loc.Get(RS.ActAdd)} {loc.Get(RS.EntityProduct)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
         var result = await dialog.Result;
 
         return result;
@@ -150,7 +150,7 @@ public class BlazorService(
     public async Task<DialogResult?> OpenAddStoreDialogAsync(string initialName = "")
     {
         var dialogParameters = new DialogParameters { ["InitialName"] = initialName };
-        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{loc.Get(RS.ActCreate)} {loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
+        var dialog = await dialogService.ShowAsync<StoreEditDialog>($"{loc.Get(RS.ActAdd)} {loc.Get(RS.EntityStore)}", dialogParameters, new DialogOptions() { MaxWidth = MaxWidth.ExtraSmall });
         var result = await dialog.Result;
 
         return result;

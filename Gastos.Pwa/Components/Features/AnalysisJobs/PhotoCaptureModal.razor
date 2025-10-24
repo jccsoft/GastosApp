@@ -8,7 +8,7 @@
 <MudDialog @bind-Visible="@_isVisible"
            Options="new DialogOptions { FullScreen = true, CloseButton = true, MaxWidth = MaxWidth.Large }">
     <TitleContent>
-        <MudText Typo="Typo.h5">@Loc.Get(RS.ActShotCamera)</MudText>
+        <MudText Typo="Typo.h5">@(string.Format(Loc.Get(RS.ActTakePhoto0), Loc.Get(RS.EntityReceipt)))</MudText>
     </TitleContent>
     <DialogContent>
         <MudStack Spacing="4" Style="height: 80vh;">

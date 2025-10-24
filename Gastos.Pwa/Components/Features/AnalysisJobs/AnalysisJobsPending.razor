@@ -1,11 +1,11 @@
 ﻿@implements IDisposable
 
+@inject BlazorService BlazorService
 @inject IDocIntelApi DocIntelApi
 @inject IReceiptApi ReceiptApi
 @inject ISnackbar Snackbar
-@inject StateContainer StateContainer
-@inject BlazorService BlazorService
 @inject LocalizationService Loc
+@inject StateContainer StateContainer
 
 
 @if (!string.IsNullOrEmpty(_errorMessage))
@@ -18,15 +18,14 @@ else if(_analysisJobs is null)
 }
 else if (_analysisJobs.ItemsCount == 0)
 {
-    <MudText Typo="Typo.body1" Class="mt-4">@Loc.Get(RS.ErrorNoPendingReceipts)</MudText>
+    <Alert Message="@Loc.Get(RS.ErrorNoPendingReceipts)" Severity="Severity.Info" />
 }
 else
 {
     <MudStack Row Justify="Justify.SpaceBetween">
         <MudText Typo="Typo.h6">@($"{Loc.Get(RS.PendingReceipts)}:")</MudText>
-        <MudIconButton Variant="Variant.Filled" OnClick="FetchPendingAnalysisJobsAsync" Icon="@Icons.Material.Filled.Refresh" Color="Color.Primary" />
+        <MyButton Type="IconRefresh" OnClick="FetchPendingAnalysisJobsAsync" />
     </MudStack>
-
 
     <MudGrid Class="mt-5" Spacing="2">
         @foreach (var job in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
@@ -72,15 +71,23 @@ else
 
         try
         {
-            var responseGetAll = await DocIntelApi.GetAllAnalysisJobsAsync(request);
+            var response = await DocIntelApi.GetAllAnalysisJobsAsync(request);
 
-            if (responseGetAll.IsSuccessStatusCode && responseGetAll.Content is AnalysisJobCollectionResponse collectionResponse)
+            if (response.IsSuccessStatusCode && response.Content is AnalysisJobCollectionResponse collectionResponse)
             {
-                _analysisJobs = GetPendingJobCollection(collectionResponse);
+                _analysisJobs = new PendingJobCollection
+                    {
+                        Items = collectionResponse.Items
+                                .Select(item => new PendingAnalysisJob(item.Id, item.FileName, item.CreatedAtUtc, item.CompletedAtUtc, item.Status, item.DocumentId, item.Errors))
+                                .ToList(),
+                        ItemsCount = collectionResponse.ItemsCount,
+                        Page = collectionResponse.Page,
+                        PageSize = collectionResponse.PageSize
+                    };
             }
             else
             {
-                _errorMessage = BlazorService.GetResponseError(responseGetAll);
+                _errorMessage = BlazorService.GetResponseError(response);
             }
         }
         catch (Exception ex)
@@ -99,50 +106,55 @@ else
     {
         if (_analysisJobs is null) return;
 
-        foreach (var job in _analysisJobs.Items.Where(j=> j.CheckPending).OrderBy(j => j.CreatedAtUtc))
+        foreach (var job in _analysisJobs.Items.Where(j => j.CheckPending).OrderBy(j => j.CreatedAtUtc))
         {
-            var response = await DocIntelApi.GetAnalysisJobByIdAsync(job.Id);
-            if (!(response.IsSuccessStatusCode && response.Content is AnalysisJobResponse remoteJob)) continue;
+            var responseJob = await DocIntelApi.GetAnalysisJobByIdAsync(job.Id);
+            if (!(responseJob.IsSuccessStatusCode && responseJob.Content is AnalysisJobResponse remoteJob)) continue;
 
-            job.Status = remoteJob.Status;
-            job.CompletedAtUtc = remoteJob.CompletedAtUtc;
+            job.UpdateJobInfo(remoteJob);
 
             if (!(remoteJob.IsSuccessful && remoteJob.DocumentId is not null)) continue;
 
-            job.DocumentId = remoteJob.DocumentId;
-
             var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
-            if (responseReceipt.IsSuccessStatusCode && responseReceipt.Content is ReceiptResponse receiptResponse)
+            if (responseReceipt.IsSuccessStatusCode && responseReceipt.Content is ReceiptResponse receipt)
             {
-                job.ReceiptMerchant = receiptResponse.Merchant.GetFirstWord().ToUpper();
-                job.ReceiptTransactionDate = receiptResponse.TransactionDateUtc;
+                job.UpdateReceiptInfo(receipt);
 
-                if (!string.IsNullOrEmpty(receiptResponse.Merchant) && receiptResponse.TransactionDateUtc is not null)
+                if (IsJobReceiptAlreadyPending(job))
                 {
-                    if (_analysisJobs.Items.Any(j =>
-                        j.CreatedAtUtc <= job.CreatedAtUtc && 
-                        j.Id != job.Id &&
-                        j.ReceiptMerchant.GetFirstWord().ToUpper() == job.ReceiptMerchant &&
-                        j.ReceiptTransactionDate == job.ReceiptTransactionDate))
-                    {
-                        job.IsReceiptAlreadyPending = true;
-                    }
-                    else
-                    {
-                        var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
-                            receiptResponse.Merchant!,
-                            (DateTime)receiptResponse.TransactionDateUtc);
-
-                        job.IsReceiptAlreadyCreated = responseExists.IsSuccessStatusCode && responseExists.Content;
-                    }                                
+                    job.IsReceiptAlreadyPending = true;
                 }
+                else if (await IsJobReceiptAlreadyCreated(job))
+                {
+                    job.IsReceiptAlreadyCreated = true;
+                } 
             }
 
-            if(string.IsNullOrEmpty(job.ReceiptMerchant)) 
-                job.ReceiptMerchant = $"{Loc.Get(RS.EntityStore)}: ?";                        
-
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
+            // StateHasChanged();
         }
+    }
+
+    private bool IsJobReceiptAlreadyPending(PendingAnalysisJob job)
+    {
+        if (_analysisJobs is null || string.IsNullOrEmpty(job.ReceiptMerchant) || job.ReceiptTransactionDate is null) return false;
+
+        return _analysisJobs.Items.Any(j =>
+            j.CreatedAtUtc <= job.CreatedAtUtc &&
+            j.Id != job.Id &&
+            j.ReceiptMerchant!.GetFirstWord().Equals(job.ReceiptMerchant, StringComparison.CurrentCultureIgnoreCase) &&
+            j.ReceiptTransactionDate == job.ReceiptTransactionDate);
+    }
+
+    private async Task<bool> IsJobReceiptAlreadyCreated(PendingAnalysisJob job)
+    {
+        if (string.IsNullOrEmpty(job.ReceiptMerchant) || job.ReceiptTransactionDate is null) return false;
+
+        var responseExists = await ReceiptApi.ExistsByStoreSourceNameAndDate(
+            job.ReceiptMerchant!,
+            (DateTime)job.ReceiptTransactionDate);
+
+        return responseExists.IsSuccessStatusCode && responseExists.Content;
     }
 
     private async void TimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -217,27 +229,4 @@ else
 
         _refreshTimer?.Dispose();
     } 
-
-
-
-    private PendingJobCollection GetPendingJobCollection(AnalysisJobCollectionResponse analysisJobCollectionResponse)
-    {
-        return new PendingJobCollection
-        {
-            Items = analysisJobCollectionResponse.Items
-                .Select(item => new PendingAnalysisJob
-                {
-                    Id = item.Id,
-                    FileName = item.FileName,
-                    CreatedAtUtc = item.CreatedAtUtc,
-                    CompletedAtUtc = item.CompletedAtUtc,
-                    DocumentId = item.DocumentId,
-                    Status = item.Status,
-                    Errors = item.Errors
-                }).ToList(),
-            ItemsCount = analysisJobCollectionResponse.ItemsCount,
-            Page = analysisJobCollectionResponse.Page,
-            PageSize = analysisJobCollectionResponse.PageSize
-        };
-    }
 }

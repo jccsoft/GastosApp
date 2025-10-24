@@ -1,17 +1,13 @@
 ﻿@if (!string.IsNullOrEmpty(Message))
 {
-    <MudAlert Severity="@Severity" Variant="Variant.Outlined" Class="mb-3" ShowCloseIcon="ShowCloseIcon" CloseIconClicked="(() => Message=string.Empty)">
+    <MudAlert Severity="@Severity" Variant="Variant.Outlined" Class="@Class" ShowCloseIcon="ShowCloseIcon" CloseIconClicked="(() => Message = string.Empty)">
         @Message
     </MudAlert>
 }
 
 @code {
-    [Parameter]
-    public string? Message { get; set; }
-
-    [Parameter]
-    public bool ShowCloseIcon { get; set; } = true;
-
-    [Parameter]
-    public Severity Severity { get; set; } = Severity.Error;
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string Class { get; set; } = "mb-3";
+    [Parameter] public bool ShowCloseIcon { get; set; } = true;
+    [Parameter] public Severity Severity { get; set; } = Severity.Error;
 }

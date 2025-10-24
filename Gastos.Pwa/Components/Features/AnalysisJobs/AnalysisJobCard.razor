@@ -15,7 +15,7 @@
             </MudTooltip>
         </CardHeaderContent>
         <CardHeaderAvatar>
-            @if (_isPending)
+            @if(_isPending)
             {
                 <Loading Size="Size.Small" Class="ml-3" />
             }
@@ -23,15 +23,19 @@
             {
                 <MudIcon Color="Color.Success" Icon="@Icons.Material.Filled.Check" Size="Size.Large" />
             }
-            else
+            else 
             {
                 <MudIcon Color="Color.Error" Icon="@Icons.Material.Filled.Error" Size="Size.Medium" />
             }
         </CardHeaderAvatar>
     </MudCardHeader>
+
     <MudCardContent Class="pt-0">
-        <MudText Typo="Typo.h6">@Job.ReceiptMerchant</MudText>
-        <MudText Typo="Typo.h6">@(Job.ReceiptTransactionDate is null ? $"{Loc.Get(RS.FieldDate)}: ?": Job.ReceiptTransactionDate.ToLocalTimeShort())</MudText>
+        @if(!_isPending)
+        {
+            <MudText Typo="Typo.h6">@(Job.ReceiptMerchant is null ? $"{Loc.Get(RS.EntityStore)}: ?" : Job.ReceiptMerchant)</MudText>
+            <MudText Typo="Typo.h6">@(Job.ReceiptTransactionDate is null ? $"{Loc.Get(RS.FieldDate)}: ?": Job.ReceiptTransactionDate.ToLocalTimeShort())</MudText>
+        }
 
         @if(_isFailed && Job.Errors.Any())
         {
@@ -56,17 +60,13 @@
             }
             else
             {
-                <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.PostAdd" Color="Color.Primary"
-                            OnClick="@OnCreateClick" FullWidth="true">
-                    @($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}")
-                </MudButton>
+                <MyButton Type="BtnAddTicket" OnClick="@OnCreateClick" FullWidth="true" />
             }
             <MudSpacer />
 
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
-                           Color="@(_isAlreadyCreated ? Color.Error : Color.Default)"
-                           Size="Size.Large"
-                           OnClick="@OnDeleteClick" />
+            <MyButton Type="IconDelete" OnClick="@OnDeleteClick"
+                      Color="@(_isAlreadyCreated ? Color.Error : Color.Default)"
+                      Size="@(_isAlreadyCreated ? Size.Large : Size.Medium)" />
         }
     </MudCardActions>
 </MudCard>

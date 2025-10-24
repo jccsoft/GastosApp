@@ -11,7 +11,7 @@
 
 <TableCrud TEntity="StoreDto" @ref="_table" ServerReload="ServerReload" Columns="@_columns"
                  SearchStringValue="@_parameters.SearchString" OnSearchStringChanged="OnSearch"
-                 OnAddClick="OpenAddDialogAsync"
+                 OnAddClick="OpenAddStoreDialogAsync"
                  @bind-AllowRemoveValue="@_allowRemove"
                  @bind-SelectedEntityId="@_selectedStoreId"
                  RowClickText="">
@@ -20,8 +20,8 @@
         <MudTd DataLabel="@Loc.Get(RS.EntityProduct)">@context.Name</MudTd>
         <MudTd DataLabel="@Loc.Get(RS.FieldReceiptDescription)">@context.SourceName.FirstCharToUpper()</MudTd>
         <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
-            <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
-            <TableButton Action="@TableAction.Delete" OnClick="() => DeleteStoreAsync(context)" Hidden="@(!_allowRemove)" />
+            <MyButton Type="IconEdit" OnClick="() => OpenEditStoreDialogAsync(context)" />
+            <MyButton Type="IconDelete" OnClick="() => DeleteStoreAsync(context)" Hidden="@(!_allowRemove)" />
         </MudTd>
     </RowTemplate>
 </TableCrud>
@@ -82,7 +82,7 @@
         return output;
     }
 
-    private async Task OpenAddDialogAsync()
+    private async Task OpenAddStoreDialogAsync()
     {
         var result = await BlazorService.OpenAddStoreDialogAsync();
         if (result is not null && !result.Canceled)
@@ -91,7 +91,7 @@
         }
     }
 
-    private async Task OpenEditDialogAsync(StoreDto store)
+    private async Task OpenEditStoreDialogAsync(StoreDto store)
     {
         var result = await BlazorService.OpenEditStoreDialogAsync(store.Id);
         if (result is not null && !result.Canceled)

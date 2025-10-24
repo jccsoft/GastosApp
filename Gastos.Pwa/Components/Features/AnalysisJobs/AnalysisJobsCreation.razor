@@ -1,18 +1,14 @@
 ﻿@implements IDisposable
 
-@using Microsoft.AspNetCore.Http
-@using Microsoft.AspNetCore.Http.Internal
-@using Gastos.Pwa.Shared.Extensions
-
-@inject IDocIntelApi DocIntelApi
-@inject ISnackbar Snackbar
-@inject StateContainer StateContainer
-@inject LocalizationService Loc
-@inject ILogger<AnalysisJobsCreation> Logger
 @inject ICameraService CameraService
+@inject IDocIntelApi DocIntelApi
+@inject ILogger<AnalysisJobsCreation> Logger
+@inject ISnackbar Snackbar
+@inject LocalizationService Loc
+@inject StateContainer StateContainer
 
 
-<MudStack Style="width: 100%" Class="mb-3">
+<MudPaper Elevation="5" Class="p-3">
     <MudFileUpload T="IReadOnlyList<IBrowserFile>" @ref="@_fileUpload" OnFilesChanged="OnInputFileChanged" AppendMultipleFiles="true"
                    Accept="@(string.Join(',',_acceptedFileExtensions))"
                    Hidden="@false" InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10" InputStyle="opacity:0" tabindex="-1"
@@ -20,10 +16,10 @@
         <ActivatorContent>
             <MudPaper Height="22vh" Outlined="true" Class="@_dragClass">
                 <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height: 100%; padding: 16px;">
-                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" />
-                    <MudText Typo="Typo.body1" Align="Align.Center">
+                    <MudChip T="string" Color="Color.Info" Icon="@Icons.Material.Filled.CloudUpload" Class="mt-2"
+                             Variant="Variant.Text" Size="@(_selectedFiles.Any() ? Size.Medium: Size.Large)">
                         @Loc.Get(RS.DragFilesHereOrClick)
-                    </MudText>
+                    </MudChip>
                     @if (_selectedFiles.Any())
                     {
                         <MudStack Row Wrap="Wrap.Wrap" Justify="Justify.Center" Spacing="1" Class="mt-2">
@@ -37,48 +33,37 @@
             </MudPaper>
         </ActivatorContent>
     </MudFileUpload>
-    
 
-    <MudStack Row="false" AlignItems="AlignItems.Center">
-        <MudButton OnClick="@OpenPhotoModal"
-                   Color="Color.Primary"
-                   Variant="Variant.Outlined"
-                   Class="p-3"
-                   StartIcon="@Icons.Material.Filled.CameraAlt" Size="Size.Large"
-                   Disabled="@(!_cameraAvailable)">
-            Tomar Foto
-        </MudButton>
-        @if (!_cameraAvailable && _cameraChecked)
+    <MudStack Row Class="mt-5"
+                Justify="@(_selectedFiles.Any() ? Justify.SpaceBetween: Justify.Center)" 
+                AlignItems="AlignItems.Baseline">
+        @if (_selectedFiles.Any())
         {
-            <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-2">
-                Cámara no disponible
-            </MudText>
+            <MyButton Type="BtnProcessFiles" OnClick="@CreateAnalysisJobsAsync" Disabled="@_processingFiles" />
+            <MyButton Type="IconClear" OnClick="@ClearAsync" Disabled="@_processingFiles" />
         }
-    </MudStack>
-    
-    <MudToolBar Gutters="@false" Class="relative d-flex justify-end gap-4" hidden="@(!_selectedFiles.Any())">
-        <MudButton OnClick="@CreateAnalysisJobsAsync" Disabled="@(!_selectedFiles.Any())" Color="Color.Primary" Variant="Variant.Filled">
-            @Loc.Get(RS.ReadReceipts)
-        </MudButton>
-        <MudSpacer />
-        <MudTooltip Text="@Loc.Get(RS.ActClearList)">
-            <MudIconButton OnClick="@ClearAsync" Disabled="@(!_selectedFiles.Any())" Icon="@Icons.Material.Filled.Clear" Variant="Variant.Outlined" Color="Color.Error" />
-        </MudTooltip>
-    </MudToolBar>
-</MudStack>
+        else
+        {
+            <MyButton Type="BtnTakePhoto" OnClick="@OpenPhotoModal" Disabled="@(!_cameraAvailable || _processingFiles)" />
+        }
+    </MudStack>        
 
-<!-- Photo Capture Modal -->
+    @if (!_cameraAvailable && _cameraChecked)
+    {
+        <Alert Message="@Loc.Get(RS.ErrorCameraUnavailable)" Class="mt-2" />
+    }
+</MudPaper>
+
 <PhotoCaptureModal @bind-IsVisible="@_photoModalVisible" OnPhotoCaptured="@OnPhotoCaptured" />
 
 @code {
     private readonly List<SelectedFile> _selectedFiles = new();
     private sealed record SelectedFile(IBrowserFile File, string IdempotencyKey);
-
     private readonly List<string> _acceptedFileExtensions = new() { ".png", ".jpg", ".jpeg", ".pdf" };
-
     private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
     private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
     private string _dragClass = DefaultDragClass;
+    private bool _processingFiles = false;
 
     // Camera related fields
     private bool _photoModalVisible = false;
@@ -109,7 +94,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error checking camera availability");
+            Logger.LogError(ex, Loc.Get(RS.ErrorCameraChecking));
             _cameraAvailable = false;
             _cameraChecked = true;
             StateHasChanged();
@@ -124,7 +109,7 @@
         }
         else
         {
-            Snackbar.Add("Cámara no disponible", Severity.Warning);
+            Snackbar.Add(Loc.Get(RS.ErrorCameraUnavailable), Severity.Warning);
         }
     }
 
@@ -138,13 +123,13 @@
             // Add to selected files
             var selectedFile = new SelectedFile(File: browserFile, IdempotencyKey: Guid.NewGuid().ToString());
             _selectedFiles.Add(selectedFile);
-
+            
             await CreateAnalysisJobsAsync();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing captured photo");
-            Snackbar.Add("Error al procesar la foto", Severity.Error);
+            Logger.LogError(ex, Loc.Get(RS.ErrorCameraProcessing));
+            Snackbar.Add(Loc.Get(RS.ErrorCameraProcessing), Severity.Error);
         }
     }
 
@@ -173,6 +158,7 @@
     {
         try
         {
+            _processingFiles = true;
             List<Guid> jobIds = new();
 
             foreach (var selectedFile in _selectedFiles)
@@ -200,7 +186,7 @@
                     Snackbar.Add(message, Severity.Error);
                 }
             }
-
+            _processingFiles = false;
             if (jobIds.Any())
             {
                 StateContainer.NotifyAnalysisJobCreated(jobIds);
@@ -209,6 +195,7 @@
         }
         catch (Exception ex)
         {
+            _processingFiles = false;
             Logger.LogError(ex, "Error creating analysis jobs");
             Snackbar.Add(Loc.Get(RS.ErrorUnknown), Severity.Error);
         }

@@ -19,7 +19,7 @@ else
                 <MudItem xs="2"></MudItem>
                 <MudItem xs="5">
                     <MudSelect T="Guid?" Value="_editingReceipt!.StoreId"
-                           ValueChanged="OnStoreChanged" Placeholder="@Loc.Get(RS.ActCreate)"
+                           ValueChanged="OnStoreChanged" Placeholder="@Loc.Get(RS.ActAdd)"
                            Variant="Variant.Outlined" Immediate="true" FullWidth>
                         @foreach (var store in stores.OrderBy(s => s.Name))
                         {
@@ -31,7 +31,8 @@ else
                     <MudDatePicker Style="text-align: center" Variant="Variant.Outlined" @bind-Date="_receiptLocalDate" DateFormat="dd/MMM" />
                 </MudItem>
                 <MudItem xs="1">
-                    <TableButton Action="@TableAction.Add" OnClick="() => OpenAddItemDialogAsync()" ToolTipText="@Loc.Get(RS.ActAddLine)" Size="Size.Medium" Class="ms-2" />
+                    <MyButton Type="IconAdd" Text="@Loc.Get(RS.ActAddLine)" OnClick="() => OpenAddItemDialogAsync()" Class="ms-2" />
+                    @* <TableButton Action="@TableAction.Add" OnClick="() => OpenAddItemDialogAsync()" ToolTipText="@Loc.Get(RS.ActAddLine)" Size="Size.Medium" Class="ms-2" /> *@
                 </MudItem>
             </MudGrid>
 

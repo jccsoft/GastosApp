@@ -20,11 +20,8 @@ else if (_editingStore is not null)
             </MudForm>
         </DialogContent>
         <DialogActions>
-            <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
-            <MudButton OnClick="SubmitAsync" Variant="Variant.Filled"
-                       Color="@(_isEdit ? Color.Primary : Color.Success)">
-                @(_isEdit? Loc.Get(RS.ActSave) : Loc.Get(RS.ActCreate))
-            </MudButton>
+            <MyButton Type="BtnCancel" OnClick="Cancel" />
+            <MyButton Type="@(_isEdit? BtnUpdate: BtnAdd)" OnClick="SubmitAsync" />
         </DialogActions>
     </MudDialog>
 }

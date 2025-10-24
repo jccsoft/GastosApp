@@ -27,9 +27,9 @@
         <MudTd DataLabel="@Loc.Get(RS.EntityStore)">@context.Store?.Name</MudTd>
         <MudTd DataLabel="@Loc.Get(RS.FieldAmount)">@context.TotalAmountFormatted</MudTd>
         <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
-            <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
-            <TableButton Action="@TableAction.Info" OnClick="() => ShowReceiptInfo(context)" Hidden="@(!_allowRemove)" />
-            <TableButton Action="@TableAction.Delete" OnClick="() => DeleteReceiptAsync(context)" Hidden="@(!_allowRemove)" />
+            <MyButton Type="IconEdit" OnClick="() => OpenEditDialogAsync(context)" />
+            <MyButton Type="IconInfo" OnClick="() => ShowReceiptInfo(context)" Hidden="@(!_allowRemove)" />
+            <MyButton Type="IconDelete" OnClick="() => DeleteReceiptAsync(context)" Hidden="@(!_allowRemove)" />
         </MudTd>
     </RowTemplate>
 

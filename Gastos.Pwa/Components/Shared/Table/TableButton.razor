@@ -41,11 +41,11 @@
     private string _tooltipText => ToolTipText ?? (
         Action switch
         {
-            TableAction.Add => Loc.Get(RS.ActCreate),
+            TableAction.Add => Loc.Get(RS.ActAdd),
             TableAction.Edit => Loc.Get(RS.ActEdit),
             TableAction.Delete => Loc.Get(RS.ActDelete),
             TableAction.Info => "Info",
-            TableAction.AddTicket => $"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityReceipt)}",
+            TableAction.AddTicket => $"{Loc.Get(RS.ActAdd)} {Loc.Get(RS.EntityReceipt)}",
             _ => ""
         } 
     );

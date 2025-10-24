@@ -1,0 +1,125 @@
+﻿@inject LocalizationService Loc
+@inject StateContainer StateContainer
+
+<MudTooltip Text="@_tooltipText">
+    @if (_isIcon)
+    {
+        <MudIconButton Icon="@_icon" Color="@_color" Size="@_size" OnClick="@OnClick"
+                       Class="@Class" Disabled="@Disabled" Variant="@_variant" hidden="@Hidden" />
+    }
+    else
+    {
+        <MudButton Variant="_variant" Color="@_color" Size="@_size" OnClick="@OnClick"
+                   Class="@Class" Disabled="@Disabled" StartIcon="@_startIcon" FullWidth="@FullWidth" hidden="@Hidden">
+            <MudText>
+                @_text
+            </MudText>
+        </MudButton>
+    }
+</MudTooltip>
+
+@code {
+    [Parameter] public required MyButtonType Type { get; set; }
+    [Parameter] public string Text { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public Size? Size { get; set; }
+    [Parameter] public Color? Color { get; set; }
+    [Parameter] public string? ToolTipText { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool FullWidth { get; set; } = false;
+    [Parameter] public Variant? Variant { get; set; }
+    [Parameter] public bool Hidden { get; set; } = false;
+
+
+
+    private string _text
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Text))
+            {
+                return Type switch
+                {
+                    BtnAdd => Loc.Get(RS.ActAdd),
+                    BtnUpdate => Loc.Get(RS.ActSave),
+                    BtnCancel => Loc.Get(RS.ActCancel),
+                    BtnAddTicket => $"{Loc.Get(RS.ActAdd)} {Loc.Get(RS.EntityReceipt)}",
+                    BtnTakePhoto => string.Format(Loc.Get(RS.ActTakePhoto0), Loc.Get(RS.EntityReceipt)),
+                    BtnProcessFiles => Loc.Get(RS.ActProcessFiles),
+                    _ => Text
+                };
+            }
+
+            return Text;
+        }
+    }
+
+
+    private Size _size => Size?? 
+        Type switch
+        {
+            IconDelete => StateContainer.IsMobile ? MudBlazor.Size.Large : MudBlazor.Size.Small,
+            IconAdd => MudBlazor.Size.Medium,
+            IconClear => MudBlazor.Size.Medium,
+            IconRefresh => MudBlazor.Size.Medium,
+            BtnTakePhoto => MudBlazor.Size.Large,
+            _ => _isIcon? MudBlazor.Size.Small : MudBlazor.Size.Medium
+        };
+
+
+    private Color _color => Color ??
+        Type switch
+        {
+            BtnAdd => MudBlazor.Color.Success,
+            BtnCancel => MudBlazor.Color.Default,
+            BtnProcessFiles => MudBlazor.Color.Info,
+            BtnTakePhoto => MudBlazor.Color.Info,
+            IconDelete => MudBlazor.Color.Error,
+            IconInfo => MudBlazor.Color.Info,
+            IconClear => MudBlazor.Color.Error,
+            _ => MudBlazor.Color.Primary
+        };
+
+
+    private string _tooltipText => ToolTipText ?? (
+        Type switch
+            {
+                IconAdd => $"{Loc.Get(RS.ActAdd)} {Text}",
+                IconEdit => $"{Loc.Get(RS.ActEdit)} {Text}",
+                IconDelete => $"{Loc.Get(RS.ActDelete)} {Text}",
+                IconInfo => "Info",
+                IconClear => Loc.Get(RS.ActClearList),
+                _ => ""
+            }
+        );
+
+
+
+    private bool _isIcon => Type.ToString().StartsWith("Icon");
+
+    private string? _startIcon => Type switch
+    {
+        BtnAddTicket => Icons.Material.Filled.PostAdd,
+        BtnTakePhoto => Icons.Material.Filled.AddAPhoto,
+        _ => null
+    };
+
+    private string? _icon => Type switch
+    {
+        IconAdd => Icons.Material.Filled.Add,
+        IconEdit => Icons.Material.Filled.Edit,
+        IconDelete => Icons.Material.Filled.Delete,
+        IconInfo => Icons.Material.Filled.Info,
+        IconClear => Icons.Material.Filled.Clear,
+        IconRefresh => Icons.Material.Filled.Refresh,
+        _ => null
+    };
+
+    // private Variant _variant => Variant ?? (Type switch
+    // {
+    //     IconClear => MudBlazor.Variant.Filled,
+    //     _ => _isIcon ? MudBlazor.Variant.Text : MudBlazor.Variant.Filled
+    // });
+    private Variant _variant => Variant ?? (_isIcon ? MudBlazor.Variant.Text : MudBlazor.Variant.Filled);
+}

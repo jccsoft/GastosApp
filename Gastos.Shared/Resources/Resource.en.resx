@@ -171,8 +171,8 @@
   <data name="ActCancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
-  <data name="ActCreate" xml:space="preserve">
-    <value>Create</value>
+  <data name="ActAdd" xml:space="preserve">
+    <value>Add</value>
   </data>
   <data name="ActDelete" xml:space="preserve">
     <value>Delete</value>
@@ -243,8 +243,8 @@
   <data name="DragFilesHereOrClick" xml:space="preserve">
     <value>Drag files here or click</value>
   </data>
-  <data name="ReadReceipts" xml:space="preserve">
-    <value>Read receipts</value>
+  <data name="ActProcessFiles" xml:space="preserve">
+    <value>Process files</value>
   </data>
   <data name="ActClearList" xml:space="preserve">
     <value>Clear list</value>
@@ -531,8 +531,8 @@
   <data name="ErrorCameraUnavailable" xml:space="preserve">
     <value>Camera unavailable</value>
   </data>
-  <data name="ActShotCamera" xml:space="preserve">
-    <value>Take photo</value>
+  <data name="ActTakePhoto0" xml:space="preserve">
+    <value>Take photo of {0}</value>
   </data>
   <data name="ActRetry" xml:space="preserve">
     <value>Retry</value>
@@ -551,5 +551,11 @@
   </data>
   <data name="ValidReceiptDiscount" xml:space="preserve">
     <value>The discount must be less than or equal to zero.</value>
+  </data>
+  <data name="ErrorCameraProcessing" xml:space="preserve">
+    <value>Error processing captured photo</value>
+  </data>
+  <data name="ErrorCameraChecking" xml:space="preserve">
+    <value>Error checking camera availability</value>
   </data>
 </root>

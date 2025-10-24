@@ -3,11 +3,11 @@
 
 <MudStack Row Class="mx-5" AlignItems="AlignItems.Baseline">
     <MudText>Id: @Receipt.Id </MudText>
-    <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="() => CopyText(Receipt.Id.ToString())" />
+    <MyButton Type="IconCopy" OnClick="() => CopyText(Receipt.Id.ToString())" />
 </MudStack>
 <MudStack Row Class="mx-5" AlignItems="AlignItems.Baseline">
     <MudText>Origen Id: @Receipt.SourceId </MudText>
-    <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="() => CopyText(Receipt.SourceId.ToString())" />
+    <MyButton Type="IconCopy" OnClick="() => CopyText(Receipt.SourceId.ToString())" />
 </MudStack>
 
 @code {

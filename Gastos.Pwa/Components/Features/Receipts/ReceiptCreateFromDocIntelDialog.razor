@@ -36,7 +36,7 @@
                         }
                     </MudSelect>
                     <TableButton Action="TableAction.Add" OnClick="OpenAddStoreDialogAsync" 
-                                 ToolTipText="@($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityStore)}")"
+                                 ToolTipText="@($"{Loc.Get(RS.ActAdd)} {Loc.Get(RS.EntityStore)}")"
                                  Size="Size.Medium" Class="mx-0 px-0" />
                         <TableButton Action="TableAction.Edit" OnClick="OpenEditStoreDialogAsync"
                                      ToolTipText="@($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityStore)}")" 
@@ -78,7 +78,7 @@
                                                      SearchFunc="((value, token) => SearchProductAsync(i,value,token))"
                                                         />
 
-                                    <TableButton Action="TableAction.Add" OnClick="(() => OpenAddProductDialogAsync(i))" ToolTipText="@($"{Loc.Get(RS.ActCreate)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Class="mx-0 px-0" />
+                                    <TableButton Action="TableAction.Add" OnClick="(() => OpenAddProductDialogAsync(i))" ToolTipText="@($"{Loc.Get(RS.ActAdd)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Class="mx-0 px-0" />
                                     <TableButton Action="TableAction.Edit" OnClick="(() => OpenEditProductDialogAsync(i))" ToolTipText="@($"{Loc.Get(RS.ActEdit)} {Loc.Get(RS.EntityProduct)}")" Size="Size.Medium" Hidden="@(_receipt.Items[i].ProductId == Guid.Empty)" Class="me-5 ms-0 ps-0" />
                                     <MudSpacer />
                                     <MudTextField Variant="Variant.Outlined" @bind-value="@newItem.Quantity" Label="@Loc.Get(RS.FieldQuantity)" Format="0.###" />
@@ -107,7 +107,7 @@
         <MudButton OnClick="Cancel" Variant="Variant.Filled">@Loc.Get(RS.ActCancel)</MudButton>
         <MudButton OnClick="Submit" Disabled="@(!(string.IsNullOrEmpty(_errorMessage) && IsValidReceipt()))"
                    Color="Color.Success" Variant="Variant.Filled">
-            @Loc.Get(RS.ActCreate)
+            @Loc.Get(RS.ActAdd)
         </MudButton>
     </DialogActions>
 </MudDialog>

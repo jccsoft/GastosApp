@@ -12,7 +12,7 @@
 
 <TableCrud TEntity="ProductDto" @ref="_table" ServerReload="ServerReload" Columns="@_columns"
                  SearchStringValue="@_parameters.SearchString" OnSearchStringChanged="OnSearch"
-                 OnAddClick="OpenAddDialogAsync"
+                 OnAddClick="OpenAddProductDialogAsync"
                  @bind-AllowRemoveValue="@_allowRemove"
                  @bind-SelectedEntityId="@_selectedProductId"
                  RowClickText="@Loc.Get(RS.RowClickProduct)">
@@ -23,8 +23,8 @@
             <MudImage Src="@context.ImageUrl" Class="rounded-lg product-image" />
         </MudTd>
         <MudTd DataLabel="@Loc.Get(RS.FieldActions)">
-            <TableButton Action="@TableAction.Edit" OnClick="() => OpenEditDialogAsync(context)" />
-            <TableButton Action="@TableAction.Delete" OnClick="() => DeleteProductAsync(context)" Hidden="@(!_allowRemove)" />
+            <MyButton Type="IconEdit" OnClick="() => OpenEditProductDialogAsync(context)" />
+            <MyButton Type="IconDelete" OnClick="() => DeleteProductAsync(context)" Hidden="@(!_allowRemove)" />
         </MudTd>
     </RowTemplate>
 
@@ -115,7 +115,7 @@
         return output;
     }
 
-    private async Task OpenAddDialogAsync()
+    private async Task OpenAddProductDialogAsync()
     {
         var result = await BlazorService.OpenAddProductDialogAsync();
         if (result is not null && !result.Canceled)
@@ -124,7 +124,7 @@
         }
     }
 
-    private async Task OpenEditDialogAsync(ProductDto product)
+    private async Task OpenEditProductDialogAsync(ProductDto product)
     {
         var result = await BlazorService.OpenEditProductDialogAsync(product.Id);
         if (result is not null && !result.Canceled)
