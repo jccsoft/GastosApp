@@ -27,7 +27,7 @@ else
         <MyButton Type="IconRefresh" OnClick="FetchPendingAnalysisJobsAsync" />
     </MudStack>
 
-    <MudGrid Class="mt-5" Spacing="2">
+    <MudGrid Spacing="5">
         @foreach (var job in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
         {
             <MudItem xs="12" sm="4">
@@ -44,6 +44,7 @@ else
     private PendingJobCollection? _analysisJobs;
 
     private string? _errorMessage;
+    private bool _checkingStatus = false;
 
     private System.Timers.Timer? _refreshTimer;
     private const int _refreshIntervalMilliseconds = 300;
@@ -106,6 +107,8 @@ else
     {
         if (_analysisJobs is null) return;
 
+        _checkingStatus = true;
+
         foreach (var job in _analysisJobs.Items.Where(j => j.CheckPending).OrderBy(j => j.CreatedAtUtc))
         {
             var responseJob = await DocIntelApi.GetAnalysisJobByIdAsync(job.Id);
@@ -130,9 +133,10 @@ else
                 } 
             }
 
-            await InvokeAsync(StateHasChanged);
-            // StateHasChanged();
+            StateHasChanged();
         }
+
+        _checkingStatus = false;
     }
 
     private bool IsJobReceiptAlreadyPending(PendingAnalysisJob job)
@@ -159,6 +163,8 @@ else
 
     private async void TimerElapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
+        if (_checkingStatus) return;
+
         _refreshTimer?.Stop();
 
         if (_analysisJobs is not null &&

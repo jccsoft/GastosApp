@@ -116,10 +116,5 @@
         _ => null
     };
 
-    // private Variant _variant => Variant ?? (Type switch
-    // {
-    //     IconClear => MudBlazor.Variant.Filled,
-    //     _ => _isIcon ? MudBlazor.Variant.Text : MudBlazor.Variant.Filled
-    // });
     private Variant _variant => Variant ?? (_isIcon ? MudBlazor.Variant.Text : MudBlazor.Variant.Filled);
 }

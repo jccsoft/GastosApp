@@ -2,11 +2,11 @@
 @inject StateContainer StateContainer
 
 <MudCard Outlined="true">
-    <MudCardHeader>
+    <MudCardHeader Style="height: 3rem; border-bottom: 1px solid var(--mud-palette-lines-default);">
         <CardHeaderContent>
             <MudTooltip>
                 <ChildContent>
-                    <MudText Style="height: 3rem;">@Job.FileName</MudText>
+                    <MudText>@Job.FileName</MudText>
                 </ChildContent>
                 <TooltipContent>
                     <MudText>@($"{Loc.Get(RS.FieldDateCreation)}: {Job.CreatedAtUtc.ToLocalTimeLong()}")</MudText>
@@ -30,7 +30,7 @@
         </CardHeaderAvatar>
     </MudCardHeader>
 
-    <MudCardContent Class="pt-0">
+    <MudCardContent Class="pt-3" Style="height: 6rem;">
         @if(!_isPending)
         {
             <MudText Typo="Typo.h6">@(Job.ReceiptMerchant is null ? $"{Loc.Get(RS.EntityStore)}: ?" : Job.ReceiptMerchant)</MudText>
@@ -47,7 +47,7 @@
             </MudAlert>
         }
     </MudCardContent>
-    <MudCardActions>
+    <MudCardActions Style="height: 3rem;">
         @if (!_isPending)
         {
             @if (_isAlreadyCreated)
