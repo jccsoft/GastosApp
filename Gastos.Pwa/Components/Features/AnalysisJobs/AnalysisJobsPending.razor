@@ -24,14 +24,14 @@ else
 {
     <MudStack Row Justify="Justify.SpaceBetween">
         <MudText Typo="Typo.h6">@($"{Loc.Get(RS.PendingReceipts)}:")</MudText>
-        <MyButton Type="IconRefresh" OnClick="FetchPendingAnalysisJobsAsync" />
+        <MyButton Type="IconRefresh" OnClick="FetchPendingAnalysisJobsAsync" Disabled="@_checkingStatus" />
     </MudStack>
 
     <MudGrid Spacing="5">
         @foreach (var job in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
         {
             <MudItem xs="12" sm="4">
-                <AnalysisJobCard Job="@job"
+                <AnalysisJobCard @key="job.Id" Job="@job"
                                  OnCreateClick="(() => OpenCreateReceiptDialogAsync(job.Id, job.DocumentId, job.FileName))"
                                  OnDeleteClick="() => DeleteAnalysisJobAsync(job.Id, job.FileName)" />
             </MudItem>
@@ -133,7 +133,7 @@ else
                 } 
             }
 
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged); 
         }
 
         _checkingStatus = false;
@@ -169,8 +169,8 @@ else
 
         if (_analysisJobs is not null &&
             _analysisJobs.Items.Any(i =>
-                i.Status == (int)AnalysisJobStatusResponse.Pending ||
-                i.Status == (int)AnalysisJobStatusResponse.InProgress))
+     i.Status == (int)AnalysisJobStatusResponse.Pending ||
+    i.Status == (int)AnalysisJobStatusResponse.InProgress))
         {
             await InvokeAsync(async () => await CheckAnalysisJobsStatus());
 

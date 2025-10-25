@@ -83,4 +83,10 @@
     private bool _isPending => Job.CheckPending;
     private bool _isAlreadyCreated => Job.IsReceiptAlreadyCreated;
     private bool _isAlreadyPending => Job.IsReceiptAlreadyPending;
+
+    protected override bool ShouldRender()
+    {
+   // Siempre renderizar - el componente solo se renderizará cuando cambien sus parámetros
+        return true;
+    }
 }

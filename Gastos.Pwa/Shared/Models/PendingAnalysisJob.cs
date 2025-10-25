@@ -19,7 +19,6 @@ public sealed class PendingAnalysisJob(Guid id, string fileName, DateTime create
     public string? ReceiptMerchant { get; set; }
     public DateTime? ReceiptTransactionDate { get; set; }
 
-    public bool CanCreateReceipt => DocumentId is not null && Status == (int)AnalysisJobStatusResponse.Successful && !IsReceiptAlreadyCreated;
     public bool CheckPending
     {
         get =>
