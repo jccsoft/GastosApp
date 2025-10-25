@@ -1,4 +1,5 @@
 ﻿@implements IDisposable
+@inject IJSRuntime JSRuntime
 
 @inject BlazorService BlazorService
 @inject IDocIntelApi DocIntelApi
@@ -24,7 +25,7 @@ else
 {
     <MudStack Row Justify="Justify.SpaceBetween">
         <MudText Typo="Typo.h6">@($"{Loc.Get(RS.PendingReceipts)}:")</MudText>
-        <MyButton Type="IconRefresh" OnClick="FetchPendingAnalysisJobsAsync" Disabled="@_checkingStatus" />
+        <MyButton Type="IconRefresh" OnClick="RefreshAnalysisJobsAsync" Disabled="@_checkingStatus" />
     </MudStack>
 
     <MudGrid Spacing="5">
@@ -32,7 +33,7 @@ else
         {
             <MudItem xs="12" sm="4">
                 <AnalysisJobCard @key="job.Id" Job="@job"
-                                 OnCreateClick="(() => OpenCreateReceiptDialogAsync(job.Id, job.DocumentId, job.FileName))"
+                                 OnCreateClick="() => OpenCreateReceiptDialogAsync(job.Id, job.DocumentId, job.FileName)"
                                  OnDeleteClick="() => DeleteAnalysisJobAsync(job.Id, job.FileName)" />
             </MudItem>
         }
@@ -41,7 +42,8 @@ else
 
 
 @code {
-    private PendingJobCollection? _analysisJobs;
+    private PendingJobCollection? _analysisJobs, _restoredAnalysisJobs;
+    private const string LocalStorageKey = "analysisJobs_pending";
 
     private string? _errorMessage;
     private bool _checkingStatus = false;
@@ -59,7 +61,9 @@ else
     }  
 
     protected override async Task OnInitializedAsync()
-    {      
+    {
+        _restoredAnalysisJobs = await BlazorService.RestoreDataFromLocalStorageAsync<PendingJobCollection>(LocalStorageKey);
+
         await FetchPendingAnalysisJobsAsync();
     }
 
@@ -68,6 +72,7 @@ else
         _refreshTimer?.Stop();
 
         _analysisJobs = null;
+
         GetAllAnalysisJobsRequest request = new() { Page = 1, PageSize = 100 };
 
         try
@@ -76,15 +81,28 @@ else
 
             if (response.IsSuccessStatusCode && response.Content is AnalysisJobCollectionResponse collectionResponse)
             {
+                var newJobs = collectionResponse.Items
+                    .Select(item => new PendingAnalysisJob(item.Id, item.FileName, item.CreatedAtUtc, item.CompletedAtUtc, item.Status, item.DocumentId, item.Errors))
+                    .ToList();
+
+                // Si hay datos restaurados, combinar la información
+                if (_restoredAnalysisJobs is not null)
+                {
+                    var restoredJobsDict = _restoredAnalysisJobs.Items.ToDictionary(j => j.Id, j => j);
+
+                    // Reemplazar cada job nuevo con el restaurado si existe, para mantener el estado UI
+                    newJobs = newJobs.Select(job => 
+                        restoredJobsDict.TryGetValue(job.Id, out var restoredJob) ? restoredJob : job
+                    ).ToList();
+                }
+
                 _analysisJobs = new PendingJobCollection
-                    {
-                        Items = collectionResponse.Items
-                                .Select(item => new PendingAnalysisJob(item.Id, item.FileName, item.CreatedAtUtc, item.CompletedAtUtc, item.Status, item.DocumentId, item.Errors))
-                                .ToList(),
-                        ItemsCount = collectionResponse.ItemsCount,
-                        Page = collectionResponse.Page,
-                        PageSize = collectionResponse.PageSize
-                    };
+                {
+                    Items = newJobs,
+                    ItemsCount = collectionResponse.ItemsCount,
+                    Page = collectionResponse.Page,
+                    PageSize = collectionResponse.PageSize
+                };
             }
             else
             {
@@ -99,6 +117,8 @@ else
         StateHasChanged();
 
         await CheckAnalysisJobsStatus();
+
+        await BlazorService.PersistDataToLocalStorageAsync(LocalStorageKey, _analysisJobs);
 
         _refreshTimer?.Start();
     }
@@ -137,6 +157,8 @@ else
         }
 
         _checkingStatus = false;
+
+        await BlazorService.PersistDataToLocalStorageAsync(LocalStorageKey, _analysisJobs);
     }
 
     private bool IsJobReceiptAlreadyPending(PendingAnalysisJob job)
@@ -169,8 +191,8 @@ else
 
         if (_analysisJobs is not null &&
             _analysisJobs.Items.Any(i =>
-     i.Status == (int)AnalysisJobStatusResponse.Pending ||
-    i.Status == (int)AnalysisJobStatusResponse.InProgress))
+                i.Status == (int)AnalysisJobStatusResponse.Pending ||
+                i.Status == (int)AnalysisJobStatusResponse.InProgress))
         {
             await InvokeAsync(async () => await CheckAnalysisJobsStatus());
 
@@ -178,11 +200,19 @@ else
         }
     }
 
+    private async Task RefreshAnalysisJobsAsync()
+    {
+        _refreshTimer?.Stop();
+        _analysisJobs = null;
+        await InvokeAsync(StateHasChanged);
+        _restoredAnalysisJobs = null;       
+        await FetchPendingAnalysisJobsAsync();
+    }
 
     #region ACTIONS
     private async Task OpenCreateReceiptDialogAsync(Guid analysisJobId, Guid? receiptId, string fileName)
     {
-        if(!receiptId.HasValue || receiptId == Guid.Empty)
+        if (!receiptId.HasValue || receiptId == Guid.Empty)
         {
             Snackbar.Add(Loc.Get(RS.ErrorNoReceiptFoundForAnalysisJob), Severity.Error);
             return;
@@ -228,11 +258,13 @@ else
 
     private void OnBreakpointChanged() => StateHasChanged();
 
-    void IDisposable.Dispose()
+    async void IDisposable.Dispose()
     {
         StateContainer.AnalysisJobCreated -= OnAnalysisJobCreated;
         StateContainer.BreakpointChanged -= OnBreakpointChanged;
 
         _refreshTimer?.Dispose();
+
+        await BlazorService.PersistDataToLocalStorageAsync(LocalStorageKey, _analysisJobs);
     } 
 }

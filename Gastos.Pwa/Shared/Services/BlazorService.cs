@@ -1,4 +1,5 @@
-﻿using static Gastos.Shared.Resources.LocalizationConstants;
+﻿using System.Text.Json;
+using static Gastos.Shared.Resources.LocalizationConstants;
 
 namespace Gastos.Pwa.Shared.Services;
 
@@ -9,6 +10,56 @@ public class BlazorService(
     LocalizationService loc,
     ILogger<BlazorService> logger)
 {
+
+    #region PERSISTENCE
+    public async Task<T?> RestoreDataFromLocalStorageAsync<T>(string localStorageKey)
+    {
+        try
+        {
+            var json = await js.InvokeAsync<string?>("localStorage.getItem", localStorageKey);
+            if (!string.IsNullOrEmpty(json))
+            {
+                return JsonSerializer.Deserialize<T>(json);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Si falla la deserialización, simplemente ignoramos y continuamos
+            Console.WriteLine($"Error restoring data from localStorage: {ex.Message}");
+        }
+
+        return default!;
+    }
+
+    public async Task PersistDataToLocalStorageAsync<T>(string localStorageKey, T? data)
+    {
+        if (data is not null)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(data);
+                await js.InvokeVoidAsync("localStorage.setItem", localStorageKey, json);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error persisting data to localStorage: {ex.Message}");
+            }
+        }
+    }
+
+    public async Task ClearLocalStorageAsync(string localStorageKey)
+    {
+        try
+        {
+            await js.InvokeVoidAsync("localStorage.removeItem", localStorageKey);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error clearing localStorage: {ex.Message}");
+        }
+    }
+    #endregion
+
 
     #region ERROR MESSAGES
     public string GetResponseError<T>(Refit.ApiResponse<T> response)
@@ -45,6 +96,7 @@ public class BlazorService(
     #endregion
 
 
+    #region DIALOGS
     public async Task<bool> ConfirmDeletionAsync(string question)
     {
         var result = await dialogService.ShowMessageBox(
@@ -57,35 +109,6 @@ public class BlazorService(
         return result is true;
     }
 
-
-#pragma warning disable S1104 // Fields should not have public accessibility
-    public Converter<decimal?> DecimalConverter = new()
-    {
-        SetFunc = value => value?.ToString() ?? string.Empty,
-        GetFunc = str =>
-        {
-            var decimalSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-            var groupSep = CultureInfo.CurrentCulture.NumberFormat.NumberGroupSeparator;
-            return str is not null && decimal.TryParse(str.Replace(groupSep, decimalSep), out var val) ? val : null;
-        }
-    };
-#pragma warning restore S1104 // Fields should not have public accessibility
-
-
-    public async Task BrowserLogAsync(string message)
-    {
-        await js.InvokeVoidAsync("console.log", message);
-    }
-
-    public async Task SetCultureAsync(string? culture)
-    {
-        if (!string.IsNullOrEmpty(culture) && culture != CultureInfo.CurrentCulture.Name)
-        {
-            await js.InvokeVoidAsync(SetCultureFunction, culture);
-        }
-    }
-
-    #region DIALOGS
     public async Task<DialogResult?> OpenCreateReceiptDialogAsync(Guid? id, string filename)
     {
         var parameters = new DialogParameters
@@ -167,6 +190,7 @@ public class BlazorService(
     #endregion
 
 
+
     #region COPY TEXT
     public async Task CopyText(string textToCopy)
     {
@@ -186,6 +210,38 @@ public class BlazorService(
         else
         {
             snackbar.Add(loc.Get(RS.ErrorCopyingText), Severity.Error);
+        }
+    }
+    #endregion
+
+
+
+    #region OTHER HELPERS
+
+#pragma warning disable S1104 // Fields should not have public accessibility
+    public Converter<decimal?> DecimalConverter = new()
+    {
+        SetFunc = value => value?.ToString() ?? string.Empty,
+        GetFunc = str =>
+        {
+            var decimalSep = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+            var groupSep = CultureInfo.CurrentCulture.NumberFormat.NumberGroupSeparator;
+            return str is not null && decimal.TryParse(str.Replace(groupSep, decimalSep), out var val) ? val : null;
+        }
+    };
+#pragma warning restore S1104 // Fields should not have public accessibility
+
+
+    public async Task BrowserLogAsync(string message)
+    {
+        await js.InvokeVoidAsync("console.log", message);
+    }
+
+    public async Task SetCultureAsync(string? culture)
+    {
+        if (!string.IsNullOrEmpty(culture) && culture != CultureInfo.CurrentCulture.Name)
+        {
+            await js.InvokeVoidAsync(SetCultureFunction, culture);
         }
     }
     #endregion
