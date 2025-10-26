@@ -13,7 +13,7 @@
 {
     <Alert Message="@_errorMessage" />
 }
-else if(_analysisJobs is null)
+else if (_analysisJobs is null)
 {
     <Loading Class="mt-4" Text="@string.Format(Loc.Get(RS.InfoLoading0), Loc.Get(RS.EntityReceipts))" />
 }
@@ -114,7 +114,6 @@ else
             _errorMessage = BlazorService.GetResponseError(ex);
         }
 
-        await BlazorService.BrowserLogAsync("StateHasChanged FetchPendingAnalysisJobsAsync");
         await InvokeAsync(StateHasChanged);
 
         await CheckAnalysisJobsStatus();
@@ -134,9 +133,10 @@ else
         {
             var responseJob = await DocIntelApi.GetAnalysisJobByIdAsync(job.Id);
             if (!(responseJob.IsSuccessStatusCode && responseJob.Content is AnalysisJobResponse remoteJob)) continue;
-            if (!(remoteJob.IsSuccessful && remoteJob.DocumentId is not null)) continue;
-
+            
             job.UpdateJobInfo(remoteJob);
+            
+            if (!(remoteJob.IsSuccessful && remoteJob.DocumentId is not null)) continue;
 
             var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
             if (responseReceipt.IsSuccessStatusCode && responseReceipt.Content is ReceiptResponse receipt)
@@ -153,8 +153,7 @@ else
                 }
             }
 
-            await BlazorService.BrowserLogAsync($"StateHasChanged for job {job.Id}");
-            await InvokeAsync(StateHasChanged); 
+            await InvokeAsync(StateHasChanged);
         }
 
         _checkingStatus = false;
@@ -204,10 +203,8 @@ else
     private async Task RefreshAnalysisJobsAsync()
     {
         _refreshTimer?.Stop();
-        _analysisJobs = null;
-        await BlazorService.BrowserLogAsync("StateHasChanged RefreshAnalysisJobsAsync");
-        await InvokeAsync(StateHasChanged);
-        _restoredAnalysisJobs = null;       
+        
+        _restoredAnalysisJobs = null; 
         await FetchPendingAnalysisJobsAsync();
     }
 
