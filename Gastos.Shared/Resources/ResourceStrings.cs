@@ -83,6 +83,7 @@ public enum ResourceStrings
     FieldUnitPrice0,
     FieldUnitsPack,
     InfoCameraInitializing,
+    InfoLoading0,
     InfoLoginStarting,
     InfoLoginProcessing,
     InfoProducts0,

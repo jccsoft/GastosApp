@@ -558,4 +558,7 @@
   <data name="ErrorCameraChecking" xml:space="preserve">
     <value>Error al comprobar la disponibilidad de la cámara</value>
   </data>
+  <data name="InfoLoading0" xml:space="preserve">
+    <value>Cargando {0}...</value>
+  </data>
 </root>

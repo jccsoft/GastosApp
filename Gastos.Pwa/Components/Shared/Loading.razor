@@ -1,6 +1,18 @@
-﻿<MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="@Size" Class="mt-4" />
+﻿@if (string.IsNullOrEmpty(Text))
+{
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="@Size" Class="mt-4" />
+}
+else
+{
+    <MudStack Row AlignItems="AlignItems.Center" Class="mt-4">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="@Size" />
+        <MudText Class="ms-5">@Text</MudText>
+    </MudStack>
+}
+
 
 @code{
     [Parameter] public Size Size { get; set; } = Size.Medium;
     [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Text { get; set; } = "";
 }

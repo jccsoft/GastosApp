@@ -15,7 +15,7 @@
 }
 else if(_analysisJobs is null)
 {
-    <Loading Class="mt-4" />
+    <Loading Class="mt-4" Text="@string.Format(Loc.Get(RS.InfoLoading0), Loc.Get(RS.EntityReceipts))" />
 }
 else if (_analysisJobs.ItemsCount == 0)
 {
@@ -28,7 +28,7 @@ else
         <MyButton Type="IconRefresh" OnClick="RefreshAnalysisJobsAsync" Disabled="@_checkingStatus" />
     </MudStack>
 
-    <MudGrid Spacing="5">
+    <MudGrid Spacing="5" Class="m-0">
         @foreach (var job in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
         {
             <MudItem xs="12" sm="4">
@@ -49,7 +49,7 @@ else
     private bool _checkingStatus = false;
 
     private System.Timers.Timer? _refreshTimer;
-    private const int _refreshIntervalMilliseconds = 300;
+    private const int _refreshIntervalMilliseconds = 1000;
 
     protected override void OnInitialized()  
     {    
@@ -114,7 +114,8 @@ else
             _errorMessage = BlazorService.GetResponseError(ex);
         }
 
-        StateHasChanged();
+        await BlazorService.BrowserLogAsync("StateHasChanged FetchPendingAnalysisJobsAsync");
+        await InvokeAsync(StateHasChanged);
 
         await CheckAnalysisJobsStatus();
 
@@ -133,10 +134,9 @@ else
         {
             var responseJob = await DocIntelApi.GetAnalysisJobByIdAsync(job.Id);
             if (!(responseJob.IsSuccessStatusCode && responseJob.Content is AnalysisJobResponse remoteJob)) continue;
+            if (!(remoteJob.IsSuccessful && remoteJob.DocumentId is not null)) continue;
 
             job.UpdateJobInfo(remoteJob);
-
-            if (!(remoteJob.IsSuccessful && remoteJob.DocumentId is not null)) continue;
 
             var responseReceipt = await DocIntelApi.GetReceiptByIdAsync((Guid)remoteJob.DocumentId);
             if (responseReceipt.IsSuccessStatusCode && responseReceipt.Content is ReceiptResponse receipt)
@@ -150,9 +150,10 @@ else
                 else if (await IsJobReceiptAlreadyCreated(job))
                 {
                     job.IsReceiptAlreadyCreated = true;
-                } 
+                }
             }
 
+            await BlazorService.BrowserLogAsync($"StateHasChanged for job {job.Id}");
             await InvokeAsync(StateHasChanged); 
         }
 
@@ -204,6 +205,7 @@ else
     {
         _refreshTimer?.Stop();
         _analysisJobs = null;
+        await BlazorService.BrowserLogAsync("StateHasChanged RefreshAnalysisJobsAsync");
         await InvokeAsync(StateHasChanged);
         _restoredAnalysisJobs = null;       
         await FetchPendingAnalysisJobsAsync();
