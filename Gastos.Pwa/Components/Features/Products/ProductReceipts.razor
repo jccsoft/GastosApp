@@ -24,7 +24,12 @@ else
             <MudTd DataLabel="@_columns[0]">@context.TransactionDateUtc.ToLocalTimeShort()</MudTd>
             <MudTd DataLabel="@_columns[1]">@(context.Store?.Name ?? "?")</MudTd>
             <MudTd DataLabel="@_columns[2]" Class="text-center">@context.Items[0].QuantityFormattedWithOne</MudTd>
-            <MudTd DataLabel="@_columns[3]" Class="text-center">@context.Items[0].UnitPriceFormatted</MudTd>
+            <MudTd DataLabel="@_columns[3]" Class="text-center">
+                @(context.Items[0].SizingIsValid ?
+                  context.Items[0].SizingPriceFormatted :
+                  context.Items[0].UnitPriceFormatted)
+            </MudTd>
+            @* <MudTd DataLabel="@_columns[3]" Class="text-center">@context.Items[0].UnitPriceFormatted</MudTd> *@
             <MudTd DataLabel="@_columns[4]" Class="text-center">@context.Items[0].AmountFormatted</MudTd>
         </RowTemplate>
     </MudTable>
@@ -36,13 +41,14 @@ else
 
     private List<ReceiptDto>? _receipts;
     private string[] _columns = null!;
+    private readonly string currencySymbol = CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol;
 
     protected override void OnInitialized()
     {
         _columns = new[] { Loc.Get(RS.FieldDate), 
                            Loc.Get(RS.EntityStore), 
                            Loc.Get(RS.FieldQuantity), 
-                           String.Format(Loc.Get(RS.FieldUnitPrice0), CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol), 
+                           String.Format(Loc.Get(RS.FieldUnitPrice0), currencySymbol),
                            Loc.Get(RS.FieldAmount) };
     }
     protected override async Task OnParametersSetAsync()
@@ -58,6 +64,10 @@ else
         if (response.IsSuccessStatusCode && response.Content is ApiPagedResponse<ReceiptDto> pagedResponse)
         {
             _receipts = pagedResponse.Items;
+            if(_receipts.Any() && _receipts[0].Items[0].SizingIsValid)
+            {
+                _columns[3] = $"{currencySymbol}/{_receipts[0].Items[0].SizingName}";
+            }
         }
     }
 }

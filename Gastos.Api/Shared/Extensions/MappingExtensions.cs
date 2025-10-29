@@ -75,7 +75,10 @@ public static class MappingExtensions
         return new SizingDto
         {
             Id = sizing.Id,
-            Name = sizing.Name
+            Name = sizing.Name,
+            ParentId = sizing.ParentId,
+            Proportion = sizing.Proportion,
+            Parent = sizing.Parent?.ToDto()
         };
     }
 

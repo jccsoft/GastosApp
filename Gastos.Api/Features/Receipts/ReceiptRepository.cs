@@ -15,7 +15,8 @@ public class ReceiptRepository(AppDbContext context) : IReceiptRepository
                 .Where(r => r.UserId == userId && r.Items.Any(ri => ri.ProductId == parameters.ProductId.Value))
                 .Include(r => r.Store)
                 .Include(r => r.Items.Where(ri => ri.ProductId == parameters.ProductId.Value))
-                .ThenInclude(ri => ri.Product)
+                .ThenInclude(ri => ri.Product!)
+                .ThenInclude(p => p.Sizing!.Parent)
                 .AsNoTracking();
         }
         else
@@ -24,7 +25,8 @@ public class ReceiptRepository(AppDbContext context) : IReceiptRepository
                 .Where(r => r.UserId == userId)
                 .Include(r => r.Store)
                 .Include(r => r.Items)
-                .ThenInclude(ri => ri.Product)
+                .ThenInclude(ri => ri.Product!)
+                .ThenInclude(p => p.Sizing!.Parent)
                 .AsNoTracking();
         }
 
