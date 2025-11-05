@@ -28,7 +28,7 @@ else
         <MyButton Type="IconRefresh" OnClick="RefreshAnalysisJobsAsync" Disabled="@_checkingStatus" />
     </MudStack>
 
-    <MudGrid Spacing="5" Class="m-0">
+    <MudGrid Spacing="0" Class="m-0">
         @foreach (var job in _analysisJobs.Items.OrderBy(j => j.CreatedAtUtc))
         {
             <MudItem xs="12" sm="4">
