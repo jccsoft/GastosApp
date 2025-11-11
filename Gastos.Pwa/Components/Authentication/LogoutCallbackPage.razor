@@ -32,7 +32,10 @@
         </MudContainer>
     </LogOutSucceeded>
     <LogOutFailed>
-        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+        <LoginFailMessage Title="Error en el callback de logout"
+                          Description="Error al procesar el callback de cierre de sesión."
+                          Origin="logout-callback" />
+        @* <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
             <MudPaper Class="pa-8 text-center" Elevation="3">
                 <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mb-4" />
                 <MudText Typo="Typo.h5" Class="mb-2">Error en el callback de logout</MudText>
@@ -47,6 +50,6 @@
                     Volver al inicio
                 </MudButton>
             </MudPaper>
-        </MudContainer>
+        </MudContainer> *@
     </LogOutFailed>
 </RemoteAuthenticatorView>

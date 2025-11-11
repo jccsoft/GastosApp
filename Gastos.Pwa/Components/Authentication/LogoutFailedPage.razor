@@ -2,7 +2,11 @@
 
 <PageTitle>Error al cerrar sesión</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+<LoginFailMessage Title="Error al cerrar sesión"
+                  Description="Ha ocurrido un error durante el proceso de cierre de sesión. Es posible que su sesión ya haya sido cerrada."
+                  Origin="logout-failed" />
+
+@* <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
     <MudPaper Class="pa-8 text-center" Elevation="3">
         <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Large" Class="mb-4" />
         <MudText Typo="Typo.h4" Class="mb-4">Error al cerrar sesión</MudText>
@@ -24,4 +28,4 @@
             </MudButton>
         </MudStack>
     </MudPaper>
-</MudContainer>
+</MudContainer> *@

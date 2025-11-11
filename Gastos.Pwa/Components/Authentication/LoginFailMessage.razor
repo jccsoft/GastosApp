@@ -1,13 +1,12 @@
-@page "/authentication/login-failed"
-
-<PageTitle>Error de autenticación</PageTitle>
-
 <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
     <MudPaper Class="pa-8 text-center" Elevation="3">
         <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Large" Class="mb-4" />
-        <MudText Typo="Typo.h4" Class="mb-4">Error de autenticación</MudText>
-        <MudText Typo="Typo.body1" Class="mb-6">
-            Ha ocurrido un error durante el proceso de autenticación.
+        <MudText Typo="Typo.h4" Class="mb-4">@Title</MudText>
+        <MudText Typo="Typo.body1">
+            @Description
+        </MudText>
+        <MudText Typo="Typo.subtitle1" Class="mb-6">
+            @($"Origen del error: {Origin}")
         </MudText>
         <MudButton Variant="Variant.Filled" 
                    Color="Color.Primary" 
@@ -17,3 +16,9 @@
         </MudButton>
     </MudPaper>
 </MudContainer>
+
+@code {
+    [Parameter] public required string Title { get; set; }
+    [Parameter] public required string Description { get; set; }
+    [Parameter] public required string Origin { get; set; }
+}

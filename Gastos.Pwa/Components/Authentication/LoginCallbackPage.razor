@@ -1,0 +1,21 @@
+@page "/authentication/login-callback"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+<RemoteAuthenticatorView Action="@RemoteAuthenticationActions.LogInCallback">
+    <CompletingLoggingIn>
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center align-center" Style="height: 100vh;">
+            <MudPaper Class="pa-8 text-center" Elevation="3">
+                <MudProgressCircular Color="Color.Success" Size="Size.Large" Indeterminate="true" Class="mb-4" />
+                <MudText Typo="Typo.h5" Class="mb-2">Completando autenticación</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Finalizando el proceso de inicio de sesión...
+                </MudText>
+            </MudPaper>
+        </MudContainer>
+    </CompletingLoggingIn>
+    <LogInFailed>
+        <LoginFailMessage Title="Error en el callback de autenticación"
+                          Description="Ha ocurrido un error durante el proceso de autenticación."
+                          Origin="login-callback" />
+    </LogInFailed>
+</RemoteAuthenticatorView>
